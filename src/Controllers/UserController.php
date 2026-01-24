@@ -4,6 +4,8 @@ namespace Lartrix\Controllers;
 
 use Illuminate\Http\Request;
 use Lartrix\Services\AuthService;
+use Lartrix\Exports\BaseExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Lartrix\Schema\Components\NaiveUI\NInput;
 use Lartrix\Schema\Components\NaiveUI\NSelect;
 use Lartrix\Schema\Components\NaiveUI\NSwitch;
@@ -185,6 +187,113 @@ class UserController extends Controller
         $user->delete();
 
         return success('删除成功');
+    }
+
+    /**
+     * 批量删除用户
+     * 
+     * 接口规则：
+     * - 请求方式：DELETE
+     * - 请求路径：{apiPrefix}/batch
+     * - 请求体：{ ids: number[] }
+     * - 响应：{ code: 0, msg: 'success', data: { deleted: number } }
+     */
+    public function batchDestroy(Request $request): array
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        $userModel = $this->getUserModel();
+        $users = $userModel::whereIn('id', $validated['ids'])->get();
+
+        if ($users->isEmpty()) {
+            return error('未找到要删除的用户');
+        }
+
+        // 撤销所有用户的 Token
+        foreach ($users as $user) {
+            $this->authService->revokeAllTokens($user);
+        }
+
+        $deleted = $userModel::whereIn('id', $validated['ids'])->delete();
+
+        return success('批量删除成功', ['deleted' => $deleted]);
+    }
+
+    /**
+     * 导出用户数据
+     * 
+     * 接口规则：
+     * - 请求方式：GET
+     * - 请求路径：{apiPrefix}/export
+     * - 请求参数：
+     *   - type: 'current' | 'all'（导出类型）
+     *   - page: number（当前页，type=current 时必填）
+     *   - page_size: number（每页数量，type=current 时必填）
+     *   - 其他搜索参数（与列表接口一致）
+     * - 响应：Excel 文件下载
+     */
+    public function export(Request $request)
+    {
+        $userModel = $this->getUserModel();
+        $query = $userModel::query();
+
+        // 应用搜索条件（与 index 方法一致）
+        if ($keyword = $request->input('keyword')) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', "%{$keyword}%")
+                    ->orWhere('nick_name', 'like', "%{$keyword}%")
+                    ->orWhere('real_name', 'like', "%{$keyword}%")
+                    ->orWhere('email', 'like', "%{$keyword}%")
+                    ->orWhere('mobile', 'like', "%{$keyword}%");
+            });
+        }
+
+        if ($request->has('status')) {
+            $query->where('status', $request->boolean('status'));
+        }
+
+        $query->with('roles')->orderBy('id', 'desc');
+
+        // 根据导出类型获取数据
+        $type = $request->input('type', 'current');
+        
+        if ($type === 'current') {
+            $page = (int) $request->input('page', 1);
+            $pageSize = (int) $request->input('page_size', 15);
+            $data = $query->skip(($page - 1) * $pageSize)->take($pageSize)->get();
+            $filename = "用户列表_第{$page}页_" . date('YmdHis') . '.xlsx';
+        } else {
+            $data = $query->get();
+            $filename = '用户列表_全部_' . date('YmdHis') . '.xlsx';
+        }
+
+        // 获取导出列配置
+        $columns = $this->getExportColumns();
+
+        return Excel::download(new BaseExport($data, $columns), $filename);
+    }
+
+    /**
+     * 获取导出列配置
+     * 
+     * 可重写此方法自定义导出列
+     */
+    protected function getExportColumns(): array
+    {
+        return [
+            ['key' => 'id', 'title' => 'ID'],
+            ['key' => 'name', 'title' => '用户名'],
+            ['key' => 'nick_name', 'title' => '昵称'],
+            ['key' => 'real_name', 'title' => '真实姓名'],
+            ['key' => 'email', 'title' => '邮箱'],
+            ['key' => 'mobile', 'title' => '手机号'],
+            ['key' => 'roles', 'title' => '角色'],
+            ['key' => 'status', 'title' => '状态'],
+            ['key' => 'created_at', 'title' => '创建时间'],
+        ];
     }
 
     /**

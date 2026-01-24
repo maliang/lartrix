@@ -495,13 +495,33 @@ class CrudPage
             
             if ($item === 'exportCurrent' && !isset($methods['handleExportCurrent'])) {
                 $methods['handleExportCurrent'] = [
-                    CallAction::make('$message.info', ['导出当前页功能开发中']),
+                    FetchAction::make("{$this->apiPrefix}/export")
+                        ->params([
+                            'type' => 'current',
+                            'page' => '{{ pagination.page }}',
+                            'page_size' => '{{ pagination.pageSize }}',
+                        ])
+                        ->responseType('blob')
+                        ->then([
+                            CallAction::make('$methods.$download', ['{{ $response }}', '导出数据.xlsx']),
+                        ])
+                        ->catch([
+                            CallAction::make('$message.error', ['{{ $error.message || "导出失败" }}']),
+                        ]),
                 ];
             }
             
             if ($item === 'exportAll' && !isset($methods['handleExportAll'])) {
                 $methods['handleExportAll'] = [
-                    CallAction::make('$message.info', ['导出全部功能开发中']),
+                    FetchAction::make("{$this->apiPrefix}/export")
+                        ->params(['type' => 'all'])
+                        ->responseType('blob')
+                        ->then([
+                            CallAction::make('$methods.$download', ['{{ $response }}', '导出数据.xlsx']),
+                        ])
+                        ->catch([
+                            CallAction::make('$message.error', ['{{ $error.message || "导出失败" }}']),
+                        ]),
                 ];
             }
             

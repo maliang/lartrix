@@ -175,14 +175,31 @@
   ],
   "com": "NCard",
   "props": {
-    "title": "成员管理"
+    "title": "成员管理",
+    "style": {
+      "height": "100%",
+      "display": "flex",
+      "flexDirection": "column"
+    },
+    "contentStyle": {
+      "flex": "1 1 0%",
+      "overflow": "hidden",
+      "display": "flex",
+      "flexDirection": "column"
+    }
   },
   "children": [
     {
       "com": "NSpace",
       "props": {
         "vertical": true,
-        "size": "large"
+        "size": "large",
+        "wrapItem": false,
+        "style": {
+          "height": "100%",
+          "display": "flex",
+          "flexDirection": "column"
+        }
       },
       "children": [
         {
@@ -360,7 +377,12 @@
             "columns": "{{ columns }}",
             "rowKey": "{{ row => row.id }}",
             "checkedRowKeys": "{{ selectedKeys }}",
-            "scrollX": 1200
+            "scrollX": 1200,
+            "flexHeight": true,
+            "style": {
+              "flex": "1 1 0%",
+              "overflow": "hidden"
+            }
           },
           "events": {
             "update:checked-row-keys": { "set": "selectedKeys", "value": "{{ $event }}" }

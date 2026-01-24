@@ -76,6 +76,8 @@ Route::prefix($prefix)->group(function () use (
             Route::get('ui/form', [$userController, 'formUi']);
             Route::get('/', [$userController, 'index']);
             Route::post('/', [$userController, 'store']);
+            Route::get('export', [$userController, 'export']);
+            Route::delete('batch', [$userController, 'batchDestroy']);
             Route::get('{id}', [$userController, 'show']);
             Route::put('{id}', [$userController, 'update']);
             Route::delete('{id}', [$userController, 'destroy']);

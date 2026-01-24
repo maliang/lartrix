@@ -14,6 +14,7 @@ class FetchAction implements ActionInterface
     protected array $headers = [];
     protected ?array $params = null;
     protected mixed $body = null;
+    protected ?string $responseType = null;
     protected array $then = [];
     protected array $catch = [];
     protected array $finally = [];
@@ -109,6 +110,16 @@ class FetchAction implements ActionInterface
     }
 
     /**
+     * 设置响应类型
+     * @param string $type 响应类型：json, text, blob, arrayBuffer
+     */
+    public function responseType(string $type): static
+    {
+        $this->responseType = $type;
+        return $this;
+    }
+
+    /**
      * 忽略全局 baseURL
      */
     public function ignoreBaseURL(bool $ignore = true): static
@@ -176,6 +187,10 @@ class FetchAction implements ActionInterface
 
         if ($this->body !== null) {
             $result['body'] = $this->body;
+        }
+
+        if ($this->responseType !== null) {
+            $result['responseType'] = $this->responseType;
         }
 
         if ($this->ignoreBaseURL) {
