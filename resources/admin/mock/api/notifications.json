@@ -1,0 +1,131 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "list": [
+      {
+        "id": "notif-001",
+        "title": "系统维护通知",
+        "content": "系统将于今晚 22:00-24:00 进行例行维护，届时部分功能可能无法正常使用，请提前做好相关工作安排。给您带来的不便，敬请谅解。",
+        "type": "system",
+        "isRead": false,
+        "createdAt": "2026-01-16T10:30:00.000Z",
+        "extra": {
+          "priority": "high"
+        }
+      },
+      {
+        "id": "notif-002",
+        "title": "订单发货提醒",
+        "content": "您的订单 #ORD20260116001 已发货，快递单号：SF1234567890，预计 3-5 个工作日送达。",
+        "type": "order",
+        "isRead": false,
+        "createdAt": "2026-01-16T09:15:00.000Z",
+        "extra": {
+          "orderId": "ORD20260116001",
+          "trackingNumber": "SF1234567890"
+        }
+      },
+      {
+        "id": "notif-003",
+        "title": "新消息提醒",
+        "content": "用户 李明 给您发送了一条私信：\"您好，关于上次讨论的项目方案，我有一些新的想法想和您交流...\"",
+        "type": "message",
+        "isRead": false,
+        "createdAt": "2026-01-16T08:45:00.000Z",
+        "extra": {
+          "senderId": "user-123",
+          "senderName": "李明"
+        }
+      },
+      {
+        "id": "notif-004",
+        "title": "安全提醒",
+        "content": "检测到您的账号在新设备上登录，登录地点：北京市海淀区，登录时间：2026-01-16 08:00:00。如非本人操作，请立即修改密码。",
+        "type": "system",
+        "isRead": true,
+        "createdAt": "2026-01-16T08:00:00.000Z",
+        "extra": {
+          "loginLocation": "北京市海淀区",
+          "deviceType": "Windows PC"
+        }
+      },
+      {
+        "id": "notif-005",
+        "title": "订单支付成功",
+        "content": "您的订单 #ORD20260115002 已支付成功，支付金额：¥299.00，支付方式：微信支付。",
+        "type": "order",
+        "isRead": true,
+        "createdAt": "2026-01-15T16:30:00.000Z",
+        "extra": {
+          "orderId": "ORD20260115002",
+          "amount": 299.00,
+          "paymentMethod": "wechat"
+        }
+      },
+      {
+        "id": "notif-006",
+        "title": "评论回复通知",
+        "content": "用户 王芳 回复了您的评论：\"非常感谢您的建议，我们会认真考虑并在下个版本中改进。\"",
+        "type": "message",
+        "isRead": false,
+        "createdAt": "2026-01-15T14:20:00.000Z",
+        "extra": {
+          "commentId": "comment-456",
+          "replyUserId": "user-456"
+        }
+      },
+      {
+        "id": "notif-007",
+        "title": "版本更新通知",
+        "content": "系统已更新至 v2.5.0 版本，新增功能：1. 深色模式优化；2. 通知中心改版；3. 性能提升 30%。详情请查看更新日志。",
+        "type": "system",
+        "isRead": true,
+        "createdAt": "2026-01-15T10:00:00.000Z",
+        "extra": {
+          "version": "2.5.0",
+          "link": "/changelog"
+        }
+      },
+      {
+        "id": "notif-008",
+        "title": "订单取消通知",
+        "content": "您的订单 #ORD20260114003 已取消，退款金额 ¥158.00 将在 3-5 个工作日内原路退回。",
+        "type": "order",
+        "isRead": true,
+        "createdAt": "2026-01-14T18:45:00.000Z",
+        "extra": {
+          "orderId": "ORD20260114003",
+          "refundAmount": 158.00
+        }
+      },
+      {
+        "id": "notif-009",
+        "title": "好友申请",
+        "content": "用户 张伟 申请添加您为好友，附言：\"您好，我是在技术论坛上认识您的，希望能向您请教一些问题。\"",
+        "type": "message",
+        "isRead": false,
+        "createdAt": "2026-01-14T15:30:00.000Z",
+        "extra": {
+          "applicantId": "user-789",
+          "applicantName": "张伟"
+        }
+      },
+      {
+        "id": "notif-010",
+        "title": "活动提醒",
+        "content": "您关注的「新春特惠活动」将于明天开始，全场商品低至 5 折，记得准时参与哦！",
+        "type": "system",
+        "isRead": true,
+        "createdAt": "2026-01-14T12:00:00.000Z",
+        "extra": {
+          "activityId": "act-2026-spring",
+          "link": "/activity/spring-sale"
+        }
+      }
+    ],
+    "total": 25,
+    "page": 1,
+    "pageSize": 10
+  }
+}

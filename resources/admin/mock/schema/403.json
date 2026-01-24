@@ -1,0 +1,49 @@
+{
+  "com": "NFlex",
+  "props": {
+    "vertical": true,
+    "justify": "center",
+    "align": "center",
+    "class": "min-h-screen"
+  },
+  "children": [
+    {
+      "com": "NResult",
+      "props": {
+        "status": "403",
+        "title": "403",
+        "description": "抱歉，您没有权限访问此页面"
+      },
+      "slots": {
+        "footer": [
+          {
+            "com": "NFlex",
+            "props": {
+              "justify": "center",
+              "class": "gap-4"
+            },
+            "children": [
+              {
+                "com": "NButton",
+                "props": {
+                  "type": "primary"
+                },
+                "events": {
+                  "click": { "script": "$methods.$tab.closeAndGo('/')" }
+                },
+                "children": "返回首页"
+              },
+              {
+                "com": "NButton",
+                "events": {
+                  "click": { "script": "$methods.$tab.refresh()" }
+                },
+                "children": "重试"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

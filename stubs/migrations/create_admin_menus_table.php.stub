@@ -1,0 +1,58 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * 运行迁移
+     * 字段对照 trix MenuRoute 类型
+     */
+    public function up(): void
+    {
+        Schema::create('admin_menus', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('parent_id')->nullable()->comment('父级菜单ID');
+            
+            // 基础路由字段
+            $table->string('name')->comment('路由名称');
+            $table->string('path')->comment('路由路径');
+            $table->string('component')->nullable()->comment('组件路径');
+            $table->string('redirect')->nullable()->comment('重定向路径');
+            
+            // meta 字段（展开为独立列）
+            $table->string('title')->nullable()->comment('页面标题');
+            $table->string('icon')->nullable()->comment('图标');
+            $table->integer('order')->default(100)->comment('排序');
+            $table->boolean('hide_in_menu')->default(false)->comment('是否在菜单中隐藏');
+            $table->boolean('keep_alive')->default(false)->comment('是否缓存页面');
+            $table->json('permissions')->nullable()->comment('权限标识列表(JSON)');
+            $table->boolean('use_json_renderer')->default(false)->comment('是否使用JSON渲染器');
+            $table->string('schema_source')->nullable()->comment('JSON Schema来源');
+            $table->string('layout_type')->nullable()->comment('布局类型:normal/blank');
+            $table->string('open_type')->nullable()->comment('打开类型:normal/iframe/newWindow');
+            $table->string('href')->nullable()->comment('外部链接地址');
+            $table->boolean('is_default_after_login')->default(false)->comment('是否为登录后默认页');
+            $table->integer('fixed_index_in_tab')->nullable()->comment('固定标签页顺序');
+            $table->boolean('requires_auth')->default(true)->comment('是否需要登录');
+            $table->string('active_menu')->nullable()->comment('父级菜单路径');
+            
+            $table->timestamps();
+
+            $table->foreign('parent_id')
+                ->references('id')
+                ->on('admin_menus')
+                ->onDelete('cascade');
+        });
+    }
+
+    /**
+     * 回滚迁移
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('admin_menus');
+    }
+};

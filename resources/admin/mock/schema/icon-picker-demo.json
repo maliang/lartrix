@@ -1,0 +1,229 @@
+{
+  "com": "div",
+  "props": {
+    "class": "p-4"
+  },
+  "data": {
+    "selectedIcon": "",
+    "selectedIcon2": "tabler:home",
+    "selectedIcon3": ""
+  },
+  "children": [
+    {
+      "com": "NCard",
+      "props": {
+        "title": "图标选择器组件",
+        "class": "mb-4"
+      },
+      "children": [
+        {
+          "com": "NAlert",
+          "props": {
+            "type": "info",
+            "class": "mb-4"
+          },
+          "children": "IconPicker 组件从 Iconify API 动态获取完整图标列表，支持多系列切换、搜索过滤、分页加载，还支持添加自定义图标系列和额外图标。"
+        },
+        {
+          "com": "NDescriptions",
+          "props": {
+            "bordered": true,
+            "column": 1,
+            "labelPlacement": "left",
+            "labelStyle": { "width": "150px" }
+          },
+          "children": [
+            {
+              "com": "NDescriptionsItem",
+              "props": { "label": "基础用法" },
+              "children": [
+                {
+                  "com": "NSpace",
+                  "props": { "align": "center" },
+                  "children": [
+                    {
+                      "com": "IconPicker",
+                      "props": {
+                        "modelValue": "{{ selectedIcon }}",
+                        "placeholder": "请选择图标"
+                      },
+                      "events": {
+                        "update:modelValue": {
+                          "set": "selectedIcon",
+                          "value": "{{ $event }}"
+                        }
+                      }
+                    },
+                    {
+                      "com": "NTag",
+                      "props": {
+                        "type": "{{ selectedIcon ? 'success' : 'default' }}"
+                      },
+                      "children": "{{ selectedIcon || '未选择' }}"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "com": "NDescriptionsItem",
+              "props": { "label": "带默认值" },
+              "children": [
+                {
+                  "com": "NSpace",
+                  "props": { "align": "center" },
+                  "children": [
+                    {
+                      "com": "IconPicker",
+                      "props": {
+                        "modelValue": "{{ selectedIcon2 }}"
+                      },
+                      "events": {
+                        "update:modelValue": {
+                          "set": "selectedIcon2",
+                          "value": "{{ $event }}"
+                        }
+                      }
+                    },
+                    {
+                      "com": "NTag",
+                      "props": { "type": "primary" },
+                      "children": "{{ selectedIcon2 }}"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "com": "NDescriptionsItem",
+              "props": { "label": "自定义系列" },
+              "children": [
+                {
+                  "com": "NSpace",
+                  "props": { "align": "center" },
+                  "children": [
+                    {
+                      "com": "IconPicker",
+                      "props": {
+                        "modelValue": "{{ selectedIcon3 }}",
+                        "placeholder": "含自定义系列",
+                        "customSets": [
+                          {
+                            "prefix": "custom",
+                            "name": "自定义",
+                            "icon": "mdi:star",
+                            "icons": ["mdi:home", "mdi:account", "mdi:cog", "mdi:heart", "mdi:star", "mdi:bell", "mdi:email", "mdi:phone", "mdi:camera", "mdi:music"]
+                          }
+                        ]
+                      },
+                      "events": {
+                        "update:modelValue": {
+                          "set": "selectedIcon3",
+                          "value": "{{ $event }}"
+                        }
+                      }
+                    },
+                    {
+                      "com": "NTag",
+                      "props": {
+                        "type": "{{ selectedIcon3 ? 'warning' : 'default' }}"
+                      },
+                      "children": "{{ selectedIcon3 || '未选择' }}"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "com": "NCard",
+      "props": {
+        "title": "组件属性",
+        "class": "mt-4"
+      },
+      "children": [
+        {
+          "com": "NDataTable",
+          "props": {
+            "bordered": true,
+            "singleLine": false,
+            "columns": [
+              { "title": "属性", "key": "prop", "width": 150 },
+              { "title": "说明", "key": "desc" },
+              { "title": "类型", "key": "type", "width": 180 },
+              { "title": "默认值", "key": "default", "width": 100 }
+            ],
+            "data": [
+              { "prop": "modelValue", "desc": "绑定值（v-model）", "type": "string", "default": "''" },
+              { "prop": "placeholder", "desc": "占位文本", "type": "string", "default": "'请选择图标'" },
+              { "prop": "disabled", "desc": "是否禁用", "type": "boolean", "default": "false" },
+              { "prop": "popoverWidth", "desc": "弹出框宽度", "type": "number", "default": "486" },
+              { "prop": "customSets", "desc": "自定义图标系列", "type": "IconSet[]", "default": "[]" },
+              { "prop": "extraIcons", "desc": "额外图标（按系列前缀分组）", "type": "Record<string, string[]>", "default": "{}" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "com": "NCard",
+      "props": {
+        "title": "IconSet 类型",
+        "class": "mt-4"
+      },
+      "children": [
+        {
+          "com": "NDataTable",
+          "props": {
+            "bordered": true,
+            "singleLine": false,
+            "columns": [
+              { "title": "属性", "key": "prop", "width": 100 },
+              { "title": "说明", "key": "desc" },
+              { "title": "类型", "key": "type", "width": 120 },
+              { "title": "必填", "key": "required", "width": 60 }
+            ],
+            "data": [
+              { "prop": "prefix", "desc": "系列前缀（唯一标识）", "type": "string", "required": "是" },
+              { "prop": "name", "desc": "系列显示名称", "type": "string", "required": "是" },
+              { "prop": "icon", "desc": "系列图标", "type": "string", "required": "是" },
+              { "prop": "icons", "desc": "预设图标列表（提供后不从 API 加载）", "type": "string[]", "required": "否" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "com": "NCard",
+      "props": {
+        "title": "默认图标系列",
+        "class": "mt-4"
+      },
+      "children": [
+        {
+          "com": "NDataTable",
+          "props": {
+            "bordered": true,
+            "singleLine": false,
+            "columns": [
+              { "title": "系列", "key": "name", "width": 150 },
+              { "title": "前缀", "key": "prefix", "width": 100 },
+              { "title": "说明", "key": "desc" }
+            ],
+            "data": [
+              { "name": "Tabler", "prefix": "tabler", "desc": "简洁线性风格，适合现代 UI，约 5000+ 图标" },
+              { "name": "Material Design", "prefix": "mdi", "desc": "Google 设计规范，图标丰富，约 7000+ 图标" },
+              { "name": "Carbon", "prefix": "carbon", "desc": "IBM 设计系统，专业商务风格，约 2000+ 图标" },
+              { "name": "Lucide", "prefix": "lucide", "desc": "Feather 图标的社区分支，简约风格，约 1500+ 图标" },
+              { "name": "Phosphor", "prefix": "ph", "desc": "灵活多变，支持多种粗细，约 7000+ 图标" },
+              { "name": "Remix Icon", "prefix": "ri", "desc": "开源中性风格，线性/填充双版本，约 2800+ 图标" }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

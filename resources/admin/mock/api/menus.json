@@ -1,0 +1,205 @@
+[
+  {
+    "name": "forbidden",
+    "path": "/403",
+    "meta": {
+      "title": "无权限",
+      "requiresAuth": false,
+      "layoutType": "normal",
+      "hideInMenu": true,
+      "useJsonRenderer": true,
+      "schemaSource": "/mock/schema/403.json"
+    }
+  },
+  {
+    "name": "not-found",
+    "path": "/404",
+    "meta": {
+      "title": "页面不存在",
+      "requiresAuth": false,
+      "layoutType": "normal",
+      "hideInMenu": true,
+      "useJsonRenderer": true,
+      "schemaSource": "/mock/schema/404.json"
+    }
+  },
+  {
+    "name": "server-error",
+    "path": "/500",
+    "meta": {
+      "title": "服务器错误",
+      "requiresAuth": false,
+      "layoutType": "normal",
+      "hideInMenu": true,
+      "useJsonRenderer": true,
+      "schemaSource": "/mock/schema/500.json"
+    }
+  },
+  {
+    "name": "home",
+    "path": "/home",
+    "meta": {
+      "title": "首页",
+      "icon": "mdi:home",
+      "order": 1,
+      "useJsonRenderer": true,
+      "schemaSource": "/mock/schema/dashboard.json"
+    }
+  },
+  {
+    "name": "goiframe",
+    "path": "/goiframe",
+    "meta": {
+      "title": "iframe页面",
+      "icon": "mdi:home",
+      "order": 1,
+      "openType": "iframe",
+      "href": "https://docs.soybeanjs.cn/"
+    }
+  },
+  {
+    "name": "newpage",
+    "path": "/newpage",
+    "meta": {
+      "title": "Naive UI",
+      "icon": "mdi:home",
+      "order": 1,
+      "openType": "newWindow",
+      "href": "https://www.naiveui.com/"
+    }
+  },
+  {
+    "name": "components",
+    "path": "/components",
+    "redirect": "/components/flow-editor",
+    "meta": {
+      "title": "组件示例",
+      "icon": "mdi:puzzle",
+      "order": 50
+    },
+    "children": [
+      {
+        "name": "components-echarts",
+        "path": "echarts",
+        "meta": {
+          "title": "ECharts 图表",
+          "icon": "mdi:chart-line",
+          "order": 0,
+          "useJsonRenderer": true,
+          "schemaSource": "/mock/schema/demo/echarts-demo.json"
+        }
+      },
+      {
+        "name": "components-flow-editor",
+        "path": "flow-editor",
+        "meta": {
+          "title": "流程图编辑器",
+          "icon": "mdi:sitemap",
+          "order": 1,
+          "useJsonRenderer": true,
+          "schemaSource": "/mock/schema/flow-editor-demo.json"
+        }
+      },
+      {
+        "name": "components-icon-picker",
+        "path": "icon-picker",
+        "meta": {
+          "title": "图标选择器",
+          "icon": "mdi:emoticon-outline",
+          "order": 2,
+          "useJsonRenderer": true,
+          "schemaSource": "/mock/schema/icon-picker-demo.json"
+        }
+      },
+      {
+        "name": "components-markdown-editor",
+        "path": "markdown-editor",
+        "meta": {
+          "title": "Markdown 编辑器",
+          "icon": "mdi:language-markdown",
+          "order": 3,
+          "useJsonRenderer": true,
+          "schemaSource": "/mock/schema/vditor-demo.json"
+        }
+      },
+      {
+        "name": "components-rich-editor",
+        "path": "rich-editor",
+        "meta": {
+          "title": "富文本编辑器",
+          "icon": "mdi:format-text",
+          "order": 4,
+          "useJsonRenderer": true,
+          "schemaSource": "/mock/schema/wang-editor-demo.json"
+        }
+      }
+    ]
+  },
+  {
+    "name": "system",
+    "path": "/system",
+    "redirect": "/system/user",
+    "meta": {
+      "title": "系统管理",
+      "icon": "mdi:cog",
+      "order": 100
+    },
+    "children": [
+      {
+        "name": "system-user",
+        "path": "user",
+        "meta": {
+          "title": "成员管理",
+          "icon": "mdi:account-group",
+          "order": 1,
+          "useJsonRenderer": true,
+          "schemaSource": "/mock/schema/system/user-list.json"
+        }
+      },
+      {
+        "name": "system-role",
+        "path": "role",
+        "meta": {
+          "title": "角色管理",
+          "icon": "mdi:account-key",
+          "order": 2,
+          "useJsonRenderer": true,
+          "schemaSource": "/mock/schema/system/role-list.json"
+        }
+      },
+      {
+        "name": "system-menu",
+        "path": "menu",
+        "meta": {
+          "title": "菜单管理",
+          "icon": "mdi:menu",
+          "order": 3,
+          "useJsonRenderer": true,
+          "schemaSource": "/mock/schema/system/menu-list.json"
+        }
+      },
+      {
+        "name": "system-permission",
+        "path": "permission",
+        "meta": {
+          "title": "权限管理",
+          "icon": "mdi:shield-key",
+          "order": 4,
+          "useJsonRenderer": true,
+          "schemaSource": "/mock/schema/system/permission-list.json"
+        }
+      },
+      {
+        "name": "system-setting",
+        "path": "setting",
+        "meta": {
+          "title": "系统设置",
+          "icon": "mdi:cog-outline",
+          "order": 5,
+          "useJsonRenderer": true,
+          "schemaSource": "/mock/schema/system/setting.json"
+        }
+      }
+    ]
+  }
+]

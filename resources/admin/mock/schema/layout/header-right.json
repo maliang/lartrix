@@ -1,0 +1,125 @@
+{
+  "com": "div",
+  "props": {
+    "class": "h-full flex-y-center gap-4px"
+  },
+  "children": [
+    {
+      "com": "GlobalSearch",
+      "props": {}
+    },
+    {
+      "com": "HeaderNotification",
+      "props": {
+        "badgeMode": "count",
+        "pageSize": 10,
+        "enableWs": false,
+        "enableNotification": true,
+        "notificationDuration": 4500,
+        "fetchApi": "/mock/api/notifications.json",
+        "readApi": "/api/notification/read",
+        "readAllApi": "/api/notification/read-all",
+        "tabs": [
+          {
+            "key": "all",
+            "label": "全部",
+            "icon": "ph:bell"
+          },
+          {
+            "key": "system",
+            "label": "系统",
+            "icon": "ph:gear",
+            "types": ["system"]
+          },
+          {
+            "key": "order",
+            "label": "订单",
+            "icon": "ph:shopping-cart",
+            "types": ["order"]
+          },
+          {
+            "key": "message",
+            "label": "消息",
+            "icon": "ph:chat-circle",
+            "types": ["message"]
+          }
+        ]
+      }
+    },
+    {
+      "com": "FullScreen",
+      "props": {}
+    },
+    {
+      "com": "LangSwitch",
+      "props": {
+        "langOptions": [
+          { "label": "中文", "value": "zh-CN" },
+          { "label": "English", "value": "en-US" }
+        ],
+        "defaultLang": "zh-CN",
+        "submitUrl": ""
+      }
+    },
+    {
+      "com": "ThemeSchemaSwitch",
+      "props": {}
+    },
+    {
+      "com": "ThemeButton",
+      "props": {}
+    },
+    {
+      "com": "UserAvatar",
+      "props": {
+        "menuItems": [
+          {
+            "key": "profile",
+            "label": "个人中心",
+            "icon": "ph:user",
+            "action": "modal",
+            "modal": {
+              "title": "个人中心",
+              "width": 600,
+              "uiApi": "/mock/schema/user/profile.json"
+            }
+          },
+          {
+            "key": "settings",
+            "label": "账号设置",
+            "icon": "ph:gear",
+            "action": "modal",
+            "modal": {
+              "title": "账号设置",
+              "width": 500,
+              "uiApi": "/mock/schema/user/settings.json",
+              "submitApi": "/api/user/settings"
+            }
+          },
+          {
+            "key": "password",
+            "label": "修改密码",
+            "icon": "ph:lock-key",
+            "action": "modal",
+            "modal": {
+              "title": "修改密码",
+              "width": 400,
+              "uiApi": "/mock/schema/user/password.json",
+              "submitApi": "/api/user/password"
+            }
+          },
+          {
+            "key": "divider-1",
+            "divider": true
+          },
+          {
+            "key": "logout",
+            "label": "common.logout",
+            "icon": "ph:sign-out",
+            "action": "logout"
+          }
+        ]
+      }
+    }
+  ]
+}

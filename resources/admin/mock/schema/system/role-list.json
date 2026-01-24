@@ -1,0 +1,592 @@
+{
+  "data": {
+    "searchForm": {
+      "name": "",
+      "code": "",
+      "status": null
+    },
+    "tableData": [],
+    "pagination": {
+      "page": 1,
+      "pageSize": 10,
+      "total": 0
+    },
+    "loading": false,
+    "showModal": false,
+    "modalType": "add",
+    "editForm": {
+      "id": null,
+      "name": "",
+      "code": "",
+      "description": "",
+      "status": 1,
+      "permissions": []
+    },
+    "editRules": {
+      "name": [
+        { "required": true, "message": "请输入角色名称", "trigger": "blur" }
+      ],
+      "code": [
+        { "required": true, "message": "请输入角色编码", "trigger": "blur" },
+        { "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$", "message": "角色编码只能包含字母、数字和下划线", "trigger": "blur" }
+      ]
+    },
+    "showPermissionModal": false,
+    "currentRole": null,
+    "permissionTree": [],
+    "checkedPermissions": [],
+    "statusOptions": [
+      { "label": "启用", "value": 1 },
+      { "label": "禁用", "value": 0 }
+    ],
+    "columns": [
+      { "title": "ID", "key": "id", "width": 80 },
+      { "title": "角色名称", "key": "name", "width": 150 },
+      { "title": "角色编码", "key": "code", "width": 150 },
+      { "title": "描述", "key": "description", "width": 200 },
+      { "title": "状态", "key": "status", "width": 100 },
+      { "title": "创建时间", "key": "createdAt", "width": 180 },
+      { "title": "操作", "key": "actions", "width": 250, "fixed": "right" }
+    ]
+  },
+  "methods": {
+    "search": [
+      { "set": "pagination.page", "value": 1 },
+      { "call": "loadData" }
+    ],
+    "resetSearch": [
+      { "set": "searchForm.name", "value": "" },
+      { "set": "searchForm.code", "value": "" },
+      { "set": "searchForm.status", "value": null },
+      { "call": "search" }
+    ],
+    "loadData": [
+      { "set": "loading", "value": true },
+      {
+        "fetch": "/mock/api/system/roles.json",
+        "method": "GET",
+        "then": [
+          { "set": "tableData", "value": "{{ $response.list || [] }}" },
+          { "set": "pagination.total", "value": "{{ $response.total || 0 }}" }
+        ],
+        "catch": [
+          { "call": "$message.error", "args": ["{{ $error.message || '加载数据失败' }}"] }
+        ],
+        "finally": [
+          { "set": "loading", "value": false }
+        ]
+      }
+    ],
+    "loadPermissionTree": {
+      "fetch": "/mock/api/system/permissions-tree.json",
+      "method": "GET",
+      "then": [
+        { "set": "permissionTree", "value": "{{ $response || [] }}" }
+      ]
+    },
+    "handleAdd": [
+      { "set": "modalType", "value": "add" },
+      { "set": "editForm.id", "value": null },
+      { "set": "editForm.name", "value": "" },
+      { "set": "editForm.code", "value": "" },
+      { "set": "editForm.description", "value": "" },
+      { "set": "editForm.status", "value": 1 },
+      { "set": "showModal", "value": true }
+    ],
+    "handleEdit": [
+      { "set": "modalType", "value": "edit" },
+      { "set": "editForm.id", "value": "{{ $event.id }}" },
+      { "set": "editForm.name", "value": "{{ $event.name }}" },
+      { "set": "editForm.code", "value": "{{ $event.code }}" },
+      { "set": "editForm.description", "value": "{{ $event.description || '' }}" },
+      { "set": "editForm.status", "value": "{{ $event.status }}" },
+      { "set": "showModal", "value": true }
+    ],
+    "handleSave": [
+      { "set": "loading", "value": true },
+      {
+        "fetch": "{{ modalType === 'add' ? '/api/system/roles' : '/api/system/roles/' + editForm.id }}",
+        "method": "{{ modalType === 'add' ? 'POST' : 'PUT' }}",
+        "body": "{{ editForm }}",
+        "then": [
+          { "call": "$message.success", "args": ["{{ modalType === 'add' ? '添加成功' : '更新成功' }}"] },
+          { "set": "showModal", "value": false },
+          { "call": "loadData" }
+        ],
+        "catch": [
+          { "call": "$message.error", "args": ["{{ $error.message || '操作失败' }}"] }
+        ],
+        "finally": [
+          { "set": "loading", "value": false }
+        ]
+      }
+    ],
+    "handleDelete": [
+      {
+        "fetch": "/mock/api/system/roles/{{ $event }}",
+        "method": "DELETE",
+        "then": [
+          { "call": "$message.success", "args": ["删除成功"] },
+          { "call": "loadData" }
+        ],
+        "catch": [
+          { "call": "$message.error", "args": ["{{ $error.message || '删除失败' }}"] }
+        ]
+      }
+    ],
+    "handlePermission": [
+      { "set": "currentRole", "value": "{{ $event }}" },
+      { "set": "checkedPermissions", "value": "{{ $event.permissions || [] }}" },
+      { "call": "loadPermissionTree" },
+      { "set": "showPermissionModal", "value": true }
+    ],
+    "handleSavePermissions": [
+      { "set": "loading", "value": true },
+      {
+        "fetch": "/mock/api/system/roles/{{ currentRole.id }}/permissions",
+        "method": "PUT",
+        "body": {
+          "permissions": "{{ checkedPermissions }}"
+        },
+        "then": [
+          { "call": "$message.success", "args": ["权限配置成功"] },
+          { "set": "showPermissionModal", "value": false },
+          { "call": "loadData" }
+        ],
+        "catch": [
+          { "call": "$message.error", "args": ["{{ $error.message || '权限配置失败' }}"] }
+        ],
+        "finally": [
+          { "set": "loading", "value": false }
+        ]
+      }
+    ],
+    "handlePageChange": [
+      { "set": "pagination.page", "value": "{{ $event }}" },
+      { "call": "loadData" }
+    ],
+    "handlePageSizeChange": [
+      { "set": "pagination.pageSize", "value": "{{ $event }}" },
+      { "set": "pagination.page", "value": 1 },
+      { "call": "loadData" }
+    ]
+  },
+  "onMounted": { "call": "loadData" },
+  "com": "NCard",
+  "props": {
+    "title": "角色管理"
+  },
+  "children": [
+    {
+      "com": "NSpace",
+      "props": {
+        "vertical": true,
+        "size": "large"
+      },
+      "children": [
+        {
+          "com": "NForm",
+          "props": {
+            "inline": true,
+            "labelPlacement": "left",
+            "model": "{{ searchForm }}"
+          },
+          "children": [
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "角色名称"
+              },
+              "children": [
+                {
+                  "com": "NInput",
+                  "model": "searchForm.name",
+                  "props": {
+                    "placeholder": "请输入角色名称",
+                    "clearable": true
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "角色编码"
+              },
+              "children": [
+                {
+                  "com": "NInput",
+                  "model": "searchForm.code",
+                  "props": {
+                    "placeholder": "请输入角色编码",
+                    "clearable": true
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "状态"
+              },
+              "children": [
+                {
+                  "com": "NSelect",
+                  "model": "searchForm.status",
+                  "props": {
+                    "placeholder": "请选择状态",
+                    "options": "{{ statusOptions }}",
+                    "clearable": true,
+                    "style": { "width": "120px" }
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "children": [
+                {
+                  "com": "NSpace",
+                  "children": [
+                    {
+                      "com": "NButton",
+                      "props": {
+                        "type": "primary"
+                      },
+                      "events": {
+                        "click": { "call": "search" }
+                      },
+                      "children": "搜索"
+                    },
+                    {
+                      "com": "NButton",
+                      "events": {
+                        "click": { "call": "resetSearch" }
+                      },
+                      "children": "重置"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "com": "NSpace",
+          "children": [
+            {
+              "com": "NButton",
+              "props": {
+                "type": "primary"
+              },
+              "events": {
+                "click": { "call": "handleAdd" }
+              },
+              "children": "新增角色"
+            }
+          ]
+        },
+        {
+          "com": "JsonDataTable",
+          "props": {
+            "loading": "{{ loading }}",
+            "data": "{{ tableData }}",
+            "columns": "{{ columns }}",
+            "rowKey": "{{ row => row.id }}",
+            "scrollX": 1100
+          },
+          "slots": {
+            "status": {
+              "content": [
+                {
+                  "com": "NTag",
+                  "props": {
+                    "type": "{{ slotData.row.status === 1 ? 'success' : 'error' }}"
+                  },
+                  "children": "{{ slotData.row.status === 1 ? '启用' : '禁用' }}"
+                }
+              ],
+              "slotProps": "slotData"
+            },
+            "actions": {
+              "content": [
+                {
+                  "com": "NSpace",
+                  "children": [
+                    {
+                      "com": "NButton",
+                      "props": {
+                        "size": "small",
+                        "type": "primary",
+                        "text": true
+                      },
+                      "events": {
+                        "click": { "call": "handleEdit", "args": ["{{ slotData.row }}"] }
+                      },
+                      "children": "编辑"
+                    },
+                    {
+                      "com": "NButton",
+                      "props": {
+                        "size": "small",
+                        "type": "info",
+                        "text": true
+                      },
+                      "events": {
+                        "click": { "call": "handlePermission", "args": ["{{ slotData.row }}"] }
+                      },
+                      "children": "权限配置"
+                    },
+                    {
+                      "com": "NPopconfirm",
+                      "events": {
+                        "positive-click": { "call": "handleDelete", "args": ["{{ slotData.row.id }}"] }
+                      },
+                      "slots": {
+                        "trigger": [
+                          {
+                            "com": "NButton",
+                            "props": {
+                              "size": "small",
+                              "type": "error",
+                              "text": true
+                            },
+                            "children": "删除"
+                          }
+                        ]
+                      },
+                      "children": "确定要删除该角色吗？"
+                    }
+                  ]
+                }
+              ],
+              "slotProps": "slotData"
+            }
+          }
+        },
+        {
+          "com": "NFlex",
+          "props": {
+            "justify": "end",
+            "class": "mt-4"
+          },
+          "children": [
+            {
+              "com": "NPagination",
+              "props": {
+                "page": "{{ pagination.page }}",
+                "pageSize": "{{ pagination.pageSize }}",
+                "itemCount": "{{ pagination.total }}",
+                "showSizePicker": true,
+                "pageSizes": [10, 20, 50, 100]
+              },
+              "events": {
+                "update:page": { "call": "handlePageChange", "args": ["{{ $event }}"] },
+                "update:page-size": { "call": "handlePageSizeChange", "args": ["{{ $event }}"] }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "com": "NModal",
+      "props": {
+        "show": "{{ showModal }}",
+        "title": "{{ modalType === 'add' ? '新增角色' : '编辑角色' }}",
+        "preset": "card",
+        "style": { "width": "500px" }
+      },
+      "events": {
+        "update:show": { "set": "showModal", "value": "{{ $event }}" }
+      },
+      "children": [
+        {
+          "com": "NForm",
+          "props": {
+            "model": "{{ editForm }}",
+            "rules": "{{ editRules }}",
+            "labelPlacement": "left",
+            "labelWidth": 80
+          },
+          "children": [
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "角色名称",
+                "path": "name"
+              },
+              "children": [
+                {
+                  "com": "NInput",
+                  "model": "editForm.name",
+                  "props": {
+                    "placeholder": "请输入角色名称"
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "角色编码",
+                "path": "code"
+              },
+              "children": [
+                {
+                  "com": "NInput",
+                  "model": "editForm.code",
+                  "props": {
+                    "placeholder": "请输入角色编码",
+                    "disabled": "{{ modalType === 'edit' }}"
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "描述",
+                "path": "description"
+              },
+              "children": [
+                {
+                  "com": "NInput",
+                  "model": "editForm.description",
+                  "props": {
+                    "type": "textarea",
+                    "placeholder": "请输入角色描述",
+                    "rows": 3
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "状态",
+                "path": "status"
+              },
+              "children": [
+                {
+                  "com": "NRadioGroup",
+                  "model": "editForm.status",
+                  "children": [
+                    {
+                      "com": "NRadio",
+                      "props": {
+                        "value": 1
+                      },
+                      "children": "启用"
+                    },
+                    {
+                      "com": "NRadio",
+                      "props": {
+                        "value": 0
+                      },
+                      "children": "禁用"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "com": "NFlex",
+          "props": {
+            "justify": "end",
+            "class": "mt-4"
+          },
+          "children": [
+            {
+              "com": "NSpace",
+              "children": [
+                {
+                  "com": "NButton",
+                  "events": {
+                    "click": { "set": "showModal", "value": false }
+                  },
+                  "children": "取消"
+                },
+                {
+                  "com": "NButton",
+                  "props": {
+                    "type": "primary",
+                    "loading": "{{ loading }}"
+                  },
+                  "events": {
+                    "click": { "call": "handleSave" }
+                  },
+                  "children": "确定"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "com": "NModal",
+      "props": {
+        "show": "{{ showPermissionModal }}",
+        "title": "{{ '权限配置 - ' + (currentRole ? currentRole.name : '') }}",
+        "preset": "card",
+        "style": { "width": "600px" }
+      },
+      "events": {
+        "update:show": { "set": "showPermissionModal", "value": "{{ $event }}" }
+      },
+      "children": [
+        {
+          "com": "NTree",
+          "props": {
+            "data": "{{ permissionTree }}",
+            "checkable": true,
+            "checkedKeys": "{{ checkedPermissions }}",
+            "selectable": false,
+            "blockLine": true,
+            "cascade": true,
+            "keyField": "id",
+            "labelField": "name"
+          },
+          "events": {
+            "update:checked-keys": { "set": "checkedPermissions", "value": "{{ $event }}" }
+          }
+        },
+        {
+          "com": "NFlex",
+          "props": {
+            "justify": "end",
+            "class": "mt-4"
+          },
+          "children": [
+            {
+              "com": "NSpace",
+              "children": [
+                {
+                  "com": "NButton",
+                  "events": {
+                    "click": { "set": "showPermissionModal", "value": false }
+                  },
+                  "children": "取消"
+                },
+                {
+                  "com": "NButton",
+                  "props": {
+                    "type": "primary",
+                    "loading": "{{ loading }}"
+                  },
+                  "events": {
+                    "click": { "call": "handleSavePermissions" }
+                  },
+                  "children": "保存"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

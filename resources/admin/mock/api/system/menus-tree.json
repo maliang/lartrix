@@ -1,0 +1,89 @@
+[
+  {
+    "id": 1,
+    "name": "home",
+    "title": "首页",
+    "path": "/home",
+    "icon": "mdi:home",
+    "component": "view.home",
+    "parentId": null,
+    "order": 1,
+    "hideInMenu": false,
+    "keepAlive": true,
+    "children": []
+  },
+  {
+    "id": 2,
+    "name": "system",
+    "title": "系统管理",
+    "path": "/system",
+    "icon": "mdi:cog",
+    "redirect": "/system/user",
+    "parentId": null,
+    "order": 2,
+    "hideInMenu": false,
+    "keepAlive": true,
+    "children": [
+      {
+        "id": 3,
+        "name": "system-user",
+        "title": "成员管理",
+        "path": "/system/user",
+        "icon": "mdi:account",
+        "schemaSource": "/mock/schema/system/user-list.json",
+        "parentId": 2,
+        "order": 1,
+        "hideInMenu": false,
+        "keepAlive": true
+      },
+      {
+        "id": 4,
+        "name": "system-role",
+        "title": "角色管理",
+        "path": "/system/role",
+        "icon": "mdi:account-group",
+        "schemaSource": "/mock/schema/system/role-list.json",
+        "parentId": 2,
+        "order": 2,
+        "hideInMenu": false,
+        "keepAlive": true
+      },
+      {
+        "id": 5,
+        "name": "system-menu",
+        "title": "菜单管理",
+        "path": "/system/menu",
+        "icon": "mdi:menu",
+        "schemaSource": "/mock/schema/system/menu-list.json",
+        "parentId": 2,
+        "order": 3,
+        "hideInMenu": false,
+        "keepAlive": true
+      },
+      {
+        "id": 6,
+        "name": "system-permission",
+        "title": "权限管理",
+        "path": "/system/permission",
+        "icon": "mdi:key",
+        "schemaSource": "/mock/schema/system/permission-list.json",
+        "parentId": 2,
+        "order": 4,
+        "hideInMenu": false,
+        "keepAlive": true
+      },
+      {
+        "id": 7,
+        "name": "system-setting",
+        "title": "系统设置",
+        "path": "/system/setting",
+        "icon": "mdi:cog-outline",
+        "schemaSource": "/mock/schema/system/setting.json",
+        "parentId": 2,
+        "order": 5,
+        "hideInMenu": false,
+        "keepAlive": true
+      }
+    ]
+  }
+]

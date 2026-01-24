@@ -1,0 +1,10 @@
+# trix 前端构建文件目录
+# 
+# 请将 trix 项目构建后的文件复制到此目录
+# 
+# 构建步骤：
+# 1. cd trix
+# 2. pnpm build
+# 3. 将 trix/dist/* 复制到 lartrix/resources/admin/
+#
+# 安装时会自动发布到 Laravel 项目的 public/admin 目录

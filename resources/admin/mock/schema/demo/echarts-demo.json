@@ -1,0 +1,258 @@
+{
+  "com": "NSpace",
+  "props": {
+    "vertical": true,
+    "size": "large",
+    "class": "w-full p-4"
+  },
+  "children": [
+    {
+      "com": "NCard",
+      "props": {
+        "title": "ECharts 图表示例",
+        "class": "w-full"
+      },
+      "children": [
+        {
+          "com": "NAlert",
+          "props": {
+            "type": "info",
+            "showIcon": true,
+            "class": "mb-4"
+          },
+          "children": "本页面展示了 VueECharts 组件在 JSON Schema 中的使用方式，支持折线图、柱状图、饼图等多种图表类型。"
+        },
+        {
+          "com": "NGrid",
+          "props": {
+            "cols": "1 m:2",
+            "xGap": 16,
+            "yGap": 16
+          },
+          "children": [
+            {
+              "com": "NGi",
+              "children": [
+                {
+                  "com": "NCard",
+                  "props": { "title": "折线图", "size": "small" },
+                  "children": [
+                    {
+                      "com": "VueECharts",
+                      "props": {
+                        "class": "h-80",
+                        "option": {
+                          "tooltip": { "trigger": "axis" },
+                          "legend": { "data": ["销售额", "访问量"], "top": 0 },
+                          "grid": { "left": "3%", "right": "4%", "bottom": "3%", "top": "15%", "containLabel": true },
+                          "xAxis": { "type": "category", "boundaryGap": false, "data": ["周一", "周二", "周三", "周四", "周五", "周六", "周日"] },
+                          "yAxis": { "type": "value" },
+                          "series": [
+                            { "name": "销售额", "type": "line", "smooth": true, "data": [820, 932, 901, 934, 1290, 1330, 1320] },
+                            { "name": "访问量", "type": "line", "smooth": true, "data": [620, 732, 701, 734, 1090, 1130, 1120] }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "com": "NGi",
+              "children": [
+                {
+                  "com": "NCard",
+                  "props": { "title": "柱状图", "size": "small" },
+                  "children": [
+                    {
+                      "com": "VueECharts",
+                      "props": {
+                        "class": "h-80",
+                        "option": {
+                          "tooltip": { "trigger": "axis", "axisPointer": { "type": "shadow" } },
+                          "legend": { "data": ["直接访问", "邮件营销", "联盟广告"], "top": 0 },
+                          "grid": { "left": "3%", "right": "4%", "bottom": "3%", "top": "15%", "containLabel": true },
+                          "xAxis": { "type": "category", "data": ["周一", "周二", "周三", "周四", "周五", "周六", "周日"] },
+                          "yAxis": { "type": "value" },
+                          "series": [
+                            { "name": "直接访问", "type": "bar", "data": [320, 332, 301, 334, 390, 330, 320] },
+                            { "name": "邮件营销", "type": "bar", "data": [120, 132, 101, 134, 90, 230, 210] },
+                            { "name": "联盟广告", "type": "bar", "data": [220, 182, 191, 234, 290, 330, 310] }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "com": "NGi",
+              "children": [
+                {
+                  "com": "NCard",
+                  "props": { "title": "饼图", "size": "small" },
+                  "children": [
+                    {
+                      "com": "VueECharts",
+                      "props": {
+                        "class": "h-80",
+                        "option": {
+                          "tooltip": { "trigger": "item" },
+                          "legend": { "orient": "vertical", "left": "left", "top": "middle" },
+                          "series": [
+                            {
+                              "name": "访问来源",
+                              "type": "pie",
+                              "radius": "55%",
+                              "center": ["60%", "50%"],
+                              "data": [
+                                { "value": 1048, "name": "搜索引擎" },
+                                { "value": 735, "name": "直接访问" },
+                                { "value": 580, "name": "邮件营销" },
+                                { "value": 484, "name": "联盟广告" },
+                                { "value": 300, "name": "视频广告" }
+                              ],
+                              "emphasis": { "itemStyle": { "shadowBlur": 10, "shadowOffsetX": 0, "shadowColor": "rgba(0, 0, 0, 0.5)" } }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "com": "NGi",
+              "children": [
+                {
+                  "com": "NCard",
+                  "props": { "title": "环形图", "size": "small" },
+                  "children": [
+                    {
+                      "com": "VueECharts",
+                      "props": {
+                        "class": "h-80",
+                        "option": {
+                          "tooltip": { "trigger": "item" },
+                          "legend": { "top": 0, "left": "center" },
+                          "series": [
+                            {
+                              "name": "销售占比",
+                              "type": "pie",
+                              "radius": ["35%", "60%"],
+                              "center": ["50%", "55%"],
+                              "avoidLabelOverlap": false,
+                              "itemStyle": { "borderRadius": 10, "borderColor": "#fff", "borderWidth": 2 },
+                              "label": { "show": false, "position": "center" },
+                              "emphasis": { "label": { "show": true, "fontSize": 20, "fontWeight": "bold" } },
+                              "labelLine": { "show": false },
+                              "data": [
+                                { "value": 1048, "name": "电子产品" },
+                                { "value": 735, "name": "服装" },
+                                { "value": 580, "name": "食品" },
+                                { "value": 484, "name": "家居" },
+                                { "value": 300, "name": "其他" }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "com": "NCard",
+      "props": { "title": "面积图与雷达图", "class": "w-full" },
+      "children": [
+        {
+          "com": "NGrid",
+          "props": { "cols": "1 m:2", "xGap": 16, "yGap": 16 },
+          "children": [
+            {
+              "com": "NGi",
+              "children": [
+                {
+                  "com": "NCard",
+                  "props": { "title": "面积图", "size": "small" },
+                  "children": [
+                    {
+                      "com": "VueECharts",
+                      "props": {
+                        "class": "h-80",
+                        "option": {
+                          "tooltip": { "trigger": "axis", "axisPointer": { "type": "cross", "label": { "backgroundColor": "#6a7985" } } },
+                          "legend": { "data": ["邮件营销", "联盟广告", "视频广告"], "top": 0 },
+                          "grid": { "left": "3%", "right": "4%", "bottom": "3%", "top": "15%", "containLabel": true },
+                          "xAxis": { "type": "category", "boundaryGap": false, "data": ["周一", "周二", "周三", "周四", "周五", "周六", "周日"] },
+                          "yAxis": { "type": "value" },
+                          "series": [
+                            { "name": "邮件营销", "type": "line", "stack": "总量", "areaStyle": {}, "emphasis": { "focus": "series" }, "data": [120, 132, 101, 134, 90, 230, 210] },
+                            { "name": "联盟广告", "type": "line", "stack": "总量", "areaStyle": {}, "emphasis": { "focus": "series" }, "data": [220, 182, 191, 234, 290, 330, 310] },
+                            { "name": "视频广告", "type": "line", "stack": "总量", "areaStyle": {}, "emphasis": { "focus": "series" }, "data": [150, 232, 201, 154, 190, 330, 410] }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "com": "NGi",
+              "children": [
+                {
+                  "com": "NCard",
+                  "props": { "title": "雷达图", "size": "small" },
+                  "children": [
+                    {
+                      "com": "VueECharts",
+                      "props": {
+                        "class": "h-80",
+                        "option": {
+                          "legend": { "data": ["预算分配", "实际开销"], "top": 0 },
+                          "radar": {
+                            "center": ["50%", "55%"],
+                            "radius": "60%",
+                            "axisName": { "color": "#666" },
+                            "splitNumber": 4,
+                            "indicator": [
+                              { "name": "销售", "max": 8000 },
+                              { "name": "管理", "max": 16000 },
+                              { "name": "信息技术", "max": 32000 },
+                              { "name": "客服", "max": 40000 },
+                              { "name": "研发", "max": 56000 },
+                              { "name": "市场", "max": 24000 }
+                            ]
+                          },
+                          "series": [
+                            {
+                              "name": "预算 vs 开销",
+                              "type": "radar",
+                              "data": [
+                                { "value": [4200, 3000, 20000, 35000, 48000, 18000], "name": "预算分配" },
+                                { "value": [5000, 14000, 28000, 26000, 42000, 21000], "name": "实际开销" }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

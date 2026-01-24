@@ -1,0 +1,409 @@
+{
+  "data": {
+    "searchForm": {
+      "name": "",
+      "code": ""
+    },
+    "tableData": [],
+    "expandedKeys": [],
+    "pagination": {
+      "page": 1,
+      "pageSize": 100,
+      "total": 0
+    },
+    "loading": false,
+    "showModal": false,
+    "modalType": "add",
+    "editForm": {
+      "id": null,
+      "parentId": null,
+      "name": "",
+      "code": "",
+      "description": ""
+    },
+    "editRules": {
+      "name": [
+        { "required": true, "message": "请输入权限名称", "trigger": "blur" }
+      ],
+      "code": [
+        { "required": true, "message": "请输入权限编码", "trigger": "blur" },
+        { "pattern": "^[a-zA-Z_:][a-zA-Z0-9_:]*$", "message": "权限编码只能包含字母、数字、下划线和冒号", "trigger": "blur" }
+      ]
+    },
+    "columns": [
+      { "title": "权限名称", "key": "name", "width": 200 },
+      { "title": "权限编码", "key": "code", "width": 200 },
+      { "title": "描述", "key": "description", "width": 200 },
+      { "title": "创建时间", "key": "createdAt", "width": 180 },
+      { "title": "操作", "key": "actions", "width": 180, "fixed": "right" }
+    ]
+  },
+  "methods": {
+    "search": [
+      { "call": "loadData" }
+    ],
+    "resetSearch": [
+      { "set": "searchForm.name", "value": "" },
+      { "set": "searchForm.code", "value": "" },
+      { "call": "search" }
+    ],
+    "loadData": [
+      { "set": "loading", "value": true },
+      {
+        "fetch": "/mock/api/system/permissions.json",
+        "method": "GET",
+        "then": [
+          { "set": "tableData", "value": "{{ $response.list || [] }}" },
+          { "set": "pagination.total", "value": "{{ $response.total || 0 }}" }
+        ],
+        "catch": [
+          { "call": "$message.error", "args": ["{{ $error.message || '加载数据失败' }}"] }
+        ],
+        "finally": [
+          { "set": "loading", "value": false }
+        ]
+      }
+    ],
+    "handleAdd": [
+      { "set": "modalType", "value": "add" },
+      { "set": "editForm.id", "value": null },
+      { "set": "editForm.parentId", "value": null },
+      { "set": "editForm.name", "value": "" },
+      { "set": "editForm.code", "value": "" },
+      { "set": "editForm.description", "value": "" },
+      { "set": "showModal", "value": true }
+    ],
+    "handleEdit": [
+      { "set": "modalType", "value": "edit" },
+      { "set": "editForm.id", "value": "{{ $event.id }}" },
+      { "set": "editForm.parentId", "value": "{{ $event.parentId }}" },
+      { "set": "editForm.name", "value": "{{ $event.name }}" },
+      { "set": "editForm.code", "value": "{{ $event.code }}" },
+      { "set": "editForm.description", "value": "{{ $event.description || '' }}" },
+      { "set": "showModal", "value": true }
+    ],
+    "handleSave": [
+      { "set": "loading", "value": true },
+      {
+        "fetch": "{{ modalType === 'add' ? '/api/system/permissions' : '/api/system/permissions/' + editForm.id }}",
+        "method": "{{ modalType === 'add' ? 'POST' : 'PUT' }}",
+        "body": "{{ editForm }}",
+        "then": [
+          { "call": "$message.success", "args": ["{{ modalType === 'add' ? '添加成功' : '更新成功' }}"] },
+          { "set": "showModal", "value": false },
+          { "call": "loadData" }
+        ],
+        "catch": [
+          { "call": "$message.error", "args": ["{{ $error.message || '操作失败' }}"] }
+        ],
+        "finally": [
+          { "set": "loading", "value": false }
+        ]
+      }
+    ],
+    "handleDelete": [
+      {
+        "fetch": "/mock/api/system/permissions/{{ $event }}",
+        "method": "DELETE",
+        "then": [
+          { "call": "$message.success", "args": ["删除成功"] },
+          { "call": "loadData" }
+        ],
+        "catch": [
+          { "call": "$message.error", "args": ["{{ $error.message || '删除失败' }}"] }
+        ]
+      }
+    ]
+  },
+  "onMounted": { "call": "loadData" },
+  "com": "NCard",
+  "props": {
+    "title": "权限管理"
+  },
+  "children": [
+    {
+      "com": "NSpace",
+      "props": {
+        "vertical": true,
+        "size": "large"
+      },
+      "children": [
+        {
+          "com": "NForm",
+          "props": {
+            "inline": true,
+            "labelPlacement": "left",
+            "model": "{{ searchForm }}"
+          },
+          "children": [
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "权限名称"
+              },
+              "children": [
+                {
+                  "com": "NInput",
+                  "model": "searchForm.name",
+                  "props": {
+                    "placeholder": "请输入权限名称",
+                    "clearable": true
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "权限编码"
+              },
+              "children": [
+                {
+                  "com": "NInput",
+                  "model": "searchForm.code",
+                  "props": {
+                    "placeholder": "请输入权限编码",
+                    "clearable": true
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "children": [
+                {
+                  "com": "NSpace",
+                  "children": [
+                    {
+                      "com": "NButton",
+                      "props": {
+                        "type": "primary"
+                      },
+                      "events": {
+                        "click": { "call": "search" }
+                      },
+                      "children": "搜索"
+                    },
+                    {
+                      "com": "NButton",
+                      "events": {
+                        "click": { "call": "resetSearch" }
+                      },
+                      "children": "重置"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "com": "NSpace",
+          "children": [
+            {
+              "com": "NButton",
+              "props": {
+                "type": "primary"
+              },
+              "events": {
+                "click": { "call": "handleAdd" }
+              },
+              "children": "新增权限"
+            }
+          ]
+        },
+        {
+          "com": "JsonDataTable",
+          "props": {
+            "loading": "{{ loading }}",
+            "data": "{{ tableData }}",
+            "columns": "{{ columns }}",
+            "rowKey": "{{ row => row.id }}",
+            "scrollX": 1000,
+            "defaultExpandAll": false,
+            "expandedRowKeys": "{{ expandedKeys }}"
+          },
+          "events": {
+            "update:expanded-row-keys": { "set": "expandedKeys", "value": "{{ $event }}" }
+          },
+          "slots": {
+            "actions": {
+              "content": [
+                {
+                  "com": "NSpace",
+                  "children": [
+                    {
+                      "com": "NButton",
+                      "props": {
+                        "size": "small",
+                        "type": "primary",
+                        "text": true
+                      },
+                      "events": {
+                        "click": { "call": "handleEdit", "args": ["{{ slotData.row }}"] }
+                      },
+                      "children": "编辑"
+                    },
+                    {
+                      "com": "NPopconfirm",
+                      "events": {
+                        "positive-click": { "call": "handleDelete", "args": ["{{ slotData.row.id }}"] }
+                      },
+                      "slots": {
+                        "trigger": [
+                          {
+                            "com": "NButton",
+                            "props": {
+                              "size": "small",
+                              "type": "error",
+                              "text": true
+                            },
+                            "children": "删除"
+                          }
+                        ]
+                      },
+                      "children": "确定要删除该权限吗？"
+                    }
+                  ]
+                }
+              ],
+              "slotProps": "slotData"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "com": "NModal",
+      "props": {
+        "show": "{{ showModal }}",
+        "title": "{{ modalType === 'add' ? '新增权限' : '编辑权限' }}",
+        "preset": "card",
+        "style": { "width": "500px" }
+      },
+      "events": {
+        "update:show": { "set": "showModal", "value": "{{ $event }}" }
+      },
+      "children": [
+        {
+          "com": "NForm",
+          "props": {
+            "model": "{{ editForm }}",
+            "rules": "{{ editRules }}",
+            "labelPlacement": "left",
+            "labelWidth": 80
+          },
+          "children": [
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "上级权限",
+                "path": "parentId"
+              },
+              "children": [
+                {
+                  "com": "NTreeSelect",
+                  "props": {
+                    "options": "{{ [{ id: 0, name: '无（顶级）' }].concat(tableData) }}",
+                    "value": "{{ editForm.parentId === null ? 0 : editForm.parentId }}",
+                    "placeholder": "请选择上级权限",
+                    "keyField": "id",
+                    "labelField": "name",
+                    "childrenField": "children",
+                    "clearable": true,
+                    "defaultExpandAll": true
+                  },
+                  "events": {
+                    "update:value": { "set": "editForm.parentId", "value": "{{ $event === 0 ? null : $event }}" }
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "权限名称",
+                "path": "name"
+              },
+              "children": [
+                {
+                  "com": "NInput",
+                  "model": "editForm.name",
+                  "props": {
+                    "placeholder": "请输入权限名称"
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "权限编码",
+                "path": "code"
+              },
+              "children": [
+                {
+                  "com": "NInput",
+                  "model": "editForm.code",
+                  "props": {
+                    "placeholder": "请输入权限编码，如：system:user:add"
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "描述",
+                "path": "description"
+              },
+              "children": [
+                {
+                  "com": "NInput",
+                  "model": "editForm.description",
+                  "props": {
+                    "type": "textarea",
+                    "placeholder": "请输入权限描述",
+                    "rows": 3
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "com": "NFlex",
+          "props": {
+            "justify": "end",
+            "class": "mt-4"
+          },
+          "children": [
+            {
+              "com": "NSpace",
+              "children": [
+                {
+                  "com": "NButton",
+                  "events": {
+                    "click": { "set": "showModal", "value": false }
+                  },
+                  "children": "取消"
+                },
+                {
+                  "com": "NButton",
+                  "props": {
+                    "type": "primary",
+                    "loading": "{{ loading }}"
+                  },
+                  "events": {
+                    "click": { "call": "handleSave" }
+                  },
+                  "children": "确定"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

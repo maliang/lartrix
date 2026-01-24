@@ -1,0 +1,47 @@
+{
+  "list": [
+    {
+      "id": 1,
+      "username": "admin",
+      "email": "admin@example.com",
+      "phone": "13800138000",
+      "roleId": 1,
+      "roleName": "管理员",
+      "status": 1,
+      "createdAt": "2024-01-01 00:00:00"
+    },
+    {
+      "id": 2,
+      "username": "user1",
+      "email": "user1@example.com",
+      "phone": "13800138001",
+      "roleId": 2,
+      "roleName": "普通用户",
+      "status": 1,
+      "createdAt": "2024-01-02 10:00:00"
+    },
+    {
+      "id": 3,
+      "username": "editor",
+      "email": "editor@example.com",
+      "phone": "13800138002",
+      "roleId": 3,
+      "roleName": "编辑员",
+      "status": 1,
+      "createdAt": "2024-01-03 14:30:00"
+    },
+    {
+      "id": 4,
+      "username": "test",
+      "email": "test@example.com",
+      "phone": "13800138003",
+      "roleId": 2,
+      "roleName": "普通用户",
+      "status": 0,
+      "createdAt": "2024-01-04 09:15:00"
+    }
+  ],
+  "total": 4,
+  "page": 1,
+  "pageSize": 10
+}

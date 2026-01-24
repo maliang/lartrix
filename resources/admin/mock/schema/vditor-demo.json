@@ -1,0 +1,76 @@
+{
+  "com": "div",
+  "props": {
+    "class": "p-4"
+  },
+  "data": {
+    "content": "# Markdown 编辑器示例\n\n这是一个基于 **Vditor** 封装的 Markdown 编辑器组件。\n\n## 功能特性\n\n- 支持三种编辑模式\n- 主题跟随系统明暗切换\n- 丰富的工具栏配置\n\n## 代码示例\n\n```javascript\nconst hello = 'world';\nconsole.log(hello);\n```\n\n## 表格\n\n| 功能 | 说明 |\n|------|------|\n| 即时渲染 | 所见即所得的 Markdown 编辑 |\n| 分屏预览 | 左侧编辑右侧预览 |"
+  },
+  "children": [
+    {
+      "com": "NCard",
+      "props": {
+        "title": "Markdown 编辑器",
+        "class": "mb-4"
+      },
+      "children": [
+        {
+          "com": "NAlert",
+          "props": {
+            "type": "info",
+            "class": "mb-4"
+          },
+          "children": "MarkdownEditor 组件基于 Vditor 封装，支持即时渲染(ir)、所见即所得(wysiwyg)、分屏预览(sv)三种编辑模式，主题自动跟随系统明暗切换。"
+        },
+        {
+          "com": "MarkdownEditor",
+          "props": {
+            "modelValue": "{{ content }}",
+            "height": 400,
+            "mode": "ir",
+            "placeholder": "请输入 Markdown 内容..."
+          },
+          "events": {
+            "update:modelValue": {
+              "set": "content",
+              "value": "{{ $event }}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "com": "NCard",
+      "props": {
+        "title": "组件属性",
+        "class": "mt-4"
+      },
+      "children": [
+        {
+          "com": "NDataTable",
+          "props": {
+            "bordered": true,
+            "singleLine": false,
+            "columns": [
+              { "title": "属性", "key": "prop", "width": 150 },
+              { "title": "说明", "key": "desc" },
+              { "title": "类型", "key": "type", "width": 150 },
+              { "title": "默认值", "key": "default", "width": 100 }
+            ],
+            "data": [
+              { "prop": "modelValue", "desc": "编辑器内容（v-model）", "type": "string", "default": "''" },
+              { "prop": "height", "desc": "编辑器高度", "type": "number | string", "default": "400" },
+              { "prop": "mode", "desc": "编辑模式：ir(即时渲染)/wysiwyg(所见即所得)/sv(分屏预览)", "type": "string", "default": "'ir'" },
+              { "prop": "placeholder", "desc": "占位文本", "type": "string", "default": "'请输入内容...'" },
+              { "prop": "readonly", "desc": "是否只读", "type": "boolean", "default": "false" },
+              { "prop": "upload", "desc": "上传配置对象", "type": "object", "default": "undefined" },
+              { "prop": "upload.url", "desc": "图片上传地址", "type": "string", "default": "-" },
+              { "prop": "upload.fieldName", "desc": "上传文件字段名", "type": "string", "default": "'file'" },
+              { "prop": "upload.headers", "desc": "上传请求头", "type": "Record<string, string>", "default": "{}" }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

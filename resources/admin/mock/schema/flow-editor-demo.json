@@ -1,0 +1,365 @@
+{
+  "com": "div",
+  "props": { "class": "p-4" },
+  "data": {
+    "nodes": [
+      { "id": "start", "type": "input", "position": { "x": 50, "y": 200 }, "data": { "label": "开始" } },
+      { "id": "task-1", "type": "task", "position": { "x": 250, "y": 80 }, "data": { "title": "需求分析", "assignee": "产品经理", "status": "completed", "progress": 100 } },
+      { "id": "task-2", "type": "task", "position": { "x": 250, "y": 320 }, "data": { "title": "技术评审", "assignee": "架构师", "status": "active", "progress": 60 } },
+      { "id": "approval-1", "type": "approval", "position": { "x": 500, "y": 200 }, "data": { "title": "方案审批", "approver": "技术总监", "status": "pending" } },
+      { "id": "task-3", "type": "task", "position": { "x": 750, "y": 200 }, "data": { "title": "开发实现", "assignee": "开发团队", "status": "pending", "progress": 0 } },
+      { "id": "end", "type": "output", "position": { "x": 1000, "y": 200 }, "data": { "label": "结束" } }
+    ],
+    "edges": [
+      { "id": "e-start-1", "source": "start", "target": "task-1" },
+      { "id": "e-start-2", "source": "start", "target": "task-2" },
+      { "id": "e-1-approval", "source": "task-1", "target": "approval-1" },
+      { "id": "e-2-approval", "source": "task-2", "target": "approval-1" },
+      { "id": "e-approval-3", "source": "approval-1", "target": "task-3", "label": "通过" },
+      { "id": "e-3-end", "source": "task-3", "target": "end" }
+    ],
+    "selectedNode": null,
+    "showEditModal": false,
+    "editTitle": "",
+    "editAssignee": "",
+    "editStatus": "pending",
+    "editProgress": 0,
+    "historyList": []
+  },
+  "computed": {
+    "taskNodes": "nodes.filter(n => n.type === 'task')",
+    "completedCount": "nodes.filter(n => n.type === 'task' && n.data && n.data.status === 'completed').length",
+    "activeCount": "nodes.filter(n => n.type === 'task' && n.data && n.data.status === 'active').length",
+    "pendingCount": "nodes.filter(n => n.type === 'task' && n.data && n.data.status === 'pending').length",
+    "overallProgress": "taskNodes.length > 0 ? Math.round(taskNodes.reduce((sum, n) => sum + (n.data ? n.data.progress || 0 : 0), 0) / taskNodes.length) : 0",
+    "canEdit": "selectedNode && selectedNode.type !== 'input' && selectedNode.type !== 'output'",
+    "isTaskNode": "selectedNode && selectedNode.type === 'task'"
+  },
+  "children": [
+    {
+      "com": "NCard",
+      "props": { "title": "流程图编辑器 - 交互增强版", "class": "mb-4" },
+      "children": [
+        {
+          "com": "NSpace",
+          "props": { "class": "mb-4", "justify": "space-between", "align": "center" },
+          "children": [
+            {
+              "com": "NSpace",
+              "children": [
+                {
+                  "com": "NButton",
+                  "props": { "type": "primary", "size": "small" },
+                  "events": {
+                    "click": [
+                      { "set": "nodes", "value": "{{ [...nodes, { id: 'task-' + Date.now(), type: 'task', position: { x: 300, y: 200 }, data: { title: '新任务', assignee: '待分配', status: 'pending', progress: 0 } }] }}" },
+                      { "set": "historyList", "value": "{{ [...historyList, { time: new Date().toLocaleTimeString(), action: '新增', node: '新任务' }] }}" }
+                    ]
+                  },
+                  "children": "+ 添加任务"
+                },
+                {
+                  "com": "NButton",
+                  "props": { "type": "warning", "size": "small", "disabled": "{{ !canEdit }}" },
+                  "events": {
+                    "click": [
+                      { "set": "editTitle", "value": "{{ selectedNode && selectedNode.data ? (selectedNode.data.title || '') : '' }}" },
+                      { "set": "editAssignee", "value": "{{ selectedNode && selectedNode.data ? (selectedNode.data.assignee || selectedNode.data.approver || '') : '' }}" },
+                      { "set": "editStatus", "value": "{{ selectedNode && selectedNode.data ? (selectedNode.data.status || 'pending') : 'pending' }}" },
+                      { "set": "editProgress", "value": "{{ selectedNode && selectedNode.data && selectedNode.type === 'task' ? (selectedNode.data.progress || 0) : 0 }}" },
+                      { "set": "showEditModal", "value": true }
+                    ]
+                  },
+                  "children": "编辑节点"
+                },
+                {
+                  "com": "NButton",
+                  "props": { "type": "error", "size": "small", "disabled": "{{ !canEdit }}" },
+                  "events": {
+                    "click": [
+                      { "set": "historyList", "value": "{{ [...historyList, { time: new Date().toLocaleTimeString(), action: '删除', node: selectedNode && selectedNode.data ? selectedNode.data.title || selectedNode.id : '' }] }}" },
+                      { "set": "edges", "value": "{{ edges.filter(e => e.source !== selectedNode.id && e.target !== selectedNode.id) }}" },
+                      { "set": "nodes", "value": "{{ nodes.filter(n => n.id !== selectedNode.id) }}" },
+                      { "set": "selectedNode", "value": null }
+                    ]
+                  },
+                  "children": "删除节点"
+                }
+              ]
+            },
+            {
+              "com": "NSpace",
+              "children": [
+                { "com": "NTag", "props": { "type": "success", "round": true }, "children": "已完成: {{ completedCount }}" },
+                { "com": "NTag", "props": { "type": "warning", "round": true }, "children": "进行中: {{ activeCount }}" },
+                { "com": "NTag", "props": { "type": "default", "round": true }, "children": "待处理: {{ pendingCount }}" }
+              ]
+            }
+          ]
+        },
+        {
+          "com": "FlowEditor",
+          "props": {
+            "height": 450,
+            "nodes": "{{ nodes }}",
+            "edges": "{{ edges }}",
+            "showControls": true,
+            "showMiniMap": true,
+            "showBackground": true,
+            "backgroundVariant": "dots"
+          },
+          "events": {
+            "update:nodes": { "set": "nodes", "value": "{{ $event }}" },
+            "update:edges": { "set": "edges", "value": "{{ $event }}" },
+            "node-click": { "set": "selectedNode", "value": "{{ $event }}" },
+            "pane-click": { "set": "selectedNode", "value": null }
+          }
+        }
+      ]
+    },
+    {
+      "com": "NGrid",
+      "props": { "cols": 3, "xGap": 16 },
+      "children": [
+        {
+          "com": "NGi",
+          "children": [
+            {
+              "com": "NCard",
+              "props": { "title": "选中节点", "size": "small" },
+              "children": [
+                {
+                  "com": "NDescriptions",
+                  "if": "selectedNode",
+                  "props": { "column": 1, "size": "small" },
+                  "children": [
+                    { "com": "NDescriptionsItem", "props": { "label": "ID" }, "children": "{{ selectedNode.id }}" },
+                    { "com": "NDescriptionsItem", "props": { "label": "类型" }, "children": "{{ selectedNode.type }}" },
+                    { "com": "NDescriptionsItem", "props": { "label": "标题" }, "children": "{{ selectedNode.data ? (selectedNode.data.title || selectedNode.data.label || '-') : '-' }}" },
+                    { "com": "NDescriptionsItem", "if": "isTaskNode", "props": { "label": "负责人" }, "children": "{{ selectedNode.data ? selectedNode.data.assignee : '-' }}" },
+                    { "com": "NDescriptionsItem", "if": "selectedNode && selectedNode.type === 'approval'", "props": { "label": "审批人" }, "children": "{{ selectedNode.data ? selectedNode.data.approver : '-' }}" },
+                    { "com": "NDescriptionsItem", "if": "isTaskNode", "props": { "label": "状态" }, "children": "{{ selectedNode.data ? selectedNode.data.status : '-' }}" },
+                    { "com": "NDescriptionsItem", "if": "isTaskNode", "props": { "label": "进度" }, "children": "{{ selectedNode.data ? selectedNode.data.progress + '%' : '-' }}" }
+                  ]
+                },
+                {
+                  "com": "NEmpty",
+                  "if": "!selectedNode",
+                  "props": { "description": "点击节点查看详情" }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "com": "NGi",
+          "children": [
+            {
+              "com": "NCard",
+              "props": { "title": "整体进度", "size": "small" },
+              "children": [
+                {
+                  "com": "div",
+                  "props": { "class": "text-center py-4" },
+                  "children": [
+                    {
+                      "com": "NProgress",
+                      "props": {
+                        "type": "circle",
+                        "percentage": "{{ overallProgress }}",
+                        "strokeWidth": 10,
+                        "status": "{{ overallProgress === 100 ? 'success' : 'default' }}"
+                      }
+                    },
+                    {
+                      "com": "div",
+                      "props": { "class": "mt-2" },
+                      "children": "任务完成率"
+                    }
+                  ]
+                },
+                {
+                  "com": "NStatistic",
+                  "props": { "label": "任务节点总数", "value": "{{ taskNodes.length }}" }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "com": "NGi",
+          "children": [
+            {
+              "com": "NCard",
+              "props": { "title": "操作历史", "size": "small" },
+              "children": [
+                {
+                  "com": "NScrollbar",
+                  "props": { "style": "max-height: 200px" },
+                  "children": [
+                    {
+                      "com": "NList",
+                      "if": "historyList.length > 0",
+                      "props": { "size": "small" },
+                      "children": [
+                        {
+                          "for": "item in historyList.slice(-5).reverse()",
+                          "com": "NListItem",
+                          "children": [
+                            {
+                              "com": "NSpace",
+                              "props": { "align": "center" },
+                              "children": [
+                                {
+                                  "com": "NTag",
+                                  "props": { 
+                                    "size": "small",
+                                    "type": "{{ item.action === '删除' ? 'error' : (item.action === '新增' ? 'success' : 'info') }}"
+                                  },
+                                  "children": "{{ item.action }}"
+                                },
+                                {
+                                  "com": "span",
+                                  "children": "{{ item.node }}"
+                                },
+                                {
+                                  "com": "NText",
+                                  "props": { "depth": 3, "style": "font-size: 12px" },
+                                  "children": "{{ item.time }}"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "com": "NEmpty",
+                      "if": "historyList.length === 0",
+                      "props": { "description": "暂无操作记录", "size": "small" }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "com": "NModal",
+      "props": {
+        "show": "{{ showEditModal }}",
+        "title": "编辑节点",
+        "preset": "card",
+        "style": "width: 500px"
+      },
+      "events": {
+        "update:show": { "set": "showEditModal", "value": "{{ $event }}" }
+      },
+      "children": [
+        {
+          "com": "NForm",
+          "props": { "labelPlacement": "left", "labelWidth": 80 },
+          "children": [
+            {
+              "com": "NFormItem",
+              "props": { "label": "标题" },
+              "children": [
+                {
+                  "com": "NInput",
+                  "props": { "value": "{{ editTitle }}", "placeholder": "请输入标题" },
+                  "events": { "update:value": { "set": "editTitle", "value": "{{ $event }}" } }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "props": { "label": "{{ selectedNode && selectedNode.type === 'approval' ? '审批人' : '负责人' }}" },
+              "children": [
+                {
+                  "com": "NInput",
+                  "props": { "value": "{{ editAssignee }}", "placeholder": "{{ selectedNode && selectedNode.type === 'approval' ? '请输入审批人' : '请输入负责人' }}" },
+                  "events": { "update:value": { "set": "editAssignee", "value": "{{ $event }}" } }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "if": "selectedNode && selectedNode.type === 'task'",
+              "props": { "label": "状态" },
+              "children": [
+                {
+                  "com": "NSelect",
+                  "props": {
+                    "value": "{{ editStatus }}",
+                    "options": [
+                      { "label": "待处理", "value": "pending" },
+                      { "label": "进行中", "value": "active" },
+                      { "label": "已完成", "value": "completed" }
+                    ]
+                  },
+                  "events": { "update:value": { "set": "editStatus", "value": "{{ $event }}" } }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "if": "selectedNode && selectedNode.type === 'approval'",
+              "props": { "label": "状态" },
+              "children": [
+                {
+                  "com": "NSelect",
+                  "props": {
+                    "value": "{{ editStatus }}",
+                    "options": [
+                      { "label": "待审批", "value": "pending" },
+                      { "label": "已通过", "value": "approved" },
+                      { "label": "已拒绝", "value": "rejected" }
+                    ]
+                  },
+                  "events": { "update:value": { "set": "editStatus", "value": "{{ $event }}" } }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "if": "selectedNode && selectedNode.type === 'task'",
+              "props": { "label": "进度" },
+              "children": [
+                {
+                  "com": "NSlider",
+                  "props": { "value": "{{ editProgress }}", "step": 10 },
+                  "events": { "update:value": { "set": "editProgress", "value": "{{ $event }}" } }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "com": "NSpace",
+          "props": { "justify": "end", "class": "mt-4" },
+          "children": [
+            {
+              "com": "NButton",
+              "events": { "click": { "set": "showEditModal", "value": false } },
+              "children": "取消"
+            },
+            {
+              "com": "NButton",
+              "props": { "type": "primary" },
+              "events": {
+                "click": [
+                  { "set": "nodes", "value": "{{ nodes.map(n => n.id === selectedNode.id ? { ...n, data: { ...n.data, title: editTitle, assignee: n.type === 'task' ? editAssignee : n.data.assignee, approver: n.type === 'approval' ? editAssignee : n.data.approver, status: editStatus, progress: n.type === 'task' ? editProgress : n.data.progress } } : n) }}" },
+                  { "set": "historyList", "value": "{{ [...historyList, { time: new Date().toLocaleTimeString(), action: '编辑', node: editTitle }] }}" },
+                  { "set": "showEditModal", "value": false }
+                ]
+              },
+              "children": "保存"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

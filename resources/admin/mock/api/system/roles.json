@@ -1,0 +1,34 @@
+{
+  "list": [
+    {
+      "id": 1,
+      "name": "管理员",
+      "code": "admin",
+      "description": "系统管理员，拥有所有权限",
+      "status": 1,
+      "permissions": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+      "createdAt": "2024-01-01 00:00:00"
+    },
+    {
+      "id": 2,
+      "name": "普通用户",
+      "code": "user",
+      "description": "普通用户，拥有基本权限",
+      "status": 1,
+      "permissions": [1, 2],
+      "createdAt": "2024-01-01 00:00:00"
+    },
+    {
+      "id": 3,
+      "name": "编辑员",
+      "code": "editor",
+      "description": "内容编辑员",
+      "status": 1,
+      "permissions": [1, 2, 3, 4],
+      "createdAt": "2024-01-01 00:00:00"
+    }
+  ],
+  "total": 3,
+  "page": 1,
+  "pageSize": 10
+}

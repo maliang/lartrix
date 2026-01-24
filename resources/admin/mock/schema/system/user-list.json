@@ -1,0 +1,602 @@
+{
+  "data": {
+    "searchForm": {
+      "username": "",
+      "email": "",
+      "status": null,
+      "roleId": null
+    },
+    "tableData": [],
+    "pagination": {
+      "page": 1,
+      "pageSize": 10,
+      "total": 0
+    },
+    "loading": false,
+    "selectedKeys": [],
+    "showModal": false,
+    "modalType": "add",
+    "editForm": {
+      "id": null,
+      "username": "",
+      "email": "",
+      "phone": "",
+      "roleId": null,
+      "status": 1
+    },
+    "editRules": {
+      "username": [
+        { "required": true, "message": "请输入用户名", "trigger": "blur" },
+        { "min": 2, "max": 20, "message": "用户名长度为2-20个字符", "trigger": "blur" }
+      ],
+      "email": [
+        { "required": true, "message": "请输入邮箱", "trigger": "blur" },
+        { "type": "email", "message": "请输入有效的邮箱地址", "trigger": "blur" }
+      ],
+      "roleId": [
+        { "required": true, "message": "请选择角色", "trigger": "change" }
+      ]
+    },
+    "roleOptions": [],
+    "statusOptions": [
+      { "label": "启用", "value": 1 },
+      { "label": "禁用", "value": 0 }
+    ],
+    "columns": [
+      { "type": "selection", "width": 50 },
+      { "title": "ID", "key": "id", "width": 80 },
+      { "title": "用户名", "key": "username", "width": 120 },
+      { "title": "邮箱", "key": "email", "width": 200 },
+      { "title": "手机号", "key": "phone", "width": 140 },
+      { "title": "角色", "key": "roleName", "width": 120 },
+      { "title": "状态", "key": "status", "width": 100 },
+      { "title": "创建时间", "key": "createdAt", "width": 180 },
+      { "title": "操作", "key": "actions", "width": 200, "fixed": "right" }
+    ]
+  },
+  "methods": {
+    "loadRoles": {
+      "fetch": "/mock/api/system/roles-options.json",
+      "method": "GET",
+      "then": [
+        { "set": "roleOptions", "value": "{{ $response.list || [] }}" }
+      ]
+    },
+    "search": [
+      { "set": "pagination.page", "value": 1 },
+      { "call": "loadData" }
+    ],
+    "resetSearch": [
+      { "set": "searchForm.username", "value": "" },
+      { "set": "searchForm.email", "value": "" },
+      { "set": "searchForm.status", "value": null },
+      { "set": "searchForm.roleId", "value": null },
+      { "call": "search" }
+    ],
+    "loadData": [
+      { "set": "loading", "value": true },
+      {
+        "fetch": "/mock/api/system/users.json",
+        "method": "GET",
+        "then": [
+          { "set": "tableData", "value": "{{ $response.list || [] }}" },
+          { "set": "pagination.total", "value": "{{ $response.total || 0 }}" }
+        ],
+        "catch": [
+          { "call": "$message.error", "args": ["{{ $error.message || '加载数据失败' }}"] }
+        ],
+        "finally": [
+          { "set": "loading", "value": false }
+        ]
+      }
+    ],
+    "handleAdd": [
+      { "set": "modalType", "value": "add" },
+      { "set": "editForm.id", "value": null },
+      { "set": "editForm.username", "value": "" },
+      { "set": "editForm.email", "value": "" },
+      { "set": "editForm.phone", "value": "" },
+      { "set": "editForm.roleId", "value": null },
+      { "set": "editForm.status", "value": 1 },
+      { "set": "showModal", "value": true }
+    ],
+    "handleEdit": [
+      { "set": "modalType", "value": "edit" },
+      { "set": "editForm.id", "value": "{{ $event.id }}" },
+      { "set": "editForm.username", "value": "{{ $event.username }}" },
+      { "set": "editForm.email", "value": "{{ $event.email }}" },
+      { "set": "editForm.phone", "value": "{{ $event.phone || '' }}" },
+      { "set": "editForm.roleId", "value": "{{ $event.roleId }}" },
+      { "set": "editForm.status", "value": "{{ $event.status }}" },
+      { "set": "showModal", "value": true }
+    ],
+    "handleSave": [
+      { "set": "loading", "value": true },
+      {
+        "fetch": "{{ modalType === 'add' ? '/api/system/users' : '/api/system/users/' + editForm.id }}",
+        "method": "{{ modalType === 'add' ? 'POST' : 'PUT' }}",
+        "body": "{{ editForm }}",
+        "then": [
+          { "call": "$message.success", "args": ["{{ modalType === 'add' ? '添加成功' : '更新成功' }}"] },
+          { "set": "showModal", "value": false },
+          { "call": "loadData" }
+        ],
+        "catch": [
+          { "call": "$message.error", "args": ["{{ $error.message || '操作失败' }}"] }
+        ],
+        "finally": [
+          { "set": "loading", "value": false }
+        ]
+      }
+    ],
+    "handleDelete": [
+      {
+        "fetch": "/mock/api/system/users/{{ $event }}",
+        "method": "DELETE",
+        "then": [
+          { "call": "$message.success", "args": ["删除成功"] },
+          { "call": "loadData" }
+        ],
+        "catch": [
+          { "call": "$message.error", "args": ["{{ $error.message || '删除失败' }}"] }
+        ]
+      }
+    ],
+    "handleBatchDelete": [
+      {
+        "fetch": "/mock/api/system/users/batch",
+        "method": "DELETE",
+        "body": {
+          "ids": "{{ selectedKeys }}"
+        },
+        "then": [
+          { "call": "$message.success", "args": ["批量删除成功"] },
+          { "set": "selectedKeys", "value": [] },
+          { "call": "loadData" }
+        ],
+        "catch": [
+          { "call": "$message.error", "args": ["{{ $error.message || '批量删除失败' }}"] }
+        ]
+      }
+    ],
+    "handlePageChange": [
+      { "set": "pagination.page", "value": "{{ $event }}" },
+      { "call": "loadData" }
+    ],
+    "handlePageSizeChange": [
+      { "set": "pagination.pageSize", "value": "{{ $event }}" },
+      { "set": "pagination.page", "value": 1 },
+      { "call": "loadData" }
+    ]
+  },
+  "onMounted": [
+    { "call": "loadRoles" },
+    { "call": "loadData" }
+  ],
+  "com": "NCard",
+  "props": {
+    "title": "成员管理"
+  },
+  "children": [
+    {
+      "com": "NSpace",
+      "props": {
+        "vertical": true,
+        "size": "large"
+      },
+      "children": [
+        {
+          "com": "NForm",
+          "props": {
+            "inline": true,
+            "labelPlacement": "left",
+            "model": "{{ searchForm }}"
+          },
+          "children": [
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "用户名"
+              },
+              "children": [
+                {
+                  "com": "NInput",
+                  "model": "searchForm.username",
+                  "props": {
+                    "placeholder": "请输入用户名",
+                    "clearable": true
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "邮箱"
+              },
+              "children": [
+                {
+                  "com": "NInput",
+                  "model": "searchForm.email",
+                  "props": {
+                    "placeholder": "请输入邮箱",
+                    "clearable": true
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "状态"
+              },
+              "children": [
+                {
+                  "com": "NSelect",
+                  "model": "searchForm.status",
+                  "props": {
+                    "placeholder": "请选择状态",
+                    "options": "{{ statusOptions }}",
+                    "clearable": true,
+                    "style": { "width": "120px" }
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "角色"
+              },
+              "children": [
+                {
+                  "com": "NSelect",
+                  "model": "searchForm.roleId",
+                  "props": {
+                    "placeholder": "请选择角色",
+                    "options": "{{ roleOptions }}",
+                    "clearable": true,
+                    "style": { "width": "150px" }
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "children": [
+                {
+                  "com": "NSpace",
+                  "children": [
+                    {
+                      "com": "NButton",
+                      "props": {
+                        "type": "primary"
+                      },
+                      "events": {
+                        "click": { "call": "search" }
+                      },
+                      "children": [
+                        {
+                          "com": "SvgIcon",
+                          "props": {
+                            "icon": "carbon:search",
+                            "class": "mr-1"
+                          }
+                        },
+                        "搜索"
+                      ]
+                    },
+                    {
+                      "com": "NButton",
+                      "events": {
+                        "click": { "call": "resetSearch" }
+                      },
+                      "children": [
+                        {
+                          "com": "SvgIcon",
+                          "props": {
+                            "icon": "carbon:reset",
+                            "class": "mr-1"
+                          }
+                        },
+                        "重置"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "com": "NSpace",
+          "children": [
+            {
+              "com": "NButton",
+              "props": {
+                "type": "primary"
+              },
+              "events": {
+                "click": { "call": "handleAdd" }
+              },
+              "children": [
+                {
+                  "com": "SvgIcon",
+                  "props": {
+                    "icon": "carbon:add",
+                    "class": "mr-1"
+                  }
+                },
+                "新增用户"
+              ]
+            },
+            {
+              "com": "NButton",
+              "props": {
+                "type": "error",
+                "disabled": "{{ selectedKeys.length === 0 }}"
+              },
+              "events": {
+                "click": { "call": "handleBatchDelete" }
+              },
+              "children": [
+                {
+                  "com": "SvgIcon",
+                  "props": {
+                    "icon": "carbon:trash-can",
+                    "class": "mr-1"
+                  }
+                },
+                "批量删除"
+              ]
+            }
+          ]
+        },
+        {
+          "com": "JsonDataTable",
+          "props": {
+            "loading": "{{ loading }}",
+            "data": "{{ tableData }}",
+            "columns": "{{ columns }}",
+            "rowKey": "{{ row => row.id }}",
+            "checkedRowKeys": "{{ selectedKeys }}",
+            "scrollX": 1200
+          },
+          "events": {
+            "update:checked-row-keys": { "set": "selectedKeys", "value": "{{ $event }}" }
+          },
+          "slots": {
+            "status": {
+              "content": [
+                {
+                  "com": "NTag",
+                  "props": {
+                    "type": "{{ slotData.row.status === 1 ? 'success' : 'error' }}"
+                  },
+                  "children": "{{ slotData.row.status === 1 ? '启用' : '禁用' }}"
+                }
+              ],
+              "slotProps": "slotData"
+            },
+            "actions": {
+              "content": [
+                {
+                  "com": "NSpace",
+                  "children": [
+                    {
+                      "com": "NButton",
+                      "props": {
+                        "size": "small",
+                        "type": "primary",
+                        "text": true
+                      },
+                      "events": {
+                        "click": { "call": "handleEdit", "args": ["{{ slotData.row }}"] }
+                      },
+                      "children": "编辑"
+                    },
+                    {
+                      "com": "NPopconfirm",
+                      "events": {
+                        "positive-click": { "call": "handleDelete", "args": ["{{ slotData.row.id }}"] }
+                      },
+                      "slots": {
+                        "trigger": [
+                          {
+                            "com": "NButton",
+                            "props": {
+                              "size": "small",
+                              "type": "error",
+                              "text": true
+                            },
+                            "children": "删除"
+                          }
+                        ]
+                      },
+                      "children": "确定要删除该用户吗？"
+                    }
+                  ]
+                }
+              ],
+              "slotProps": "slotData"
+            }
+          }
+        },
+        {
+          "com": "NFlex",
+          "props": {
+            "justify": "end",
+            "class": "mt-4"
+          },
+          "children": [
+            {
+              "com": "NPagination",
+              "props": {
+                "page": "{{ pagination.page }}",
+                "pageSize": "{{ pagination.pageSize }}",
+                "itemCount": "{{ pagination.total }}",
+                "showSizePicker": true,
+                "pageSizes": [10, 20, 50, 100]
+              },
+              "events": {
+                "update:page": { "call": "handlePageChange", "args": ["{{ $event }}"] },
+                "update:page-size": { "call": "handlePageSizeChange", "args": ["{{ $event }}"] }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "com": "NModal",
+      "props": {
+        "show": "{{ showModal }}",
+        "title": "{{ modalType === 'add' ? '新增用户' : '编辑用户' }}",
+        "preset": "card",
+        "style": { "width": "500px" }
+      },
+      "events": {
+        "update:show": { "set": "showModal", "value": "{{ $event }}" }
+      },
+      "children": [
+        {
+          "com": "NForm",
+          "props": {
+            "model": "{{ editForm }}",
+            "rules": "{{ editRules }}",
+            "labelPlacement": "left",
+            "labelWidth": 80
+          },
+          "children": [
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "用户名",
+                "path": "username"
+              },
+              "children": [
+                {
+                  "com": "NInput",
+                  "model": "editForm.username",
+                  "props": {
+                    "placeholder": "请输入用户名"
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "邮箱",
+                "path": "email"
+              },
+              "children": [
+                {
+                  "com": "NInput",
+                  "model": "editForm.email",
+                  "props": {
+                    "placeholder": "请输入邮箱"
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "手机号",
+                "path": "phone"
+              },
+              "children": [
+                {
+                  "com": "NInput",
+                  "model": "editForm.phone",
+                  "props": {
+                    "placeholder": "请输入手机号"
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "角色",
+                "path": "roleId"
+              },
+              "children": [
+                {
+                  "com": "NSelect",
+                  "model": "editForm.roleId",
+                  "props": {
+                    "placeholder": "请选择角色",
+                    "options": "{{ roleOptions }}"
+                  }
+                }
+              ]
+            },
+            {
+              "com": "NFormItem",
+              "props": {
+                "label": "状态",
+                "path": "status"
+              },
+              "children": [
+                {
+                  "com": "NRadioGroup",
+                  "model": "editForm.status",
+                  "children": [
+                    {
+                      "com": "NRadio",
+                      "props": {
+                        "value": 1
+                      },
+                      "children": "启用"
+                    },
+                    {
+                      "com": "NRadio",
+                      "props": {
+                        "value": 0
+                      },
+                      "children": "禁用"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "com": "NFlex",
+          "props": {
+            "justify": "end",
+            "class": "mt-4"
+          },
+          "children": [
+            {
+              "com": "NSpace",
+              "children": [
+                {
+                  "com": "NButton",
+                  "events": {
+                    "click": { "set": "showModal", "value": false }
+                  },
+                  "children": "取消"
+                },
+                {
+                  "com": "NButton",
+                  "props": {
+                    "type": "primary",
+                    "loading": "{{ loading }}"
+                  },
+                  "events": {
+                    "click": { "call": "handleSave" }
+                  },
+                  "children": "确定"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

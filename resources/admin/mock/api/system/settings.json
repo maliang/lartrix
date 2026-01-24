@@ -1,0 +1,31 @@
+{
+  "basic": {
+    "siteName": "Trix Admin",
+    "siteDescription": "JSON 驱动的后台管理系统",
+    "logo": "/logo.png",
+    "favicon": "/favicon.ico",
+    "copyright": "© 2024 Trix Admin"
+  },
+  "security": {
+    "passwordMinLength": 6,
+    "passwordRequireUppercase": true,
+    "passwordRequireNumber": true,
+    "passwordRequireSpecial": false,
+    "loginMaxAttempts": 5,
+    "lockoutDuration": 30
+  },
+  "email": {
+    "smtpHost": "smtp.example.com",
+    "smtpPort": 587,
+    "smtpUser": "noreply@example.com",
+    "smtpPassword": "",
+    "senderName": "Trix Admin",
+    "senderEmail": "noreply@example.com"
+  },
+  "storage": {
+    "type": "local",
+    "localPath": "/uploads",
+    "maxFileSize": 10,
+    "allowedExtensions": ["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx"]
+  }
+}

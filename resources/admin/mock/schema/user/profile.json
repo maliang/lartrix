@@ -1,0 +1,97 @@
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "com": "div",
+    "props": {
+      "class": "flex flex-col gap-16px"
+    },
+    "children": [
+      {
+        "com": "div",
+        "props": {
+          "class": "flex items-center gap-16px"
+        },
+        "children": [
+          {
+            "com": "NAvatar",
+            "props": {
+              "size": 80,
+              "round": true,
+              "src": "https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
+            }
+          },
+          {
+            "com": "div",
+            "props": {
+              "class": "flex flex-col gap-4px"
+            },
+            "children": [
+              {
+                "com": "NText",
+                "props": {
+                  "class": "text-18px font-bold"
+                },
+                "children": "Soybean"
+              },
+              {
+                "com": "NText",
+                "props": {
+                  "depth": 3
+                },
+                "children": "前端开发工程师"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "com": "NDivider"
+      },
+      {
+        "com": "NDescriptions",
+        "props": {
+          "labelPlacement": "left",
+          "column": 1
+        },
+        "children": [
+          {
+            "com": "NDescriptionsItem",
+            "props": {
+              "label": "用户名"
+            },
+            "children": "Soybean"
+          },
+          {
+            "com": "NDescriptionsItem",
+            "props": {
+              "label": "邮箱"
+            },
+            "children": "soybean@example.com"
+          },
+          {
+            "com": "NDescriptionsItem",
+            "props": {
+              "label": "手机"
+            },
+            "children": "138****8888"
+          },
+          {
+            "com": "NDescriptionsItem",
+            "props": {
+              "label": "角色"
+            },
+            "children": "超级管理员"
+          },
+          {
+            "com": "NDescriptionsItem",
+            "props": {
+              "label": "注册时间"
+            },
+            "children": "2024-01-01"
+          }
+        ]
+      }
+    ]
+  }
+}

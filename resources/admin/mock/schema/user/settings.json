@@ -1,0 +1,133 @@
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "com": "NForm",
+    "props": {
+      "labelPlacement": "left",
+      "labelWidth": 80
+    },
+    "data": {
+      "avatar": "",
+      "nickname": "",
+      "email": "",
+      "phone": "",
+      "bio": ""
+    },
+    "children": [
+      {
+        "com": "NFormItem",
+        "props": {
+          "label": "头像"
+        },
+        "children": [
+          {
+            "com": "NUpload",
+            "props": {
+              "action": "/api/upload",
+              "listType": "image-card",
+              "max": 1
+            },
+            "events": {
+              "finish": {
+                "set": "avatar",
+                "value": "{{ $event.file.url }}"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "com": "NFormItem",
+        "props": {
+          "label": "昵称"
+        },
+        "children": [
+          {
+            "com": "NInput",
+            "props": {
+              "placeholder": "请输入昵称"
+            },
+            "model": "nickname"
+          }
+        ]
+      },
+      {
+        "com": "NFormItem",
+        "props": {
+          "label": "邮箱"
+        },
+        "children": [
+          {
+            "com": "NInput",
+            "props": {
+              "placeholder": "请输入邮箱"
+            },
+            "model": "email"
+          }
+        ]
+      },
+      {
+        "com": "NFormItem",
+        "props": {
+          "label": "手机号"
+        },
+        "children": [
+          {
+            "com": "NInput",
+            "props": {
+              "placeholder": "请输入手机号"
+            },
+            "model": "phone"
+          }
+        ]
+      },
+      {
+        "com": "NFormItem",
+        "props": {
+          "label": "个人简介"
+        },
+        "children": [
+          {
+            "com": "NInput",
+            "props": {
+              "type": "textarea",
+              "placeholder": "请输入个人简介",
+              "rows": 3
+            },
+            "model": "bio"
+          }
+        ]
+      },
+      {
+        "com": "div",
+        "props": {
+          "class": "flex justify-end gap-12px mt-16px"
+        },
+        "children": [
+          {
+            "com": "NButton",
+            "children": "取消",
+            "events": {
+              "click": {
+                "script": "$methods.closeModal()"
+              }
+            }
+          },
+          {
+            "com": "NButton",
+            "props": {
+              "type": "primary"
+            },
+            "children": "保存",
+            "events": {
+              "click": {
+                "script": "$methods.submitForm({ avatar: state.avatar, nickname: state.nickname, email: state.email, phone: state.phone, bio: state.bio })"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

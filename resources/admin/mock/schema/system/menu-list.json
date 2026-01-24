@@ -1,0 +1,775 @@
+{
+  "data": {
+    "treeData": [],
+    "loading": false,
+    "expandedKeys": [],
+    "showModal": false,
+    "modalType": "add",
+    "editForm": {
+      "id": null,
+      "parentId": null,
+      "name": "",
+      "title": "",
+      "path": "",
+      "icon": "",
+      "component": "",
+      "redirect": "",
+      "order": 0,
+      "hideInMenu": false,
+      "keepAlive": true,
+      "schemaSource": "",
+      "permissions": [],
+      "isDefaultAfterLogin": false,
+      "layoutType": "normal",
+      "useJsonRenderer": false,
+      "openType": "normal",
+      "href": "",
+      "requiresAuth": true
+    },
+    "editRules": {
+      "name": [
+        { "required": true, "message": "请输入路由名称", "trigger": "blur" }
+      ],
+      "title": [
+        { "required": true, "message": "请输入菜单标题", "trigger": "blur" }
+      ],
+      "path": [
+        { "required": true, "message": "请输入路由路径", "trigger": "blur" }
+      ]
+    },
+    "columns": [
+      { "title": "菜单标题", "key": "title", "width": 180 },
+      { "title": "路由名称", "key": "name", "width": 150 },
+      { "title": "图标", "key": "icon", "width": 60 },
+      { "title": "路由路径", "key": "path", "width": 180 },
+      { "title": "排序", "key": "order", "width": 80 },
+      { "title": "隐藏", "key": "hideInMenu", "width": 80 },
+      { "title": "缓存", "key": "keepAlive", "width": 80 },
+      { "title": "操作", "key": "actions", "width": 180, "fixed": "right" }
+    ]
+  },
+  "methods": {
+    "loadData": [
+      { "set": "loading", "value": true },
+      {
+        "fetch": "/mock/api/system/menus-tree.json",
+        "method": "GET",
+        "then": [
+          { "set": "treeData", "value": "{{ $response || [] }}" }
+        ],
+        "catch": [
+          { "call": "$message.error", "args": ["{{ $error.message || '加载数据失败' }}"] }
+        ],
+        "finally": [
+          { "set": "loading", "value": false }
+        ]
+      }
+    ],
+    "handleAdd": [
+      { "set": "modalType", "value": "add" },
+      { "set": "editForm.id", "value": null },
+      { "set": "editForm.parentId", "value": null },
+      { "set": "editForm.name", "value": "" },
+      { "set": "editForm.title", "value": "" },
+      { "set": "editForm.path", "value": "" },
+      { "set": "editForm.icon", "value": "" },
+      { "set": "editForm.component", "value": "" },
+      { "set": "editForm.redirect", "value": "" },
+      { "set": "editForm.order", "value": 0 },
+      { "set": "editForm.hideInMenu", "value": false },
+      { "set": "editForm.keepAlive", "value": true },
+      { "set": "editForm.schemaSource", "value": "" },
+      { "set": "editForm.permissions", "value": [] },
+      { "set": "editForm.isDefaultAfterLogin", "value": false },
+      { "set": "editForm.layoutType", "value": "normal" },
+      { "set": "editForm.useJsonRenderer", "value": false },
+      { "set": "editForm.openType", "value": "normal" },
+      { "set": "editForm.href", "value": "" },
+      { "set": "editForm.requiresAuth", "value": true },
+      { "set": "showModal", "value": true }
+    ],
+    "handleAddChild": [
+      { "set": "modalType", "value": "add" },
+      { "set": "editForm.id", "value": null },
+      { "set": "editForm.parentId", "value": "{{ $event.id }}" },
+      { "set": "editForm.name", "value": "" },
+      { "set": "editForm.title", "value": "" },
+      { "set": "editForm.path", "value": "" },
+      { "set": "editForm.icon", "value": "" },
+      { "set": "editForm.component", "value": "" },
+      { "set": "editForm.redirect", "value": "" },
+      { "set": "editForm.order", "value": 0 },
+      { "set": "editForm.hideInMenu", "value": false },
+      { "set": "editForm.keepAlive", "value": true },
+      { "set": "editForm.schemaSource", "value": "" },
+      { "set": "editForm.permissions", "value": [] },
+      { "set": "editForm.isDefaultAfterLogin", "value": false },
+      { "set": "editForm.layoutType", "value": "normal" },
+      { "set": "editForm.useJsonRenderer", "value": false },
+      { "set": "editForm.openType", "value": "normal" },
+      { "set": "editForm.href", "value": "" },
+      { "set": "editForm.requiresAuth", "value": true },
+      { "set": "showModal", "value": true }
+    ],
+    "handleEdit": [
+      { "set": "modalType", "value": "edit" },
+      { "set": "editForm.id", "value": "{{ $event.id }}" },
+      { "set": "editForm.parentId", "value": "{{ $event.parentId }}" },
+      { "set": "editForm.name", "value": "{{ $event.name }}" },
+      { "set": "editForm.title", "value": "{{ $event.title || '' }}" },
+      { "set": "editForm.path", "value": "{{ $event.path }}" },
+      { "set": "editForm.icon", "value": "{{ $event.icon || '' }}" },
+      { "set": "editForm.component", "value": "{{ $event.component || '' }}" },
+      { "set": "editForm.redirect", "value": "{{ $event.redirect || '' }}" },
+      { "set": "editForm.order", "value": "{{ $event.order || 0 }}" },
+      { "set": "editForm.hideInMenu", "value": "{{ $event.hideInMenu || false }}" },
+      { "set": "editForm.keepAlive", "value": "{{ $event.keepAlive !== false }}" },
+      { "set": "editForm.schemaSource", "value": "{{ $event.schemaSource || '' }}" },
+      { "set": "editForm.permissions", "value": "{{ $event.permissions || [] }}" },
+      { "set": "editForm.isDefaultAfterLogin", "value": "{{ $event.isDefaultAfterLogin || false }}" },
+      { "set": "editForm.layoutType", "value": "{{ $event.layoutType || 'normal' }}" },
+      { "set": "editForm.useJsonRenderer", "value": "{{ $event.useJsonRenderer || false }}" },
+      { "set": "editForm.openType", "value": "{{ $event.openType || 'normal' }}" },
+      { "set": "editForm.href", "value": "{{ $event.href || '' }}" },
+      { "set": "editForm.requiresAuth", "value": "{{ $event.requiresAuth !== false }}" },
+      { "set": "showModal", "value": true }
+    ],
+    "handleSave": [
+      { "set": "loading", "value": true },
+      {
+        "fetch": "{{ modalType === 'add' ? '/api/system/menus' : '/api/system/menus/' + editForm.id }}",
+        "method": "{{ modalType === 'add' ? 'POST' : 'PUT' }}",
+        "body": "{{ editForm }}",
+        "then": [
+          { "call": "$message.success", "args": ["{{ modalType === 'add' ? '添加成功' : '更新成功' }}"] },
+          { "set": "showModal", "value": false },
+          { "call": "loadData" }
+        ],
+        "catch": [
+          { "call": "$message.error", "args": ["{{ $error.message || '操作失败' }}"] }
+        ],
+        "finally": [
+          { "set": "loading", "value": false }
+        ]
+      }
+    ],
+    "handleDelete": [
+      {
+        "fetch": "/mock/api/system/menus/{{ $event }}",
+        "method": "DELETE",
+        "then": [
+          { "call": "$message.success", "args": ["删除成功"] },
+          { "call": "loadData" }
+        ],
+        "catch": [
+          { "call": "$message.error", "args": ["{{ $error.message || '删除失败' }}"] }
+        ]
+      }
+    ],
+    "handleExpandAll": [
+      { "set": "expandedKeys", "value": "{{ treeData.map(item => item.id) }}" }
+    ],
+    "handleCollapseAll": [
+      { "set": "expandedKeys", "value": [] }
+    ]
+  },
+  "onMounted": { "call": "loadData" },
+  "com": "NCard",
+  "props": {
+    "title": "菜单管理"
+  },
+  "children": [
+    {
+      "com": "NSpace",
+      "props": {
+        "vertical": true,
+        "size": "large"
+      },
+      "children": [
+        {
+          "com": "NSpace",
+          "children": [
+            {
+              "com": "NButton",
+              "props": {
+                "type": "primary"
+              },
+              "events": {
+                "click": { "call": "handleAdd" }
+              },
+              "children": "新增菜单"
+            },
+            {
+              "com": "NButton",
+              "events": {
+                "click": { "call": "handleExpandAll" }
+              },
+              "children": "展开全部"
+            },
+            {
+              "com": "NButton",
+              "events": {
+                "click": { "call": "handleCollapseAll" }
+              },
+              "children": "折叠全部"
+            }
+          ]
+        },
+        {
+          "com": "JsonDataTable",
+          "props": {
+            "loading": "{{ loading }}",
+            "data": "{{ treeData }}",
+            "columns": "{{ columns }}",
+            "rowKey": "{{ row => row.id }}",
+            "defaultExpandAll": false,
+            "expandedRowKeys": "{{ expandedKeys }}",
+            "scrollX": 1100
+          },
+          "events": {
+            "update:expanded-row-keys": { "set": "expandedKeys", "value": "{{ $event }}" }
+          },
+          "slots": {
+            "icon": {
+              "content": [
+                {
+                  "com": "SvgIcon",
+                  "if": "slotData.row.icon",
+                  "props": {
+                    "icon": "{{ slotData.row.icon }}",
+                    "class": "text-lg"
+                  }
+                }
+              ],
+              "slotProps": "slotData"
+            },
+            "hideInMenu": {
+              "content": [
+                {
+                  "com": "NTag",
+                  "props": {
+                    "type": "{{ slotData.row.hideInMenu ? 'warning' : 'success' }}",
+                    "size": "small"
+                  },
+                  "children": "{{ slotData.row.hideInMenu ? '是' : '否' }}"
+                }
+              ],
+              "slotProps": "slotData"
+            },
+            "keepAlive": {
+              "content": [
+                {
+                  "com": "NTag",
+                  "props": {
+                    "type": "{{ slotData.row.keepAlive !== false ? 'success' : 'default' }}",
+                    "size": "small"
+                  },
+                  "children": "{{ slotData.row.keepAlive !== false ? '是' : '否' }}"
+                }
+              ],
+              "slotProps": "slotData"
+            },
+            "actions": {
+              "content": [
+                {
+                  "com": "NSpace",
+                  "children": [
+                    {
+                      "com": "NButton",
+                      "props": {
+                        "size": "small",
+                        "type": "primary",
+                        "text": true
+                      },
+                      "events": {
+                        "click": { "call": "handleEdit", "args": ["{{ slotData.row }}"] }
+                      },
+                      "children": "编辑"
+                    },
+                    {
+                      "com": "NButton",
+                      "props": {
+                        "size": "small",
+                        "type": "info",
+                        "text": true
+                      },
+                      "events": {
+                        "click": { "call": "handleAddChild", "args": ["{{ slotData.row }}"] }
+                      },
+                      "children": "添加子菜单"
+                    },
+                    {
+                      "com": "NPopconfirm",
+                      "events": {
+                        "positive-click": { "call": "handleDelete", "args": ["{{ slotData.row.id }}"] }
+                      },
+                      "slots": {
+                        "trigger": [
+                          {
+                            "com": "NButton",
+                            "props": {
+                              "size": "small",
+                              "type": "error",
+                              "text": true
+                            },
+                            "children": "删除"
+                          }
+                        ]
+                      },
+                      "children": "确定要删除该菜单吗？删除后子菜单也会被删除。"
+                    }
+                  ]
+                }
+              ],
+              "slotProps": "slotData"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "com": "NModal",
+      "props": {
+        "show": "{{ showModal }}",
+        "title": "{{ modalType === 'add' ? '新增菜单' : '编辑菜单' }}",
+        "preset": "card",
+        "style": { "width": "650px" }
+      },
+      "events": {
+        "update:show": { "set": "showModal", "value": "{{ $event }}" }
+      },
+      "children": [
+        {
+          "com": "NForm",
+          "props": {
+            "model": "{{ editForm }}",
+            "rules": "{{ editRules }}",
+            "labelPlacement": "left",
+            "labelWidth": 100
+          },
+          "children": [
+            {
+              "com": "NGrid",
+              "props": {
+                "cols": 2,
+                "xGap": 16
+              },
+              "children": [
+                {
+                  "com": "NGridItem",
+                  "children": [
+                    {
+                      "com": "NFormItem",
+                      "props": {
+                        "label": "上级菜单",
+                        "path": "parentId"
+                      },
+                      "children": [
+                        {
+                          "com": "NTreeSelect",
+                          "props": {
+                            "options": "{{ [{ id: 0, title: '根目录' }].concat(treeData) }}",
+                            "value": "{{ editForm.parentId === null ? 0 : editForm.parentId }}",
+                            "placeholder": "请选择上级菜单",
+                            "keyField": "id",
+                            "labelField": "title",
+                            "childrenField": "children",
+                            "clearable": true,
+                            "defaultExpandAll": true
+                          },
+                          "events": {
+                            "update:value": { "set": "editForm.parentId", "value": "{{ $event === 0 ? null : $event }}" }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "com": "NGridItem",
+                  "children": [
+                    {
+                      "com": "NFormItem",
+                      "props": {
+                        "label": "菜单标题",
+                        "path": "title"
+                      },
+                      "children": [
+                        {
+                          "com": "NInput",
+                          "model": "editForm.title",
+                          "props": {
+                            "placeholder": "请输入菜单标题"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "com": "NGridItem",
+                  "children": [
+                    {
+                      "com": "NFormItem",
+                      "props": {
+                        "label": "路由名称",
+                        "path": "name"
+                      },
+                      "children": [
+                        {
+                          "com": "NInput",
+                          "model": "editForm.name",
+                          "props": {
+                            "placeholder": "请输入路由名称（唯一）"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "com": "NGridItem",
+                  "children": [
+                    {
+                      "com": "NFormItem",
+                      "props": {
+                        "label": "路由路径",
+                        "path": "path"
+                      },
+                      "children": [
+                        {
+                          "com": "NInput",
+                          "model": "editForm.path",
+                          "props": {
+                            "placeholder": "请输入路由路径"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "com": "NGridItem",
+                  "children": [
+                    {
+                      "com": "NFormItem",
+                      "props": {
+                        "label": "图标"
+                      },
+                      "children": [
+                        {
+                          "com": "IconPicker",
+                          "model": "editForm.icon",
+                          "props": {
+                            "placeholder": "请选择图标"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "com": "NGridItem",
+                  "children": [
+                    {
+                      "com": "NFormItem",
+                      "props": {
+                        "label": "排序"
+                      },
+                      "children": [
+                        {
+                          "com": "NInputNumber",
+                          "model": "editForm.order",
+                          "props": {
+                            "placeholder": "请输入排序",
+                            "min": 0,
+                            "class": "w-full"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "com": "NGridItem",
+                  "children": [
+                    {
+                      "com": "NFormItem",
+                      "props": {
+                        "label": "组件路径"
+                      },
+                      "children": [
+                        {
+                          "com": "NInput",
+                          "model": "editForm.component",
+                          "props": {
+                            "placeholder": "请输入组件路径"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "com": "NGridItem",
+                  "children": [
+                    {
+                      "com": "NFormItem",
+                      "props": {
+                        "label": "重定向"
+                      },
+                      "children": [
+                        {
+                          "com": "NInput",
+                          "model": "editForm.redirect",
+                          "props": {
+                            "placeholder": "请输入重定向路径"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "com": "NGridItem",
+                  "props": { "span": 2 },
+                  "children": [
+                    {
+                      "com": "NFormItem",
+                      "props": {
+                        "label": "Schema来源"
+                      },
+                      "children": [
+                        {
+                          "com": "NInput",
+                          "model": "editForm.schemaSource",
+                          "props": {
+                            "placeholder": "JSON Schema 文件路径，如：/mock/schema/xxx.json"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "com": "NGridItem",
+                  "children": [
+                    {
+                      "com": "NFormItem",
+                      "props": {
+                        "label": "打开方式"
+                      },
+                      "children": [
+                        {
+                          "com": "NSelect",
+                          "model": "editForm.openType",
+                          "props": {
+                            "options": [
+                              { "label": "正常打开", "value": "normal" },
+                              { "label": "内嵌iframe", "value": "iframe" },
+                              { "label": "新窗口", "value": "newWindow" }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "com": "NGridItem",
+                  "children": [
+                    {
+                      "com": "NFormItem",
+                      "props": {
+                        "label": "布局类型"
+                      },
+                      "children": [
+                        {
+                          "com": "NSelect",
+                          "props": {
+                            "value": "{{ editForm.layoutType }}",
+                            "options": [
+                              { "label": "正常布局", "value": "normal" },
+                              { "label": "空白布局", "value": "blank" }
+                            ]
+                          },
+                          "events": {
+                            "update:value": { "set": "editForm.layoutType", "value": "{{ $event }}" }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "com": "NGridItem",
+                  "props": { "span": 2 },
+                  "if": "editForm.openType !== 'normal'",
+                  "children": [
+                    {
+                      "com": "NFormItem",
+                      "props": {
+                        "label": "外部链接"
+                      },
+                      "children": [
+                        {
+                          "com": "NInput",
+                          "model": "editForm.href",
+                          "props": {
+                            "placeholder": "请输入外部链接地址"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "com": "NGridItem",
+                  "children": [
+                    {
+                      "com": "NFormItem",
+                      "props": {
+                        "label": "隐藏菜单"
+                      },
+                      "children": [
+                        {
+                          "com": "NSwitch",
+                          "props": {
+                            "value": "{{ editForm.hideInMenu }}"
+                          },
+                          "events": {
+                            "update:value": { "set": "editForm.hideInMenu", "value": "{{ $event }}" }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "com": "NGridItem",
+                  "children": [
+                    {
+                      "com": "NFormItem",
+                      "props": {
+                        "label": "页面缓存"
+                      },
+                      "children": [
+                        {
+                          "com": "NSwitch",
+                          "props": {
+                            "value": "{{ editForm.keepAlive }}"
+                          },
+                          "events": {
+                            "update:value": { "set": "editForm.keepAlive", "value": "{{ $event }}" }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "com": "NGridItem",
+                  "children": [
+                    {
+                      "com": "NFormItem",
+                      "props": {
+                        "label": "JSON渲染"
+                      },
+                      "children": [
+                        {
+                          "com": "NSwitch",
+                          "props": {
+                            "value": "{{ editForm.useJsonRenderer }}"
+                          },
+                          "events": {
+                            "update:value": { "set": "editForm.useJsonRenderer", "value": "{{ $event }}" }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "com": "NGridItem",
+                  "children": [
+                    {
+                      "com": "NFormItem",
+                      "props": {
+                        "label": "默认显示"
+                      },
+                      "children": [
+                        {
+                          "com": "NSwitch",
+                          "props": {
+                            "value": "{{ editForm.isDefaultAfterLogin }}"
+                          },
+                          "events": {
+                            "update:value": { "set": "editForm.isDefaultAfterLogin", "value": "{{ $event }}" }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "com": "NGridItem",
+                  "children": [
+                    {
+                      "com": "NFormItem",
+                      "props": {
+                        "label": "需要登录"
+                      },
+                      "children": [
+                        {
+                          "com": "NSwitch",
+                          "props": {
+                            "value": "{{ editForm.requiresAuth }}"
+                          },
+                          "events": {
+                            "update:value": { "set": "editForm.requiresAuth", "value": "{{ $event }}" }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "com": "NFlex",
+          "props": {
+            "justify": "end",
+            "class": "mt-4"
+          },
+          "children": [
+            {
+              "com": "NSpace",
+              "children": [
+                {
+                  "com": "NButton",
+                  "events": {
+                    "click": { "set": "showModal", "value": false }
+                  },
+                  "children": "取消"
+                },
+                {
+                  "com": "NButton",
+                  "props": {
+                    "type": "primary",
+                    "loading": "{{ loading }}"
+                  },
+                  "events": {
+                    "click": { "call": "handleSave" }
+                  },
+                  "children": "确定"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

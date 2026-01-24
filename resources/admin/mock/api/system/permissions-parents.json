@@ -1,0 +1,7 @@
+[
+  { "value": null, "label": "顶级权限" },
+  { "value": 1, "label": "系统管理" },
+  { "value": 2, "label": "用户管理" },
+  { "value": 6, "label": "角色管理" },
+  { "value": 7, "label": "菜单管理" }
+]

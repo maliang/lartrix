@@ -1,0 +1,77 @@
+{
+  "com": "div",
+  "props": {
+    "class": "p-4"
+  },
+  "data": {
+    "content": "<h2>富文本编辑器示例</h2><p>这是一个基于 <strong>wangEditor</strong> 封装的富文本编辑器组件。</p><p>支持以下功能：</p><ul><li>丰富的文本格式化</li><li>图片、视频插入</li><li>表格编辑</li><li>代码块</li></ul>"
+  },
+  "children": [
+    {
+      "com": "NCard",
+      "props": {
+        "title": "富文本编辑器",
+        "class": "mb-4"
+      },
+      "children": [
+        {
+          "com": "NAlert",
+          "props": {
+            "type": "info",
+            "class": "mb-4"
+          },
+          "children": "RichEditor 组件基于 wangEditor 封装，支持默认(default)和简洁(simple)两种模式，暗色主题自动适配。"
+        },
+        {
+          "com": "RichEditor",
+          "props": {
+            "modelValue": "{{ content }}",
+            "height": 400,
+            "mode": "default",
+            "placeholder": "请输入内容..."
+          },
+          "events": {
+            "update:modelValue": {
+              "set": "content",
+              "value": "{{ $event }}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "com": "NCard",
+      "props": {
+        "title": "组件属性",
+        "class": "mt-4"
+      },
+      "children": [
+        {
+          "com": "NDataTable",
+          "props": {
+            "bordered": true,
+            "singleLine": false,
+            "columns": [
+              { "title": "属性", "key": "prop", "width": 150 },
+              { "title": "说明", "key": "desc" },
+              { "title": "类型", "key": "type", "width": 150 },
+              { "title": "默认值", "key": "default", "width": 100 }
+            ],
+            "data": [
+              { "prop": "modelValue", "desc": "编辑器 HTML 内容（v-model）", "type": "string", "default": "''" },
+              { "prop": "height", "desc": "编辑器高度（最小 300px）", "type": "number | string", "default": "400" },
+              { "prop": "mode", "desc": "编辑模式：default(默认)/simple(简洁)", "type": "string", "default": "'default'" },
+              { "prop": "placeholder", "desc": "占位文本", "type": "string", "default": "'请输入内容...'" },
+              { "prop": "readonly", "desc": "是否只读", "type": "boolean", "default": "false" },
+              { "prop": "upload", "desc": "上传配置对象", "type": "object", "default": "undefined" },
+              { "prop": "upload.url", "desc": "图片上传地址", "type": "string", "default": "-" },
+              { "prop": "upload.fieldName", "desc": "上传文件字段名", "type": "string", "default": "'file'" },
+              { "prop": "upload.headers", "desc": "上传请求头", "type": "Record<string, string>", "default": "{}" },
+              { "prop": "upload.videoUrl", "desc": "视频上传地址（不设置则使用 url）", "type": "string", "default": "undefined" }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "com": "NFlex",
+  "props": {
+    "vertical": true,
+    "justify": "center",
+    "align": "center",
+    "class": "min-h-screen"
+  },
+  "children": [
+    {
+      "com": "NResult",
+      "props": {
+        "status": "500",
+        "title": "500",
+        "description": "抱歉，服务器出现错误，请稍后再试"
+      },
+      "slots": {
+        "footer": [
+          {
+            "com": "NFlex",
+            "props": {
+              "justify": "center",
+              "class": "gap-4"
+            },
+            "children": [
+              {
+                "com": "NButton",
+                "props": {
+                  "type": "primary"
+                },
+                "events": {
+                  "click": { "script": "$methods.$tab.closeAndGo('/')" }
+                },
+                "children": "返回首页"
+              },
+              {
+                "com": "NButton",
+                "events": {
+                  "click": { "script": "$methods.$tab.refresh()" }
+                },
+                "children": "重试"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

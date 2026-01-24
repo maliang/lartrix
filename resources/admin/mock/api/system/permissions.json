@@ -1,0 +1,81 @@
+{
+  "list": [
+    {
+      "id": 1,
+      "parentId": null,
+      "name": "系统管理",
+      "code": "system",
+      "description": "系统管理模块",
+      "createdAt": "2024-01-01 00:00:00",
+      "children": [
+        {
+          "id": 2,
+          "parentId": 1,
+          "name": "用户管理",
+          "code": "system:user",
+          "description": "用户管理菜单",
+          "createdAt": "2024-01-01 00:00:00",
+          "children": [
+            {
+              "id": 3,
+              "parentId": 2,
+              "name": "新增用户",
+              "code": "system:user:add",
+              "description": "新增用户操作",
+              "createdAt": "2024-01-01 00:00:00"
+            },
+            {
+              "id": 4,
+              "parentId": 2,
+              "name": "编辑用户",
+              "code": "system:user:edit",
+              "description": "编辑用户操作",
+              "createdAt": "2024-01-01 00:00:00"
+            },
+            {
+              "id": 5,
+              "parentId": 2,
+              "name": "删除用户",
+              "code": "system:user:delete",
+              "description": "删除用户操作",
+              "createdAt": "2024-01-01 00:00:00"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "parentId": 1,
+          "name": "角色管理",
+          "code": "system:role",
+          "description": "角色管理菜单",
+          "createdAt": "2024-01-01 00:00:00"
+        },
+        {
+          "id": 7,
+          "parentId": 1,
+          "name": "菜单管理",
+          "code": "system:menu",
+          "description": "菜单管理菜单",
+          "createdAt": "2024-01-01 00:00:00"
+        },
+        {
+          "id": 8,
+          "parentId": 1,
+          "name": "权限管理",
+          "code": "system:permission",
+          "description": "权限管理菜单",
+          "createdAt": "2024-01-01 00:00:00"
+        },
+        {
+          "id": 9,
+          "parentId": 1,
+          "name": "系统设置",
+          "code": "system:setting",
+          "description": "系统设置菜单",
+          "createdAt": "2024-01-01 00:00:00"
+        }
+      ]
+    }
+  ],
+  "total": 9
+}
