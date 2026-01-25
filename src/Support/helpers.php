@@ -1,7 +1,5 @@
 <?php
 
-namespace Lartrix\Support;
-
 use Lartrix\Exceptions\ApiException;
 
 if (!function_exists('success')) {
@@ -16,7 +14,7 @@ if (!function_exists('success')) {
     function success(string|array $msg = 'success', mixed $data = null, int $code = 0): array
     {
         // 如果第一个参数是数组，则作为 data，msg 使用默认值
-        if (is_array($msg)) {
+        if (\is_array($msg)) {
             $data = $msg;
             $msg = 'success';
         }

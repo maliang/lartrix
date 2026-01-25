@@ -5,21 +5,33 @@ namespace Lartrix\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Lartrix\Models\Setting;
-use Lartrix\Schema\Components\NaiveUI\NCard;
-use Lartrix\Schema\Components\NaiveUI\NForm;
-use Lartrix\Schema\Components\NaiveUI\NFormItem;
-use Lartrix\Schema\Components\NaiveUI\NInput;
-use Lartrix\Schema\Components\NaiveUI\NSwitch;
-use Lartrix\Schema\Components\NaiveUI\NButton;
-use Lartrix\Schema\Components\NaiveUI\NSpace;
-use function Lartrix\Support\success;
+use Lartrix\Schema\Components\NaiveUI\Card;
+use Lartrix\Schema\Components\NaiveUI\Form;
+use Lartrix\Schema\Components\NaiveUI\FormItem;
+use Lartrix\Schema\Components\NaiveUI\Input;
+use Lartrix\Schema\Components\NaiveUI\SwitchC;
+use Lartrix\Schema\Components\NaiveUI\Button;
+use Lartrix\Schema\Components\NaiveUI\Space;
 
 class SettingController extends Controller
 {
     /**
+     * 设置入口（支持 action_type 分发）
+     */
+    public function index(Request $request): array
+    {
+        $actionType = $request->input('action_type', 'list');
+
+        return match ($actionType) {
+            'form_ui' => $this->formUi(),
+            default => $this->list(),
+        };
+    }
+
+    /**
      * 设置列表
      */
-    public function index(): array
+    protected function list(): array
     {
         $settings = Setting::orderBy('group')
             ->orderBy('sort')
@@ -89,51 +101,51 @@ class SettingController extends Controller
     /**
      * 系统设置表单 UI Schema
      */
-    public function formUi(): array
+    protected function formUi(): array
     {
-        $schema = NCard::make()
+        $schema = Card::make()
             ->title('系统设置')
             ->children([
-                NForm::make()
+                Form::make()
                     ->props(['model' => '{{ formData }}', 'labelPlacement' => 'left', 'labelWidth' => 120])
                     ->children([
-                        NFormItem::make()
+                        FormItem::make()
                             ->label('系统名称')
                             ->path('app_title')
                             ->children([
-                                NInput::make()
+                                Input::make()
                                     ->model('formData.app_title')
                                     ->placeholder('请输入系统名称'),
                             ]),
-                        NFormItem::make()
+                        FormItem::make()
                             ->label('系统副标题')
                             ->path('app_subtitle')
                             ->children([
-                                NInput::make()
+                                Input::make()
                                     ->model('formData.app_subtitle')
                                     ->placeholder('请输入系统副标题'),
                             ]),
-                        NFormItem::make()
+                        FormItem::make()
                             ->label('Logo 地址')
                             ->path('logo')
                             ->children([
-                                NInput::make()
+                                Input::make()
                                     ->model('formData.logo')
                                     ->placeholder('请输入 Logo 地址'),
                             ]),
-                        NFormItem::make()
+                        FormItem::make()
                             ->label('版权信息')
                             ->path('copyright')
                             ->children([
-                                NInput::make()
+                                Input::make()
                                     ->model('formData.copyright')
                                     ->placeholder('请输入版权信息'),
                             ]),
-                        NFormItem::make()
+                        FormItem::make()
                             ->children([
-                                NSpace::make()
+                                Space::make()
                                     ->children([
-                                        NButton::make()
+                                        Button::make()
                                             ->type('primary')
                                             ->children(['保存设置'])
                                             ->on('click', [

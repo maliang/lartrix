@@ -5,7 +5,6 @@ namespace Lartrix\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use function Lartrix\Support\error;
 
 class Authenticate
 {

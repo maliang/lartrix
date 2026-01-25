@@ -3,10 +3,10 @@
 namespace Lartrix\Schema\Components\Business;
 
 use Lartrix\Schema\Components\Component;
-use Lartrix\Schema\Components\NaiveUI\NForm;
-use Lartrix\Schema\Components\NaiveUI\NFormItem;
-use Lartrix\Schema\Components\NaiveUI\NSpace;
-use Lartrix\Schema\Components\NaiveUI\NButton;
+use Lartrix\Schema\Components\NaiveUI\Form;
+use Lartrix\Schema\Components\NaiveUI\FormItem;
+use Lartrix\Schema\Components\NaiveUI\Space;
+use Lartrix\Schema\Components\NaiveUI\Button;
 use Lartrix\Schema\JsonNodeInterface;
 
 /**
@@ -157,7 +157,7 @@ class OptForm implements JsonNodeInterface
             // 自动绑定 model
             $component->model("{$this->modelPath}.{$name}");
             
-            $formItem = NFormItem::make()->label($label);
+            $formItem = FormItem::make()->label($label);
             
             // 检查是否有条件渲染
             if (isset($field[4]) && is_string($field[4])) {
@@ -177,12 +177,12 @@ class OptForm implements JsonNodeInterface
 
         // 添加按钮
         if (!empty($this->buttons)) {
-            $formItems[] = NFormItem::make()->children([
-                NSpace::make()->props(['justify' => 'end'])->children($this->buttons),
+            $formItems[] = FormItem::make()->children([
+                Space::make()->props(['justify' => 'end'])->children($this->buttons),
             ]);
         }
 
-        return NForm::make()
+        return Form::make()
             ->props($this->formProps)
             ->children($formItems)
             ->toArray();

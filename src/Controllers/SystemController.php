@@ -3,21 +3,20 @@
 namespace Lartrix\Controllers;
 
 use Illuminate\Http\Request;
-use Lartrix\Schema\Components\Html\Html;
-use Lartrix\Schema\Components\NaiveUI\NCard;
-use Lartrix\Schema\Components\NaiveUI\NFlex;
-use Lartrix\Schema\Components\NaiveUI\NForm;
-use Lartrix\Schema\Components\NaiveUI\NFormItem;
-use Lartrix\Schema\Components\NaiveUI\NInput;
-use Lartrix\Schema\Components\NaiveUI\NInputGroup;
-use Lartrix\Schema\Components\NaiveUI\NButton;
-use Lartrix\Schema\Components\NaiveUI\NCheckbox;
-use Lartrix\Schema\Components\NaiveUI\NText;
-use Lartrix\Schema\Components\NaiveUI\NDivider;
-use Lartrix\Schema\Components\NaiveUI\NIcon;
+use Lartrix\Schema\Components\Custom\Html;
+use Lartrix\Schema\Components\NaiveUI\Card;
+use Lartrix\Schema\Components\NaiveUI\Flex;
+use Lartrix\Schema\Components\NaiveUI\Form;
+use Lartrix\Schema\Components\NaiveUI\FormItem;
+use Lartrix\Schema\Components\NaiveUI\Input;
+use Lartrix\Schema\Components\NaiveUI\InputGroup;
+use Lartrix\Schema\Components\NaiveUI\Button;
+use Lartrix\Schema\Components\NaiveUI\Checkbox;
+use Lartrix\Schema\Components\NaiveUI\Text;
+use Lartrix\Schema\Components\NaiveUI\Divider;
+use Lartrix\Schema\Components\NaiveUI\Icon;
 use Lartrix\Schema\Components\Custom\SvgIcon;
-use Lartrix\Schema\Components\Common\SystemLogo;
-use Lartrix\Schema\Components\NaiveUI\NResult;
+use Lartrix\Schema\Components\NaiveUI\Result;
 use Lartrix\Schema\Components\Custom\GlobalSearch;
 use Lartrix\Schema\Components\Custom\HeaderNotification;
 use Lartrix\Schema\Components\Custom\FullScreen;
@@ -25,8 +24,6 @@ use Lartrix\Schema\Components\Custom\LangSwitch;
 use Lartrix\Schema\Components\Custom\ThemeSchemaSwitch;
 use Lartrix\Schema\Components\Custom\ThemeButton;
 use Lartrix\Schema\Components\Custom\UserAvatar;
-use function Lartrix\Support\success;
-use function Lartrix\Support\error;
 
 class SystemController extends Controller
 {
@@ -44,13 +41,9 @@ class SystemController extends Controller
      */
     public function loginPage(): array
     {
-        // 从设置中获取登录页配置
-        $settingModel = $this->getSettingModel();
-        $loginConfig = $settingModel::getGroup('login');
-
-        $appTitle = $loginConfig['app_title'] ?? config('app.name', 'Lartrix Admin');
-        $appSubtitle = $loginConfig['app_subtitle'] ?? 'JSON 驱动的后台管理系统';
-        $copyright = $loginConfig['copyright'] ?? '© ' . date('Y') . ' Lartrix Admin. All rights reserved.';
+        $appTitle = config('lartrix.app_title', 'Lartrix Admin');
+        $appSubtitle = 'JSON 驱动的后台管理系统';
+        $copyright = config('lartrix.copyright', 'Lartrix Admin');
 
         // 构建登录页面 Schema
         $schema = Html::div()
@@ -79,7 +72,7 @@ class SystemController extends Controller
                 // 登录卡片
                 $this->buildLoginCard($appTitle, $appSubtitle),
                 // 版权信息
-                NText::make()
+                Text::make()
                     ->props([
                         'style' => [
                             'marginTop' => '32px',
@@ -229,9 +222,9 @@ class SystemController extends Controller
     /**
      * 构建登录卡片
      */
-    protected function buildLoginCard(string $appTitle, string $appSubtitle): NCard
+    protected function buildLoginCard(string $appTitle, string $appSubtitle): Card
     {
-        return NCard::make()
+        return Card::make()
             ->bordered(false)
             ->props([
                 'style' => [
@@ -258,24 +251,24 @@ class SystemController extends Controller
     /**
      * 构建 Logo 头部
      */
-    protected function buildLogoHeader(string $appTitle, string $appSubtitle): NFlex
+    protected function buildLogoHeader(string $appTitle, string $appSubtitle): Flex
     {
-        return NFlex::make()
+        return Flex::make()
             ->align('center')
             ->justify('center')
             ->props(['style' => ['marginBottom' => '32px', 'gap' => '12px']])
             ->children([
                 Html::make('img')
-                    ->props(['src' => '/admin/favicon.svg', 'style' => ['width' => '48px', 'height' => '48px']]),
-                NFlex::make()
+                    ->props(['src' => config('lartrix.logo'), 'style' => ['width' => '48px', 'height' => '48px']]),
+                Flex::make()
                     ->vertical()
                     ->props(['style' => ['gap' => '2px']])
                     ->children([
-                        NText::make()
+                        Text::make()
                             ->strong()
                             ->props(['style' => ['fontSize' => '24px', 'lineHeight' => '1.2']])
                             ->children([$appTitle]),
-                        NText::make()
+                        Text::make()
                             ->depth(3)
                             ->props(['style' => ['fontSize' => '12px']])
                             ->children([$appSubtitle]),
@@ -291,31 +284,31 @@ class SystemController extends Controller
         return Html::div()
             ->if("mode === 'login'")
             ->children([
-                NForm::make()
+                Form::make()
                     ->model('form')
                     ->rules('rules')
                     ->showLabel(false)
                     ->children([
                         // 用户名
-                        NFormItem::make()
+                        FormItem::make()
                             ->path('username')
                             ->children([
-                                NInput::make()
+                                Input::make()
                                     ->model('form.username')
                                     ->placeholder('用户名')
                                     ->size('large')
                                     ->clearable()
                                     ->slot('prefix', [
-                                        NIcon::make()
+                                        Icon::make()
                                             ->props(['style' => ['color' => '#999']])
                                             ->children([SvgIcon::make('carbon:user')]),
                                     ]),
                             ]),
                         // 密码
-                        NFormItem::make()
+                        FormItem::make()
                             ->path('password')
                             ->children([
-                                NInput::make()
+                                Input::make()
                                     ->model('form.password')
                                     ->type('password')
                                     ->placeholder('密码')
@@ -323,27 +316,27 @@ class SystemController extends Controller
                                     ->showPasswordOn('click')
                                     ->clearable()
                                     ->slot('prefix', [
-                                        NIcon::make()
+                                        Icon::make()
                                             ->props(['style' => ['color' => '#999']])
                                             ->children([SvgIcon::make('carbon:password')]),
                                     ]),
                             ]),
                         // 记住我 & 忘记密码
-                        NFlex::make()
+                        Flex::make()
                             ->justify('space-between')
                             ->align('center')
                             ->props(['style' => ['marginBottom' => '24px']])
                             ->children([
-                                NCheckbox::make()
+                                Checkbox::make()
                                     ->props(['model:checked' => 'rememberMe'])
                                     ->children(['记住我']),
-                                NButton::make()
+                                Button::make()
                                     ->props(['text' => true, 'type' => 'primary'])
                                     ->on('click', ['set' => 'mode', 'value' => 'reset'])
                                     ->children(['忘记密码？']),
                             ]),
                         // 登录按钮
-                        NButton::make()
+                        Button::make()
                             ->type('primary')
                             ->props([
                                 'block' => true,
@@ -354,46 +347,7 @@ class SystemController extends Controller
                             ])
                             ->on('click', ['script' => 'state.loading = true; try { await $methods.login(state.form.username, state.form.password); } finally { state.loading = false; }'])
                             ->text('登 录'),
-                    ]),
-                // 分割线
-                NDivider::make()
-                    ->props(['style' => ['margin' => '24px 0']])
-                    ->children([
-                        NText::make()
-                            ->depth(3)
-                            ->props(['style' => ['fontSize' => '12px']])
-                            ->children(['其他登录方式']),
-                    ]),
-                // 社交登录按钮
-                $this->buildSocialLoginButtons(),
-            ]);
-    }
-
-
-    /**
-     * 构建社交登录按钮
-     */
-    protected function buildSocialLoginButtons(): NFlex
-    {
-        return NFlex::make()
-            ->justify('center')
-            ->props(['style' => ['gap' => '24px']])
-            ->children([
-                NButton::make()
-                    ->circle()
-                    ->quaternary()
-                    ->props(['style' => ['width' => '44px', 'height' => '44px']])
-                    ->children([SvgIcon::make('carbon:logo-github')->props(['style' => ['fontSize' => '20px', 'color' => '#666']])]),
-                NButton::make()
-                    ->circle()
-                    ->quaternary()
-                    ->props(['style' => ['width' => '44px', 'height' => '44px']])
-                    ->children([SvgIcon::make('carbon:logo-wechat')->props(['style' => ['fontSize' => '20px', 'color' => '#07c160']])]),
-                NButton::make()
-                    ->circle()
-                    ->quaternary()
-                    ->props(['style' => ['width' => '44px', 'height' => '44px']])
-                    ->children([SvgIcon::make('carbon:email')->props(['style' => ['fontSize' => '20px', 'color' => '#1890ff']])]),
+                    ])
             ]);
     }
 
@@ -406,11 +360,11 @@ class SystemController extends Controller
             ->if("mode === 'reset'")
             ->children([
                 // 返回按钮和标题
-                NFlex::make()
+                Flex::make()
                     ->align('center')
                     ->props(['style' => ['marginBottom' => '24px']])
                     ->children([
-                        NButton::make()
+                        Button::make()
                             ->props(['text' => true, 'style' => ['padding' => '0']])
                             ->on('click', [
                                 ['set' => 'mode', 'value' => 'login'],
@@ -418,40 +372,40 @@ class SystemController extends Controller
                                 ['set' => 'countdown', 'value' => 0],
                             ])
                             ->children([SvgIcon::make('carbon:arrow-left')->props(['style' => ['fontSize' => '18px']])]),
-                        NText::make()
+                        Text::make()
                             ->strong()
                             ->props(['style' => ['fontSize' => '18px', 'marginLeft' => '12px']])
                             ->children(['重置密码']),
                     ]),
                 // 重置密码表单
-                NForm::make()
+                Form::make()
                     ->model('resetForm')
                     ->rules('resetRules')
                     ->showLabel(false)
                     ->children([
                         // 手机号
-                        NFormItem::make()
+                        FormItem::make()
                             ->path('phone')
                             ->children([
-                                NInput::make()
+                                Input::make()
                                     ->model('resetForm.phone')
                                     ->placeholder('手机号')
                                     ->size('large')
                                     ->clearable()
                                     ->maxlength(11)
                                     ->slot('prefix', [
-                                        NIcon::make()
+                                        Icon::make()
                                             ->props(['style' => ['color' => '#999']])
                                             ->children([SvgIcon::make('carbon:phone')]),
                                     ]),
                             ]),
                         // 验证码
-                        NFormItem::make()
+                        FormItem::make()
                             ->path('code')
                             ->children([
-                                NInputGroup::make()
+                                InputGroup::make()
                                     ->children([
-                                        NInput::make()
+                                        Input::make()
                                             ->model('resetForm.code')
                                             ->placeholder('验证码')
                                             ->size('large')
@@ -459,11 +413,11 @@ class SystemController extends Controller
                                             ->maxlength(6)
                                             ->props(['style' => ['flex' => '1']])
                                             ->slot('prefix', [
-                                                NIcon::make()
+                                                Icon::make()
                                                     ->props(['style' => ['color' => '#999']])
                                                     ->children([SvgIcon::make('carbon:security')]),
                                             ]),
-                                        NButton::make()
+                                        Button::make()
                                             ->type('primary')
                                             ->size('large')
                                             ->props([
@@ -477,10 +431,10 @@ class SystemController extends Controller
                                     ]),
                             ]),
                         // 新密码
-                        NFormItem::make()
+                        FormItem::make()
                             ->path('newPassword')
                             ->children([
-                                NInput::make()
+                                Input::make()
                                     ->model('resetForm.newPassword')
                                     ->type('password')
                                     ->placeholder('新密码')
@@ -488,16 +442,16 @@ class SystemController extends Controller
                                     ->showPasswordOn('click')
                                     ->clearable()
                                     ->slot('prefix', [
-                                        NIcon::make()
+                                        Icon::make()
                                             ->props(['style' => ['color' => '#999']])
                                             ->children([SvgIcon::make('carbon:password')]),
                                     ]),
                             ]),
                         // 确认密码
-                        NFormItem::make()
+                        FormItem::make()
                             ->path('confirmPassword')
                             ->children([
-                                NInput::make()
+                                Input::make()
                                     ->model('resetForm.confirmPassword')
                                     ->type('password')
                                     ->placeholder('确认密码')
@@ -505,13 +459,13 @@ class SystemController extends Controller
                                     ->showPasswordOn('click')
                                     ->clearable()
                                     ->slot('prefix', [
-                                        NIcon::make()
+                                        Icon::make()
                                             ->props(['style' => ['color' => '#999']])
                                             ->children([SvgIcon::make('carbon:checkmark')]),
                                     ]),
                             ]),
                         // 重置按钮
-                        NButton::make()
+                        Button::make()
                             ->type('primary')
                             ->props([
                                 'block' => true,
@@ -543,26 +497,26 @@ class SystemController extends Controller
      */
     public function forbidden(): array
     {
-        $schema = NFlex::make()
+        $schema = Flex::make()
             ->vertical()
             ->justify('center')
             ->align('center')
             ->props(['class' => 'min-h-screen'])
             ->children([
-                NResult::make()
+                Result::make()
                     ->status('403')
                     ->title('403')
                     ->description('抱歉，您没有权限访问此页面')
                     ->slot('footer', [
-                        NFlex::make()
+                        Flex::make()
                             ->justify('center')
                             ->props(['class' => 'gap-4'])
                             ->children([
-                                NButton::make()
+                                Button::make()
                                     ->type('primary')
                                     ->on('click', ['call' => '$router.push', 'args' => ['/']])
                                     ->text('返回首页'),
-                                NButton::make()
+                                Button::make()
                                     ->on('click', ['call' => '$router.back'])
                                     ->text('返回上一页'),
                             ]),
@@ -577,26 +531,26 @@ class SystemController extends Controller
      */
     public function notFound(): array
     {
-        $schema = NFlex::make()
+        $schema = Flex::make()
             ->vertical()
             ->justify('center')
             ->align('center')
             ->props(['class' => 'min-h-screen'])
             ->children([
-                NResult::make()
+                Result::make()
                     ->status('404')
                     ->title('404')
                     ->description('抱歉，您访问的页面不存在')
                     ->slot('footer', [
-                        NFlex::make()
+                        Flex::make()
                             ->justify('center')
                             ->props(['class' => 'gap-4'])
                             ->children([
-                                NButton::make()
+                                Button::make()
                                     ->type('primary')
                                     ->on('click', ['call' => '$router.push', 'args' => ['/']])
                                     ->text('返回首页'),
-                                NButton::make()
+                                Button::make()
                                     ->on('click', ['call' => '$router.back'])
                                     ->text('返回上一页'),
                             ]),
@@ -611,26 +565,26 @@ class SystemController extends Controller
      */
     public function serverError(): array
     {
-        $schema = NFlex::make()
+        $schema = Flex::make()
             ->vertical()
             ->justify('center')
             ->align('center')
             ->props(['class' => 'min-h-screen'])
             ->children([
-                NResult::make()
+                Result::make()
                     ->status('500')
                     ->title('500')
                     ->description('抱歉，服务器出现错误，请稍后再试')
                     ->slot('footer', [
-                        NFlex::make()
+                        Flex::make()
                             ->justify('center')
                             ->props(['class' => 'gap-4'])
                             ->children([
-                                NButton::make()
+                                Button::make()
                                     ->type('primary')
                                     ->on('click', ['call' => '$router.push', 'args' => ['/']])
                                     ->text('返回首页'),
-                                NButton::make()
+                                Button::make()
                                     ->on('click', ['call' => 'location.reload'])
                                     ->text('刷新页面'),
                             ]),

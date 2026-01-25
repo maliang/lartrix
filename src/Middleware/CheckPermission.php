@@ -6,7 +6,6 @@ use Closure;
 use Illuminate\Http\Request;
 use Lartrix\Services\PermissionService;
 use Symfony\Component\HttpFoundation\Response;
-use function Lartrix\Support\error;
 
 class CheckPermission
 {

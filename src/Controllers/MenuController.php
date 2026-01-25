@@ -3,84 +3,76 @@
 namespace Lartrix\Controllers;
 
 use Illuminate\Http\Request;
-use Lartrix\Schema\Components\NaiveUI\NCard;
-use Lartrix\Schema\Components\NaiveUI\NForm;
-use Lartrix\Schema\Components\NaiveUI\NFormItem;
-use Lartrix\Schema\Components\NaiveUI\NInput;
-use Lartrix\Schema\Components\NaiveUI\NInputNumber;
-use Lartrix\Schema\Components\NaiveUI\NSelect;
-use Lartrix\Schema\Components\NaiveUI\NSwitch;
-use Lartrix\Schema\Components\NaiveUI\NTreeSelect;
-use Lartrix\Schema\Components\NaiveUI\NButton;
-use Lartrix\Schema\Components\NaiveUI\NSpace;
-use Lartrix\Schema\Components\Json\JsonDataTable;
-use Lartrix\Schema\Components\NaiveUI\NPopconfirm;
-use Lartrix\Schema\Components\NaiveUI\NTag;
-use Lartrix\Schema\Components\Custom\SvgIcon;
-use function Lartrix\Support\success;
-use function Lartrix\Support\error;
+use Illuminate\Database\Eloquent\Builder;
+use Lartrix\Schema\Components\NaiveUI\Input;
+use Lartrix\Schema\Components\NaiveUI\InputNumber;
+use Lartrix\Schema\Components\NaiveUI\Select;
+use Lartrix\Schema\Components\NaiveUI\SwitchC;
+use Lartrix\Schema\Components\NaiveUI\TreeSelect;
+use Lartrix\Schema\Components\NaiveUI\Button;
+use Lartrix\Schema\Components\NaiveUI\Space;
+use Lartrix\Schema\Components\NaiveUI\Popconfirm;
+use Lartrix\Schema\Components\NaiveUI\Tag;
+use Lartrix\Schema\Components\Business\CrudPage;
+use Lartrix\Schema\Components\Business\OptForm;
+use Lartrix\Schema\Actions\SetAction;
+use Lartrix\Schema\Actions\CallAction;
+use Lartrix\Schema\Actions\FetchAction;
 
-class MenuController extends Controller
+class MenuController extends CrudController
 {
-    /**
-     * 获取菜单模型类
-     */
-    protected function getMenuModel(): string
+    // ==================== 配置方法 ====================
+
+    protected function getModelClass(): string
     {
         return config('lartrix.models.menu', \Lartrix\Models\Menu::class);
+    }
+
+    protected function getResourceName(): string
+    {
+        return '菜单';
+    }
+
+    protected function getTable(): string
+    {
+        return config('lartrix.tables.menus', 'admin_menus');
+    }
+
+    protected function getDefaultOrder(): array
+    {
+        return ['order', 'asc'];
+    }
+
+    // ==================== 路由方法重写 ====================
+
+    public function index(Request $request): mixed
+    {
+        $actionType = $request->input('action_type', 'list');
+
+        return match ($actionType) {
+            'all' => $this->all(),
+            'list_ui' => $this->listUi(),
+            'form_ui' => $this->formUi(),
+            default => $this->list($request),
+        };
     }
 
     /**
      * 当前用户可见菜单（MenuRoute 格式）
      */
-    public function index(Request $request): array
+    protected function list(Request $request): array
     {
-        $menuModel = $this->getMenuModel();
-        $routes = $menuModel::getRoutesForUser($request->user());
+        $modelClass = $this->getModelClass();
+        $routes = $modelClass::getRoutesForUser($request->user());
         return success($routes);
     }
 
-    /**
-     * 所有菜单（管理用）
-     */
-    public function all(): array
+    // ==================== 验证规则 ====================
+
+    protected function getStoreRules(): array
     {
-        $menuModel = $this->getMenuModel();
-        $menus = $menuModel::query()
-            ->whereNull('parent_id')
-            ->with('allChildren')
-            ->orderBy('order')
-            ->get();
-
-        // 递归转换 all_children 为 children
-        $result = $this->transformMenuChildren($menus->toArray());
-
-        return success($result);
-    }
-
-    /**
-     * 递归转换菜单子节点字段名
-     */
-    protected function transformMenuChildren(array $menus): array
-    {
-        return array_map(function ($menu) {
-            if (isset($menu['all_children'])) {
-                $menu['children'] = $this->transformMenuChildren($menu['all_children']);
-                unset($menu['all_children']);
-            }
-            return $menu;
-        }, $menus);
-    }
-
-    /**
-     * 创建菜单
-     */
-    public function store(Request $request): array
-    {
-        $menuModel = $this->getMenuModel();
-        $table = config('lartrix.tables.menus', 'admin_menus');
-
-        $validated = $request->validate([
+        $table = $this->getTable();
+        return [
             'parent_id' => "nullable|integer|exists:{$table},id",
             'name' => 'required|string|max:255',
             'path' => 'required|string|max:255',
@@ -101,42 +93,13 @@ class MenuController extends Controller
             'is_default_after_login' => 'boolean',
             'requires_auth' => 'boolean',
             'active_menu' => 'nullable|string|max:255',
-        ]);
-
-        $menu = $menuModel::create($validated);
-
-        return success('创建成功', $menu);
+        ];
     }
 
-    /**
-     * 菜单详情
-     */
-    public function show(int $id): array
+    protected function getUpdateRules(int $id): array
     {
-        $menuModel = $this->getMenuModel();
-        $menu = $menuModel::with('children')->find($id);
-
-        if (!$menu) {
-            error('菜单不存在', null, 40004);
-        }
-
-        return success($menu->toArray());
-    }
-
-    /**
-     * 更新菜单
-     */
-    public function update(Request $request, int $id): array
-    {
-        $menuModel = $this->getMenuModel();
-        $table = config('lartrix.tables.menus', 'admin_menus');
-        $menu = $menuModel::find($id);
-
-        if (!$menu) {
-            error('菜单不存在', null, 40004);
-        }
-
-        $validated = $request->validate([
+        $table = $this->getTable();
+        return [
             'parent_id' => "nullable|integer|exists:{$table},id",
             'name' => 'string|max:255',
             'path' => 'string|max:255',
@@ -157,58 +120,78 @@ class MenuController extends Controller
             'is_default_after_login' => 'boolean',
             'requires_auth' => 'boolean',
             'active_menu' => 'nullable|string|max:255',
-        ]);
+        ];
+    }
+
+    protected function validateUpdate(Request $request, int $id): array
+    {
+        $validated = parent::validateUpdate($request, $id);
 
         // 防止设置自己为父级
         if (isset($validated['parent_id']) && $validated['parent_id'] == $id) {
-            error('不能将自己设为父级菜单', null, 40022);
+            throw new \Lartrix\Exceptions\ApiException('不能将自己设为父级菜单', 40022);
         }
 
-        $menu->fill($validated);
-        $menu->save();
+        return $validated;
+    }
 
-        return success('更新成功', $menu);
+    protected function beforeDelete(mixed $model): void
+    {
+        if ($model->children()->exists()) {
+            throw new \Lartrix\Exceptions\ApiException('请先删除子菜单', 40022);
+        }
+    }
+
+    // ==================== 自定义方法 ====================
+
+    /**
+     * 所有菜单（管理用）
+     */
+    protected function all(): array
+    {
+        $modelClass = $this->getModelClass();
+        $menus = $modelClass::query()
+            ->whereNull('parent_id')
+            ->with('allChildren')
+            ->orderBy('order')
+            ->get();
+
+        $result = $this->transformMenuChildren($menus->toArray());
+
+        return success($result);
     }
 
     /**
-     * 删除菜单
+     * 递归转换菜单子节点字段名
      */
-    public function destroy(int $id): array
+    protected function transformMenuChildren(array $menus): array
     {
-        $menuModel = $this->getMenuModel();
-        $menu = $menuModel::find($id);
-
-        if (!$menu) {
-            error('菜单不存在', null, 40004);
-        }
-
-        // 检查是否有子菜单
-        if ($menu->children()->exists()) {
-            error('请先删除子菜单', null, 40022);
-        }
-
-        $menu->delete();
-
-        return success('删除成功');
+        return array_map(function ($menu) {
+            if (isset($menu['all_children'])) {
+                $menu['children'] = $this->transformMenuChildren($menu['all_children']);
+                unset($menu['all_children']);
+            }
+            return $menu;
+        }, $menus);
     }
 
     /**
-     * 菜单排序
+     * 菜单排序（action_type=sort）
      */
-    public function sort(Request $request): array
+    protected function updateSort(Request $request, int $id): array
     {
-        $menuModel = $this->getMenuModel();
-        $table = config('lartrix.tables.menus', 'admin_menus');
+        $table = $this->getTable();
+        $modelClass = $this->getModelClass();
 
         $validated = $request->validate([
             'items' => 'required|array',
-            'items.*.id' => "required|integer|exists:{$table},id",
+            "items.*.id" => "required|integer|exists:{$table},id",
             'items.*.order' => 'required|integer',
-            'items.*.parent_id' => "nullable|integer|exists:{$table},id",
+            "items.*.parent_id" => "nullable|integer|exists:{$table},id",
         ]);
 
         foreach ($validated['items'] as $item) {
-            $menuModel::where('id', $item['id'])->update([
+            $modelClass::where('id', $item['id'])->update([
                 'order' => $item['order'],
                 'parent_id' => $item['parent_id'] ?? null,
             ]);
@@ -217,260 +200,125 @@ class MenuController extends Controller
         return success('排序成功');
     }
 
-    /**
-     * 菜单列表页 UI Schema
-     */
-    public function listUi(): array
+    // ==================== UI Schema ====================
+
+    protected function listUi(): array
     {
-        $schema = NCard::make()
-            ->props(['title' => '菜单管理'])
+        // 菜单表单
+        $menuForm = OptForm::make('formData')
+            ->fields([
+                ['父级菜单', 'parent_id', TreeSelect::make()->props([
+                    'placeholder' => '无（顶级菜单）',
+                    'clearable' => true,
+                    'options' => '{{ menuTreeOptions }}',
+                    'keyField' => 'id',
+                    'labelField' => 'title',
+                    'childrenField' => 'children',
+                ])],
+                ['菜单名称', 'name', Input::make()->props(['placeholder' => '路由名称（英文）'])],
+                ['菜单标题', 'title', Input::make()->props(['placeholder' => '显示的菜单标题'])],
+                ['路由路径', 'path', Input::make()->props(['placeholder' => '如：/user'])],
+                ['图标', 'icon', Input::make()->props(['placeholder' => '如：mdi:account'])],
+                ['重定向', 'redirect', Input::make()->props(['placeholder' => '重定向路径'])],
+                ['排序', 'order', InputNumber::make()->props(['min' => 0]), 0],
+                ['布局类型', 'layout_type', Select::make()->props([
+                    'clearable' => true,
+                    'options' => [
+                        ['label' => '普通布局', 'value' => 'normal'],
+                        ['label' => '空白布局', 'value' => 'blank'],
+                    ],
+                ])],
+                ['打开方式', 'open_type', Select::make()->props([
+                    'clearable' => true,
+                    'options' => [
+                        ['label' => '正常打开', 'value' => 'normal'],
+                        ['label' => 'iframe 嵌入', 'value' => 'iframe'],
+                        ['label' => '新窗口打开', 'value' => 'newWindow'],
+                    ],
+                ])],
+                ['外链地址', 'href', Input::make()->props(['placeholder' => '外部链接地址']), '', "formData.open_type === 'iframe' || formData.open_type === 'newWindow'"],
+                ['使用 JSON 渲染', 'use_json_renderer', SwitchC::make(), false],
+                ['Schema 来源', 'schema_source', Input::make()->props(['placeholder' => 'API 地址或静态文件路径']), '', 'formData.use_json_renderer'],
+                ['隐藏菜单', 'hide_in_menu', SwitchC::make(), false],
+                ['缓存页面', 'keep_alive', SwitchC::make(), false],
+                ['需要认证', 'requires_auth', SwitchC::make(), true],
+                ['登录后默认页', 'is_default_after_login', SwitchC::make(), false],
+            ])
+            ->buttons([
+                Button::make()->on('click', SetAction::make('formVisible', false))->text('取消'),
+                Button::make()->type('primary')->props(['loading' => '{{ submitting }}'])->on('click', ['call' => 'handleSubmit'])->text('确定'),
+            ]);
+
+        $schema = CrudPage::make('菜单管理')
+            ->apiPrefix('/menus')
+            ->apiParams(['action_type' => 'all'])
+            ->columns($this->getTableColumns())
+            ->scrollX(1200)
+            ->pagination(false)
+            ->tree()
+            ->toolbarLeft([
+                Button::make()
+                    ->type('primary')
+                    ->on('click', [
+                        SetAction::batch([
+                            'editingId' => null,
+                            'formData' => $menuForm->getDefaultData(),
+                            'formVisible' => true,
+                        ]),
+                        CallAction::make('loadMenuTree'),
+                    ])
+                    ->text('新增'),
+                'expandAll',
+                'collapseAll',
+            ])
             ->data([
-                'tableData' => [],
-                'loading' => false,
-                'expandedKeys' => [],
-                'columns' => $this->getTableColumns(),
+                'formData' => $menuForm->getDefaultData(),
+                'editingId' => null,
+                'submitting' => false,
+                'menuTreeOptions' => [],
             ])
             ->methods([
-                'loadData' => [
-                    ['set' => 'loading', 'value' => true],
-                    [
-                        'fetch' => '/menus/all',
-                        'method' => 'GET',
-                        'then' => [
-                            ['set' => 'tableData', 'value' => '{{ $response.data || [] }}'],
-                        ],
-                        'catch' => [
-                            ['script' => 'console.error("加载失败:", $error);'],
-                        ],
-                        'finally' => [
-                            ['set' => 'loading', 'value' => false],
-                        ],
-                    ],
+                'loadMenuTree' => [
+                    FetchAction::make('/menus?action_type=all')
+                        ->get()
+                        ->then([
+                            SetAction::make('menuTreeOptions', '{{ $response.data || [] }}'),
+                        ]),
                 ],
-                'handleAdd' => [
-                    ['call' => '$router.push', 'args' => ['/system/menu/add']],
-                ],
-                'handleEdit' => [
-                    ['call' => '$router.push', 'args' => ['/system/menu/edit?id={{ $event.id }}']],
+                'handleSubmit' => [
+                    SetAction::make('submitting', true),
+                    FetchAction::make('{{ editingId ? "/menus/" + editingId : "/menus" }}')
+                        ->method('{{ editingId ? "PUT" : "POST" }}')
+                        ->body('{{ formData }}')
+                        ->then([
+                            CallAction::make('$message.success', ['{{ editingId ? "更新成功" : "创建成功" }}']),
+                            SetAction::make('formVisible', false),
+                            CallAction::make('loadData'),
+                        ])
+                        ->catch([
+                            CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                        ])
+                        ->finally([
+                            SetAction::make('submitting', false),
+                        ]),
                 ],
                 'handleAddChild' => [
-                    ['call' => '$router.push', 'args' => ['/system/menu/add?parentId={{ $event.id }}']],
-                ],
-                'handleDelete' => [
-                    [
-                        'fetch' => '/menus/{{ $event }}',
-                        'method' => 'DELETE',
-                        'then' => [
-                            ['call' => '$message.success', 'args' => ['删除成功']],
-                            ['call' => 'loadData'],
-                        ],
-                        'catch' => [
-                            ['call' => '$message.error', 'args' => ['{{ $error.message || "删除失败" }}']],
-                        ],
-                    ],
-                ],
-                'expandAll' => [
-                    ['script' => "const getAllKeys = (items) => items.reduce((keys, item) => { keys.push(item.id); if (item.children) keys.push(...getAllKeys(item.children)); return keys; }, []); state.expandedKeys = getAllKeys(state.tableData);"],
-                ],
-                'collapseAll' => [
-                    ['set' => 'expandedKeys', 'value' => []],
+                    SetAction::batch([
+                        'editingId' => null,
+                        'formData' => array_merge($menuForm->getDefaultData(), ['parent_id' => '{{ $event.id }}']),
+                        'formVisible' => true,
+                    ]),
+                    CallAction::make('loadMenuTree'),
                 ],
             ])
-            ->onMounted(['call' => 'loadData'])
-            ->children([
-                NSpace::make()
-                    ->props(['vertical' => true, 'size' => 'large'])
-                    ->children([
-                        // 操作按钮
-                        NSpace::make()->children([
-                            NButton::make()
-                                ->type('primary')
-                                ->on('click', ['call' => 'handleAdd'])
-                                ->children([
-                                    SvgIcon::make('carbon:add')->props(['class' => 'mr-1']),
-                                    '新增菜单',
-                                ]),
-                            NButton::make()
-                                ->on('click', ['call' => 'expandAll'])
-                                ->text('展开全部'),
-                            NButton::make()
-                                ->on('click', ['call' => 'collapseAll'])
-                                ->text('折叠全部'),
-                        ]),
-                        // 数据表格
-                        JsonDataTable::make()
-                            ->props([
-                                'loading' => '{{ loading }}',
-                                'data' => '{{ tableData }}',
-                                'columns' => '{{ columns }}',
-                                'rowKey' => '{{ row => row.id }}',
-                                'defaultExpandAll' => true,
-                                'expandedRowKeys' => '{{ expandedKeys }}',
-                                'scrollX' => 1200,
-                            ])
-                            ->on('update:expanded-row-keys', ['set' => 'expandedKeys', 'value' => '{{ $event }}'])
-                            ->slot('hide_in_menu', [
-                                NTag::make()
-                                    ->props([
-                                        'type' => "{{ slotData.row.hide_in_menu ? 'warning' : 'success' }}",
-                                        'size' => 'small',
-                                    ])
-                                    ->children(["{{ slotData.row.hide_in_menu ? '是' : '否' }}"]),
-                            ], 'slotData')
-                            ->slot('actions', [
-                                NSpace::make()->children([
-                                    NButton::make()
-                                        ->size('small')
-                                        ->props(['type' => 'primary', 'text' => true])
-                                        ->on('click', ['call' => 'handleEdit', 'args' => ['{{ slotData.row }}']])
-                                        ->text('编辑'),
-                                    NButton::make()
-                                        ->size('small')
-                                        ->props(['type' => 'success', 'text' => true])
-                                        ->on('click', ['call' => 'handleAddChild', 'args' => ['{{ slotData.row }}']])
-                                        ->text('添加子菜单'),
-                                    NPopconfirm::make()
-                                        ->on('positive-click', ['call' => 'handleDelete', 'args' => ['{{ slotData.row.id }}']])
-                                        ->slot('trigger', [
-                                            NButton::make()
-                                                ->size('small')
-                                                ->props(['type' => 'error', 'text' => true])
-                                                ->text('删除'),
-                                        ])
-                                        ->children(['确定要删除该菜单吗？']),
-                                ]),
-                            ], 'slotData'),
-                    ]),
-            ]);
+            ->modal('form', '{{ editingId ? "编辑菜单" : "新增菜单" }}', $menuForm, ['width' => '600px']);
 
-        return success($schema->toArray());
+        return success($schema->build());
     }
 
-    /**
-     * 菜单表单 UI Schema（新增/编辑）
-     */
-    public function formUi(Request $request): array
+    protected function formUi(): array
     {
-        $id = $request->query('id');
-        $isEdit = !empty($id);
-
-        // 获取菜单树（用于选择父级）
-        $menuTree = $this->getMenuTreeOptions($id);
-
-        $schema = NCard::make()
-            ->title($isEdit ? '编辑菜单' : '新增菜单')
-            ->children([
-                NForm::make()
-                    ->props(['labelPlacement' => 'left', 'labelWidth' => 120])
-                    ->children([
-                        // 基本信息
-                        NFormItem::make()->label('父级菜单')->path('parent_id')->children([
-                            NTreeSelect::make()->props([
-                                'placeholder' => '无（顶级菜单）',
-                                'clearable' => true,
-                                'options' => $menuTree,
-                                'keyField' => 'id',
-                                'labelField' => 'title',
-                                'childrenField' => 'children',
-                            ])->model('parent_id'),
-                        ]),
-                        NFormItem::make()->label('菜单名称')->path('name')
-                            ->props(['required' => true])
-                            ->children([
-                                NInput::make()->props(['placeholder' => '路由名称（英文）'])->model('name'),
-                            ]),
-                        NFormItem::make()->label('菜单标题')->path('title')
-                            ->props(['required' => true])
-                            ->children([
-                                NInput::make()->props(['placeholder' => '显示的菜单标题'])->model('title'),
-                            ]),
-                        NFormItem::make()->label('路由路径')->path('path')
-                            ->props(['required' => true])
-                            ->children([
-                                NInput::make()->props(['placeholder' => '如：/user'])->model('path'),
-                            ]),
-                        NFormItem::make()->label('组件路径')->path('component')->children([
-                            NInput::make()->props(['placeholder' => '如：views/user/index'])->model('component'),
-                        ]),
-                        NFormItem::make()->label('图标')->path('icon')->children([
-                            NInput::make()->props(['placeholder' => '如：mdi:account'])->model('icon'),
-                        ]),
-                        NFormItem::make()->label('重定向')->path('redirect')->children([
-                            NInput::make()->props(['placeholder' => '重定向路径'])->model('redirect'),
-                        ]),
-                        NFormItem::make()->label('排序')->path('order')->children([
-                            NInputNumber::make()->props(['min' => 0])->model('order'),
-                        ]),
-
-                        // 布局配置
-                        NFormItem::make()->label('布局类型')->path('layout_type')->children([
-                            NSelect::make()->props([
-                                'options' => [
-                                    ['label' => '普通布局', 'value' => 'normal'],
-                                    ['label' => '空白布局', 'value' => 'blank'],
-                                ],
-                            ])->model('layout_type'),
-                        ]),
-                        NFormItem::make()->label('打开方式')->path('open_type')->children([
-                            NSelect::make()->props([
-                                'options' => [
-                                    ['label' => '正常打开', 'value' => 'normal'],
-                                    ['label' => 'iframe 嵌入', 'value' => 'iframe'],
-                                    ['label' => '新窗口打开', 'value' => 'newWindow'],
-                                ],
-                            ])->model('open_type'),
-                        ]),
-                        NFormItem::make()->label('外链地址')->path('href')
-                            ->show("formData.open_type === 'iframe' || formData.open_type === 'newWindow'")
-                            ->children([
-                                NInput::make()->props(['placeholder' => '外部链接地址'])->model('href'),
-                            ]),
-
-                        // JSON 渲染配置
-                        NFormItem::make()->label('使用 JSON 渲染')->path('use_json_renderer')->children([
-                            NSwitch::make()->model('use_json_renderer'),
-                        ]),
-                        NFormItem::make()->label('Schema 来源')->path('schema_source')
-                            ->show('formData.use_json_renderer')
-                            ->children([
-                                NInput::make()->props(['placeholder' => 'API 地址或静态文件路径'])->model('schema_source'),
-                            ]),
-
-                        // 显示配置
-                        NFormItem::make()->label('隐藏菜单')->path('hide_in_menu')->children([
-                            NSwitch::make()->model('hide_in_menu'),
-                        ]),
-                        NFormItem::make()->label('缓存页面')->path('keep_alive')->children([
-                            NSwitch::make()->model('keep_alive'),
-                        ]),
-                        NFormItem::make()->label('需要认证')->path('requires_auth')->children([
-                            NSwitch::make()->model('requires_auth'),
-                        ]),
-                        NFormItem::make()->label('登录后默认页')->path('is_default_after_login')->children([
-                            NSwitch::make()->model('is_default_after_login'),
-                        ]),
-
-                        // 提交按钮
-                        NFormItem::make()->children([
-                            NSpace::make()->children([
-                                NButton::make()->type('primary')->text('保存')
-                                    ->on('click', ['action' => 'submit']),
-                                NButton::make()->text('返回')
-                                    ->on('click', ['action' => 'back']),
-                            ]),
-                        ]),
-                    ]),
-            ]);
-
-        // 编辑时加载菜单数据
-        if ($isEdit) {
-            $schema->initApi([
-                'url' => "menus/{$id}",
-                'method' => 'GET',
-            ]);
-        }
-
-        return success($schema->toArray());
+        return $this->listUi();
     }
 
     /**
@@ -485,57 +333,71 @@ class MenuController extends Controller
             ['key' => 'path', 'title' => '路由路径'],
             ['key' => 'icon', 'title' => '图标', 'width' => 100],
             ['key' => 'order', 'title' => '排序', 'width' => 80],
-            ['key' => 'hide_in_menu', 'title' => '隐藏', 'width' => 80],
-            ['key' => 'actions', 'title' => '操作', 'width' => 200, 'fixed' => 'right'],
+            ['key' => 'hide_in_menu', 'title' => '隐藏', 'width' => 80, 'slot' => [
+                Tag::make()
+                    ->props([
+                        'type' => "{{ slotData.row.hide_in_menu ? 'warning' : 'success' }}",
+                        'size' => 'small',
+                    ])
+                    ->children(["{{ slotData.row.hide_in_menu ? '是' : '否' }}"]),
+            ]],
+            ['key' => 'actions', 'title' => '操作', 'width' => 200, 'fixed' => 'right', 'slot' => [
+                Space::make()->children([
+                    Button::make()
+                        ->size('small')
+                        ->props(['type' => 'primary', 'text' => true])
+                        ->on('click', [
+                            SetAction::make('editingId', '{{ slotData.row.id }}'),
+                            SetAction::make('formData.parent_id', '{{ slotData.row.parent_id }}'),
+                            SetAction::make('formData.name', '{{ slotData.row.name }}'),
+                            SetAction::make('formData.title', '{{ slotData.row.title || "" }}'),
+                            SetAction::make('formData.path', '{{ slotData.row.path }}'),
+                            SetAction::make('formData.icon', '{{ slotData.row.icon || "" }}'),
+                            SetAction::make('formData.redirect', '{{ slotData.row.redirect || "" }}'),
+                            SetAction::make('formData.order', '{{ slotData.row.order || 0 }}'),
+                            SetAction::make('formData.layout_type', '{{ slotData.row.layout_type }}'),
+                            SetAction::make('formData.open_type', '{{ slotData.row.open_type }}'),
+                            SetAction::make('formData.href', '{{ slotData.row.href || "" }}'),
+                            SetAction::make('formData.use_json_renderer', '{{ slotData.row.use_json_renderer || false }}'),
+                            SetAction::make('formData.schema_source', '{{ slotData.row.schema_source || "" }}'),
+                            SetAction::make('formData.hide_in_menu', '{{ slotData.row.hide_in_menu || false }}'),
+                            SetAction::make('formData.keep_alive', '{{ slotData.row.keep_alive || false }}'),
+                            SetAction::make('formData.requires_auth', '{{ slotData.row.requires_auth !== false }}'),
+                            SetAction::make('formData.is_default_after_login', '{{ slotData.row.is_default_after_login || false }}'),
+                            SetAction::make('formVisible', true),
+                            CallAction::make('loadMenuTree'),
+                        ])
+                        ->text('编辑'),
+                    Button::make()
+                        ->size('small')
+                        ->props(['type' => 'success', 'text' => true])
+                        ->on('click', ['call' => 'handleAddChild', 'args' => ['{{ slotData.row }}']])
+                        ->text('添加子菜单'),
+                    Popconfirm::make()
+                        ->props([
+                            'positiveText' => '确定',
+                            'negativeText' => '取消',
+                        ])
+                        ->on('positive-click',
+                            FetchAction::make('/menus/{{ slotData.row.id }}')
+                                ->delete()
+                                ->then([
+                                    CallAction::make('$message.success', ['删除成功']),
+                                    CallAction::make('loadData'),
+                                ])
+                                ->catch([
+                                    CallAction::make('$message.error', ['{{ $error.message || "删除失败" }}']),
+                                ])
+                        )
+                        ->slot('trigger', [
+                            Button::make()
+                                ->size('small')
+                                ->props(['type' => 'error', 'text' => true])
+                                ->text('删除'),
+                        ])
+                        ->children(['确定要删除该菜单吗？']),
+                ]),
+            ]],
         ];
-    }
-
-    /**
-     * 获取菜单树选项（排除自身及子节点）
-     */
-    protected function getMenuTreeOptions(?int $excludeId = null): array
-    {
-        $menuModel = $this->getMenuModel();
-        $menus = $menuModel::query()
-            ->whereNull('parent_id')
-            ->with('allChildren')
-            ->orderBy('order')
-            ->get();
-
-        return $menus
-            ->map(fn ($m) => $this->formatMenuTreeNode($m, $excludeId))
-            ->filter()
-            ->values()
-            ->toArray();
-    }
-
-    /**
-     * 格式化菜单树节点
-     */
-    protected function formatMenuTreeNode($menu, ?int $excludeId = null): ?array
-    {
-        // 排除自身
-        if ($excludeId && $menu->id === $excludeId) {
-            return null;
-        }
-
-        $node = [
-            'id' => $menu->id,
-            'title' => $menu->title ?: $menu->name,
-        ];
-
-        if ($menu->allChildren && $menu->allChildren->count() > 0) {
-            $children = $menu->allChildren
-                ->map(fn ($c) => $this->formatMenuTreeNode($c, $excludeId))
-                ->filter()
-                ->values()
-                ->toArray();
-
-            if (!empty($children)) {
-                $node['children'] = $children;
-            }
-        }
-
-        return $node;
     }
 }

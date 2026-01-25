@@ -3,65 +3,148 @@
 namespace Lartrix\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 use Lartrix\Services\PermissionService;
-use Lartrix\Schema\Components\NaiveUI\NCard;
-use Lartrix\Schema\Components\NaiveUI\NForm;
-use Lartrix\Schema\Components\NaiveUI\NFormItem;
-use Lartrix\Schema\Components\NaiveUI\NInput;
-use Lartrix\Schema\Components\NaiveUI\NInputNumber;
-use Lartrix\Schema\Components\NaiveUI\NSelect;
-use Lartrix\Schema\Components\NaiveUI\NTreeSelect;
-use Lartrix\Schema\Components\NaiveUI\NButton;
-use Lartrix\Schema\Components\NaiveUI\NSpace;
-use Lartrix\Schema\Components\Json\JsonDataTable;
-use Lartrix\Schema\Components\NaiveUI\NPopconfirm;
-use function Lartrix\Support\success;
-use function Lartrix\Support\error;
+use Lartrix\Schema\Components\NaiveUI\Input;
+use Lartrix\Schema\Components\NaiveUI\InputNumber;
+use Lartrix\Schema\Components\NaiveUI\TreeSelect;
+use Lartrix\Schema\Components\NaiveUI\Button;
+use Lartrix\Schema\Components\NaiveUI\Space;
+use Lartrix\Schema\Components\NaiveUI\Popconfirm;
+use Lartrix\Schema\Components\Business\CrudPage;
+use Lartrix\Schema\Components\Business\OptForm;
+use Lartrix\Schema\Actions\SetAction;
+use Lartrix\Schema\Actions\CallAction;
+use Lartrix\Schema\Actions\FetchAction;
 
-class PermissionController extends Controller
+class PermissionController extends CrudController
 {
     public function __construct(
         protected PermissionService $permissionService
     ) {}
 
-    /**
-     * 获取权限模型类
-     */
-    protected function getPermissionModel(): string
+    // ==================== 配置方法 ====================
+
+    protected function getModelClass(): string
     {
         return config('lartrix.models.permission', \Lartrix\Models\Permission::class);
     }
 
-    /**
-     * 权限列表
-     */
-    public function index(Request $request): array
+    protected function getResourceName(): string
     {
-        $permissionModel = $this->getPermissionModel();
-        $query = $permissionModel::query();
+        return '权限';
+    }
 
-        // 模块筛选
-        if ($module = $request->input('module')) {
-            $query->where('module', $module);
-        }
+    protected function getTable(): string
+    {
+        return config('lartrix.tables.permissions', 'permissions');
+    }
 
-        // 搜索
+    protected function getDefaultOrder(): array
+    {
+        return ['sort', 'asc'];
+    }
+
+    // ==================== 路由方法重写 ====================
+
+    public function index(Request $request): mixed
+    {
+        $actionType = $request->input('action_type', 'list');
+
+        return match ($actionType) {
+            'tree' => $this->tree(),
+            'all' => $this->all(),
+            'list_ui' => $this->listUi(),
+            'form_ui' => $this->formUi($request),
+            default => $this->list($request),
+        };
+    }
+
+    // ==================== 搜索与筛选 ====================
+
+    protected function applySearch(Builder $query, Request $request): void
+    {
         if ($keyword = $request->input('keyword')) {
             $query->where(function ($q) use ($keyword) {
                 $q->where('name', 'like', "%{$keyword}%")
                     ->orWhere('title', 'like', "%{$keyword}%");
             });
         }
-
-        $permissions = $query->orderBy('module')->orderBy('sort')->get();
-
-        return success($permissions->toArray());
     }
+
+    protected function applyFilters(Builder $query, Request $request): void
+    {
+        if ($module = $request->input('module')) {
+            $query->where('module', $module);
+        }
+    }
+
+    // ==================== 验证规则 ====================
+
+    protected function getStoreRules(): array
+    {
+        return [
+            'parent_id' => 'nullable|integer|exists:permissions,id',
+            'name' => 'required|string|max:255|unique:permissions',
+            'title' => 'nullable|string|max:255',
+            'module' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'sort' => 'integer',
+        ];
+    }
+
+    protected function getUpdateRules(int $id): array
+    {
+        return [
+            'parent_id' => 'nullable|integer|exists:permissions,id',
+            'name' => "string|max:255|unique:permissions,name,{$id}",
+            'title' => 'nullable|string|max:255',
+            'module' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'sort' => 'integer',
+        ];
+    }
+
+    // ==================== 数据处理 ====================
+
+    protected function prepareStoreData(array $validated): array
+    {
+        return [
+            'parent_id' => $validated['parent_id'] ?? null,
+            'name' => $validated['name'],
+            'title' => $validated['title'] ?? null,
+            'guard_name' => 'sanctum',
+            'module' => $validated['module'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'sort' => $validated['sort'] ?? 0,
+        ];
+    }
+
+    protected function validateUpdate(Request $request, int $id): array
+    {
+        $validated = parent::validateUpdate($request, $id);
+
+        // 防止设置自己为父级
+        if (isset($validated['parent_id']) && $validated['parent_id'] == $id) {
+            throw new \Lartrix\Exceptions\ApiException('不能将自己设为父级权限', 40022);
+        }
+
+        return $validated;
+    }
+
+    protected function beforeDelete(mixed $model): void
+    {
+        if ($model->children()->exists()) {
+            throw new \Lartrix\Exceptions\ApiException('请先删除子权限', 40022);
+        }
+    }
+
+    // ==================== 自定义方法 ====================
 
     /**
      * 权限树（按模块分组）
      */
-    public function tree(): array
+    protected function tree(): array
     {
         $tree = $this->permissionService->getTreeByModule();
         return success($tree);
@@ -70,16 +153,15 @@ class PermissionController extends Controller
     /**
      * 所有权限（树状结构，管理用）
      */
-    public function all(): array
+    protected function all(): array
     {
-        $permissionModel = $this->getPermissionModel();
-        $permissions = $permissionModel::query()
+        $modelClass = $this->getModelClass();
+        $permissions = $modelClass::query()
             ->whereNull('parent_id')
             ->with('allChildren')
             ->orderBy('sort')
             ->get();
 
-        // 递归转换 all_children 为 children
         $result = $this->transformPermissionChildren($permissions->toArray());
 
         return success($result);
@@ -99,291 +181,113 @@ class PermissionController extends Controller
         }, $permissions);
     }
 
-    /**
-     * 创建权限
-     */
-    public function store(Request $request): array
+    // ==================== UI Schema ====================
+
+    protected function listUi(): array
     {
-        $permissionModel = $this->getPermissionModel();
+        // 权限表单
+        $permissionForm = OptForm::make('formData')
+            ->fields([
+                ['父级权限', 'parent_id', TreeSelect::make()->props([
+                    'placeholder' => '无（顶级权限）',
+                    'clearable' => true,
+                    'options' => '{{ permissionTreeOptions }}',
+                    'keyField' => 'id',
+                    'labelField' => 'title',
+                    'childrenField' => 'children',
+                ])],
+                ['权限标识', 'name', Input::make()->props(['placeholder' => '如：user.create'])],
+                ['权限名称', 'title', Input::make()->props(['placeholder' => '请输入权限名称'])],
+                ['所属模块', 'module', Input::make()->props(['placeholder' => '请输入模块名称'])],
+                ['描述', 'description', Input::make()->props(['type' => 'textarea', 'placeholder' => '请输入权限描述'])],
+                ['排序', 'sort', InputNumber::make()->props(['min' => 0]), 0],
+            ])
+            ->buttons([
+                Button::make()->on('click', SetAction::make('formVisible', false))->text('取消'),
+                Button::make()->type('primary')->props(['loading' => '{{ submitting }}'])->on('click', ['call' => 'handleSubmit'])->text('确定'),
+            ]);
 
-        $validated = $request->validate([
-            'parent_id' => 'nullable|integer|exists:permissions,id',
-            'name' => 'required|string|max:255|unique:permissions',
-            'title' => 'nullable|string|max:255',
-            'module' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'sort' => 'integer',
-        ]);
-
-        $permission = $permissionModel::create([
-            'parent_id' => $validated['parent_id'] ?? null,
-            'name' => $validated['name'],
-            'title' => $validated['title'] ?? null,
-            'guard_name' => 'sanctum',
-            'module' => $validated['module'] ?? null,
-            'description' => $validated['description'] ?? null,
-            'sort' => $validated['sort'] ?? 0,
-        ]);
-
-        return success('创建成功', $permission);
-    }
-
-    /**
-     * 权限详情
-     */
-    public function show(int $id): array
-    {
-        $permissionModel = $this->getPermissionModel();
-        $permission = $permissionModel::with('children')->find($id);
-
-        if (!$permission) {
-            error('权限不存在', null, 40004);
-        }
-
-        return success($permission->toArray());
-    }
-
-    /**
-     * 更新权限
-     */
-    public function update(Request $request, int $id): array
-    {
-        $permissionModel = $this->getPermissionModel();
-        $permission = $permissionModel::find($id);
-
-        if (!$permission) {
-            error('权限不存在', null, 40004);
-        }
-
-        $validated = $request->validate([
-            'parent_id' => 'nullable|integer|exists:permissions,id',
-            'name' => 'string|max:255|unique:permissions,name,' . $id,
-            'title' => 'nullable|string|max:255',
-            'module' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'sort' => 'integer',
-        ]);
-
-        // 防止设置自己为父级
-        if (isset($validated['parent_id']) && $validated['parent_id'] == $id) {
-            error('不能将自己设为父级权限', null, 40022);
-        }
-
-        $permission->fill($validated);
-        $permission->save();
-
-        return success('更新成功', $permission);
-    }
-
-    /**
-     * 删除权限
-     */
-    public function destroy(int $id): array
-    {
-        $permissionModel = $this->getPermissionModel();
-        $permission = $permissionModel::find($id);
-
-        if (!$permission) {
-            error('权限不存在', null, 40004);
-        }
-
-        // 检查是否有子权限
-        if ($permission->children()->exists()) {
-            error('请先删除子权限', null, 40022);
-        }
-
-        $permission->delete();
-
-        return success('删除成功');
-    }
-
-    /**
-     * 权限列表页 UI Schema
-     */
-    public function listUi(): array
-    {
-        $schema = NCard::make()
-            ->props(['title' => '权限管理'])
+        $schema = CrudPage::make('权限管理')
+            ->apiPrefix('/permissions')
+            ->apiParams(['action_type' => 'all'])
+            ->columns($this->getTableColumns())
+            ->scrollX(1000)
+            ->pagination(false)
+            ->tree()
+            ->toolbarLeft([
+                Button::make()
+                    ->type('primary')
+                    ->on('click', [
+                        SetAction::batch([
+                            'editingId' => null,
+                            'formData.parent_id' => null,
+                            'formData.name' => '',
+                            'formData.title' => '',
+                            'formData.module' => '',
+                            'formData.description' => '',
+                            'formData.sort' => 0,
+                            'formVisible' => true,
+                        ]),
+                        CallAction::make('loadPermissionTree'),
+                    ])
+                    ->text('新增'),
+                'expandAll',
+                'collapseAll',
+            ])
             ->data([
-                'tableData' => [],
-                'loading' => false,
-                'expandedKeys' => [],
-                'columns' => $this->getTableColumns(),
+                'formData' => $permissionForm->getDefaultData(),
+                'editingId' => null,
+                'submitting' => false,
+                'permissionTreeOptions' => [],
             ])
             ->methods([
-                'loadData' => [
-                    ['set' => 'loading', 'value' => true],
-                    [
-                        'fetch' => '/permissions/all',
-                        'method' => 'GET',
-                        'then' => [
-                            ['set' => 'tableData', 'value' => '{{ $response.data || [] }}'],
-                        ],
-                        'catch' => [
-                            ['script' => 'console.error("加载失败:", $error);'],
-                        ],
-                        'finally' => [
-                            ['set' => 'loading', 'value' => false],
-                        ],
-                    ],
+                'loadPermissionTree' => [
+                    FetchAction::make('/permissions?action_type=all')
+                        ->get()
+                        ->then([
+                            SetAction::make('permissionTreeOptions', '{{ $response.data || [] }}'),
+                        ]),
                 ],
-                'handleAdd' => [
-                    ['call' => '$router.push', 'args' => ['/system/permission/add']],
+                'handleSubmit' => [
+                    SetAction::make('submitting', true),
+                    FetchAction::make('{{ editingId ? "/permissions/" + editingId : "/permissions" }}')
+                        ->method('{{ editingId ? "PUT" : "POST" }}')
+                        ->body('{{ formData }}')
+                        ->then([
+                            CallAction::make('$message.success', ['{{ editingId ? "更新成功" : "创建成功" }}']),
+                            SetAction::make('formVisible', false),
+                            CallAction::make('loadData'),
+                        ])
+                        ->catch([
+                            CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                        ])
+                        ->finally([
+                            SetAction::make('submitting', false),
+                        ]),
                 ],
                 'handleAddChild' => [
-                    ['call' => '$router.push', 'args' => ['/system/permission/add?parentId={{ $event.id }}']],
-                ],
-                'handleEdit' => [
-                    ['call' => '$router.push', 'args' => ['/system/permission/edit?id={{ $event.id }}']],
-                ],
-                'handleDelete' => [
-                    [
-                        'fetch' => '/permissions/{{ $event }}',
-                        'method' => 'DELETE',
-                        'then' => [
-                            ['call' => '$message.success', 'args' => ['删除成功']],
-                            ['call' => 'loadData'],
-                        ],
-                        'catch' => [
-                            ['script' => 'console.error("删除失败:", $error);'],
-                        ],
-                    ],
-                ],
-                'expandAll' => [
-                    ['script' => "const getAllKeys = (items) => items.reduce((keys, item) => { keys.push(item.id); if (item.children) keys.push(...getAllKeys(item.children)); return keys; }, []); state.expandedKeys = getAllKeys(state.tableData);"],
-                ],
-                'collapseAll' => [
-                    ['set' => 'expandedKeys', 'value' => []],
+                    SetAction::batch([
+                        'editingId' => null,
+                        'formData.parent_id' => '{{ $event.id }}',
+                        'formData.name' => '',
+                        'formData.title' => '',
+                        'formData.module' => '{{ $event.module || "" }}',
+                        'formData.description' => '',
+                        'formData.sort' => 0,
+                        'formVisible' => true,
+                    ]),
+                    CallAction::make('loadPermissionTree'),
                 ],
             ])
-            ->onMounted(['call' => 'loadData'])
-            ->children([
-                NSpace::make()
-                    ->props(['vertical' => true, 'size' => 'large'])
-                    ->children([
-                        // 操作按钮
-                        NSpace::make()->children([
-                            NButton::make()
-                                ->type('primary')
-                                ->on('click', ['call' => 'handleAdd'])
-                                ->text('新增权限'),
-                            NButton::make()
-                                ->on('click', ['call' => 'expandAll'])
-                                ->text('展开全部'),
-                            NButton::make()
-                                ->on('click', ['call' => 'collapseAll'])
-                                ->text('折叠全部'),
-                        ]),
-                        // 数据表格
-                        JsonDataTable::make()
-                            ->props([
-                                'loading' => '{{ loading }}',
-                                'data' => '{{ tableData }}',
-                                'columns' => '{{ columns }}',
-                                'rowKey' => '{{ row => row.id }}',
-                                'defaultExpandAll' => true,
-                                'expandedRowKeys' => '{{ expandedKeys }}',
-                                'scrollX' => 1000,
-                            ])
-                            ->on('update:expanded-row-keys', ['set' => 'expandedKeys', 'value' => '{{ $event }}'])
-                            ->slot('actions', [
-                                NSpace::make()->children([
-                                    NButton::make()
-                                        ->size('small')
-                                        ->props(['type' => 'primary', 'text' => true])
-                                        ->on('click', ['call' => 'handleEdit', 'args' => ['{{ slotData.row }}']])
-                                        ->text('编辑'),
-                                    NButton::make()
-                                        ->size('small')
-                                        ->props(['type' => 'success', 'text' => true])
-                                        ->on('click', ['call' => 'handleAddChild', 'args' => ['{{ slotData.row }}']])
-                                        ->text('添加子权限'),
-                                    NPopconfirm::make()
-                                        ->on('positive-click', ['call' => 'handleDelete', 'args' => ['{{ slotData.row.id }}']])
-                                        ->slot('trigger', [
-                                            NButton::make()
-                                                ->size('small')
-                                                ->props(['type' => 'error', 'text' => true])
-                                                ->text('删除'),
-                                        ])
-                                        ->children(['确定要删除该权限吗？']),
-                                ]),
-                            ], 'slotData'),
-                    ]),
-            ]);
+            ->modal('form', '{{ editingId ? "编辑权限" : "新增权限" }}', $permissionForm, ['width' => '500px']);
 
-        return success($schema->toArray());
+        return success($schema->build());
     }
 
-    /**
-     * 权限表单 UI Schema（新增/编辑）
-     */
-    public function formUi(Request $request): array
+    protected function formUi(): array
     {
-        $id = $request->query('id');
-        $isEdit = !empty($id);
-
-        // 获取权限树（用于选择父级）
-        $permissionTree = $this->getPermissionTreeOptions($id);
-
-        $schema = NCard::make()
-            ->title($isEdit ? '编辑权限' : '新增权限')
-            ->children([
-                NForm::make()
-                    ->props(['labelPlacement' => 'left', 'labelWidth' => 100])
-                    ->children([
-                        NFormItem::make()->label('父级权限')->path('parent_id')->children([
-                            NTreeSelect::make()->props([
-                                'placeholder' => '无（顶级权限）',
-                                'clearable' => true,
-                                'options' => $permissionTree,
-                                'keyField' => 'id',
-                                'labelField' => 'title',
-                                'childrenField' => 'children',
-                            ])->model('parent_id'),
-                        ]),
-                        NFormItem::make()->label('权限标识')->path('name')
-                            ->props(['required' => true])
-                            ->children([
-                                NInput::make()
-                                    ->props(['placeholder' => '如：user.create'])
-                                    ->model('name'),
-                            ]),
-                        NFormItem::make()->label('权限名称')->path('title')->children([
-                            NInput::make()->props(['placeholder' => '请输入权限名称'])->model('title'),
-                        ]),
-                        NFormItem::make()->label('所属模块')->path('module')->children([
-                            NInput::make()->props(['placeholder' => '请输入模块名称'])->model('module'),
-                        ]),
-                        NFormItem::make()->label('描述')->path('description')->children([
-                            NInput::make()->props([
-                                'type' => 'textarea',
-                                'placeholder' => '请输入权限描述',
-                            ])->model('description'),
-                        ]),
-                        NFormItem::make()->label('排序')->path('sort')->children([
-                            NInputNumber::make()->props(['min' => 0])->model('sort'),
-                        ]),
-                        NFormItem::make()->children([
-                            NSpace::make()->children([
-                                NButton::make()->type('primary')->text('保存')
-                                    ->on('click', ['action' => 'submit']),
-                                NButton::make()->text('返回')
-                                    ->on('click', ['action' => 'back']),
-                            ]),
-                        ]),
-                    ]),
-            ]);
-
-        // 编辑时加载权限数据
-        if ($isEdit) {
-            $schema->initApi([
-                'url' => "permissions/{$id}",
-                'method' => 'GET',
-            ]);
-        }
-
-        return success($schema->toArray());
+        // 保留旧的 formUi 以兼容
+        return $this->listUi();
     }
 
     /**
@@ -398,68 +302,53 @@ class PermissionController extends Controller
             ['key' => 'module', 'title' => '所属模块'],
             ['key' => 'description', 'title' => '描述'],
             ['key' => 'sort', 'title' => '排序', 'width' => 80],
-            ['key' => 'actions', 'title' => '操作', 'width' => 150, 'fixed' => 'right'],
+            ['key' => 'actions', 'title' => '操作', 'width' => 200, 'fixed' => 'right', 'slot' => [
+                Space::make()->children([
+                    Button::make()
+                        ->size('small')
+                        ->props(['type' => 'primary', 'text' => true])
+                        ->on('click', [
+                            SetAction::make('editingId', '{{ slotData.row.id }}'),
+                            SetAction::make('formData.parent_id', '{{ slotData.row.parent_id }}'),
+                            SetAction::make('formData.name', '{{ slotData.row.name }}'),
+                            SetAction::make('formData.title', '{{ slotData.row.title || "" }}'),
+                            SetAction::make('formData.module', '{{ slotData.row.module || "" }}'),
+                            SetAction::make('formData.description', '{{ slotData.row.description || "" }}'),
+                            SetAction::make('formData.sort', '{{ slotData.row.sort || 0 }}'),
+                            SetAction::make('formVisible', true),
+                            CallAction::make('loadPermissionTree'),
+                        ])
+                        ->text('编辑'),
+                    Button::make()
+                        ->size('small')
+                        ->props(['type' => 'success', 'text' => true])
+                        ->on('click', ['call' => 'handleAddChild', 'args' => ['{{ slotData.row }}']])
+                        ->text('添加子权限'),
+                    Popconfirm::make()
+                        ->props([
+                            'positiveText' => '确定',
+                            'negativeText' => '取消',
+                        ])
+                        ->on('positive-click',
+                            FetchAction::make('/permissions/{{ slotData.row.id }}')
+                                ->delete()
+                                ->then([
+                                    CallAction::make('$message.success', ['删除成功']),
+                                    CallAction::make('loadData'),
+                                ])
+                                ->catch([
+                                    CallAction::make('$message.error', ['{{ $error.message || "删除失败" }}']),
+                                ])
+                        )
+                        ->slot('trigger', [
+                            Button::make()
+                                ->size('small')
+                                ->props(['type' => 'error', 'text' => true])
+                                ->text('删除'),
+                        ])
+                        ->children(['确定要删除该权限吗？']),
+                ]),
+            ]],
         ];
-    }
-
-    /**
-     * 获取模块选项
-     */
-    protected function getModuleOptions(): array
-    {
-        $permissionModel = $this->getPermissionModel();
-        return $permissionModel::query()
-            ->whereNotNull('module')
-            ->distinct()
-            ->pluck('module')
-            ->map(fn ($m) => ['label' => $m, 'value' => $m])
-            ->toArray();
-    }
-
-    /**
-     * 获取权限树选项（排除自身及子节点）
-     */
-    protected function getPermissionTreeOptions(?int $excludeId = null): array
-    {
-        $permissionModel = $this->getPermissionModel();
-        $query = $permissionModel::query()->whereNull('parent_id')->with('allChildren')->orderBy('sort');
-
-        $permissions = $query->get();
-
-        return $permissions
-            ->map(fn ($p) => $this->formatPermissionTreeNode($p, $excludeId))
-            ->filter()
-            ->values()
-            ->toArray();
-    }
-
-    /**
-     * 格式化权限树节点
-     */
-    protected function formatPermissionTreeNode($permission, ?int $excludeId = null): ?array
-    {
-        // 排除自身
-        if ($excludeId && $permission->id === $excludeId) {
-            return null;
-        }
-
-        $node = [
-            'id' => $permission->id,
-            'title' => $permission->title ?: $permission->name,
-        ];
-
-        if ($permission->allChildren && $permission->allChildren->count() > 0) {
-            $children = $permission->allChildren
-                ->map(fn ($c) => $this->formatPermissionTreeNode($c, $excludeId))
-                ->filter()
-                ->values()
-                ->toArray();
-
-            if (!empty($children)) {
-                $node['children'] = $children;
-            }
-        }
-
-        return $node;
     }
 }

@@ -4,8 +4,6 @@ namespace Lartrix\Controllers;
 
 use Illuminate\Http\Request;
 use Lartrix\Services\AuthService;
-use function Lartrix\Support\success;
-use function Lartrix\Support\error;
 
 class AuthController extends Controller
 {

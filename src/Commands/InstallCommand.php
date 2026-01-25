@@ -89,6 +89,11 @@ class InstallCommand extends Command
         $this->info('9. 创建超级管理员账户...');
         $admin = $this->createSuperAdmin($superAdminRole);
 
+        // 创建 AI 开发指南文件
+        $this->info('10. 创建 AI 开发指南文件...');
+        $this->createAiGuideFiles();
+        $this->info('   AI 开发指南文件创建完成。');
+
         // 输出安装摘要
         $this->newLine();
         $this->info('========================================');
@@ -107,6 +112,7 @@ class InstallCommand extends Command
         );
         $this->newLine();
         $this->info('请访问 /admin/ 进入后台管理系统。');
+        $this->info('AI 开发指南：AGENTS.md 和 CLAUDE.md 已创建在项目根目录。');
 
         return self::SUCCESS;
     }
@@ -140,20 +146,54 @@ class InstallCommand extends Command
      */
     protected function publishDependencies(): void
     {
-        // 检查 spatie/laravel-permission 迁移是否已存在
+        // 发布 spatie/laravel-permission 配置和迁移
+        $permissionConfig = config_path('permission.php');
+        if (!file_exists($permissionConfig)) {
+            Artisan::call('vendor:publish', [
+                '--provider' => \Spatie\Permission\PermissionServiceProvider::class,
+                '--tag' => 'permission-config',
+            ]);
+            $this->line('   发布 permission.php 配置文件。');
+        }
+        
         $permissionMigrations = glob(database_path('migrations/*_create_permission_tables.php'));
         if (empty($permissionMigrations)) {
             Artisan::call('vendor:publish', [
-                '--provider' => 'Spatie\\Permission\\PermissionServiceProvider',
+                '--provider' => \Spatie\Permission\PermissionServiceProvider::class,
+                '--tag' => 'permission-migrations',
             ]);
+            $this->line('   发布 permission 迁移文件。');
         }
 
-        // 检查 laravel/sanctum 迁移是否已存在
+        // 发布 laravel/sanctum 配置和迁移
+        $sanctumConfig = config_path('sanctum.php');
+        if (!file_exists($sanctumConfig)) {
+            Artisan::call('vendor:publish', [
+                '--provider' => \Laravel\Sanctum\SanctumServiceProvider::class,
+                '--tag' => 'sanctum-config',
+            ]);
+            $this->line('   发布 sanctum.php 配置文件。');
+        }
+        
         $sanctumMigrations = glob(database_path('migrations/*_create_personal_access_tokens_table.php'));
         if (empty($sanctumMigrations)) {
             Artisan::call('vendor:publish', [
-                '--provider' => 'Laravel\\Sanctum\\SanctumServiceProvider',
+                '--provider' => \Laravel\Sanctum\SanctumServiceProvider::class,
+                '--tag' => 'sanctum-migrations',
             ]);
+            $this->line('   发布 sanctum 迁移文件。');
+        }
+
+        // 发布 nwidart/laravel-modules 配置（如果已安装）
+        if (class_exists(\Nwidart\Modules\LaravelModulesServiceProvider::class)) {
+            $modulesConfig = config_path('modules.php');
+            if (!file_exists($modulesConfig)) {
+                Artisan::call('vendor:publish', [
+                    '--provider' => \Nwidart\Modules\LaravelModulesServiceProvider::class,
+                    '--tag' => 'config',
+                ]);
+                $this->line('   发布 modules.php 配置文件。');
+            }
         }
 
         // 生成 lartrix 迁移文件（时间戳在依赖包迁移之后）
@@ -605,6 +645,40 @@ class InstallCommand extends Command
     }
 
     /**
+     * 创建 AI 开发指南文件
+     */
+    protected function createAiGuideFiles(): void
+    {
+        $stubsPath = __DIR__ . '/../../stubs';
+        
+        // 创建 AGENTS.md
+        $agentsStub = "{$stubsPath}/AGENTS.md.stub";
+        $agentsTarget = base_path('AGENTS.md');
+        
+        if (file_exists($agentsStub)) {
+            if (!file_exists($agentsTarget) || $this->option('force')) {
+                copy($agentsStub, $agentsTarget);
+                $this->line('   创建 AGENTS.md');
+            } else {
+                $this->line('   AGENTS.md 已存在，跳过');
+            }
+        }
+        
+        // 创建 CLAUDE.md
+        $claudeStub = "{$stubsPath}/CLAUDE.md.stub";
+        $claudeTarget = base_path('CLAUDE.md');
+        
+        if (file_exists($claudeStub)) {
+            if (!file_exists($claudeTarget) || $this->option('force')) {
+                copy($claudeStub, $claudeTarget);
+                $this->line('   创建 CLAUDE.md');
+            } else {
+                $this->line('   CLAUDE.md 已存在，跳过');
+            }
+        }
+    }
+
+    /**
      * 获取默认菜单数据
      */
     protected function getDefaultMenus(): array
@@ -641,7 +715,7 @@ class InstallCommand extends Command
                             'icon' => 'mdi:account-group',
                             'order' => 1,
                             'useJsonRenderer' => true,
-                            'schemaSource' => '/users/ui/list',
+                            'schemaSource' => '/users?action_type=list_ui',
                         ],
                     ],
                     [
@@ -652,7 +726,7 @@ class InstallCommand extends Command
                             'icon' => 'mdi:account-key',
                             'order' => 2,
                             'useJsonRenderer' => true,
-                            'schemaSource' => '/roles/ui/list',
+                            'schemaSource' => '/roles?action_type=list_ui',
                         ],
                     ],
                     [
@@ -663,7 +737,7 @@ class InstallCommand extends Command
                             'icon' => 'mdi:menu',
                             'order' => 3,
                             'useJsonRenderer' => true,
-                            'schemaSource' => '/menus/ui/list',
+                            'schemaSource' => '/menus?action_type=list_ui',
                         ],
                     ],
                     [
@@ -674,7 +748,7 @@ class InstallCommand extends Command
                             'icon' => 'mdi:shield-key',
                             'order' => 4,
                             'useJsonRenderer' => true,
-                            'schemaSource' => '/permissions/ui/list',
+                            'schemaSource' => '/permissions?action_type=list_ui',
                         ],
                     ],
                     [
@@ -685,7 +759,7 @@ class InstallCommand extends Command
                             'icon' => 'mdi:cog-outline',
                             'order' => 5,
                             'useJsonRenderer' => true,
-                            'schemaSource' => '/settings/ui/form',
+                            'schemaSource' => '/settings?action_type=form_ui',
                         ],
                     ],
                 ],
@@ -709,7 +783,7 @@ class InstallCommand extends Command
                             'icon' => 'mdi:store',
                             'order' => 1,
                             'useJsonRenderer' => true,
-                            'schemaSource' => '/modules/ui/market',
+                            'schemaSource' => '/modules?action_type=market_ui',
                         ],
                     ],
                     [
@@ -720,7 +794,7 @@ class InstallCommand extends Command
                             'icon' => 'mdi:puzzle-check',
                             'order' => 2,
                             'useJsonRenderer' => true,
-                            'schemaSource' => '/modules/ui/installed',
+                            'schemaSource' => '/modules?action_type=installed_ui',
                         ],
                     ],
                 ],

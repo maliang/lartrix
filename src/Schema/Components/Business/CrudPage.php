@@ -3,19 +3,19 @@
 namespace Lartrix\Schema\Components\Business;
 
 use Lartrix\Schema\Components\Component;
-use Lartrix\Schema\Components\NaiveUI\NCard;
-use Lartrix\Schema\Components\NaiveUI\NForm;
-use Lartrix\Schema\Components\NaiveUI\NFormItem;
-use Lartrix\Schema\Components\NaiveUI\NInput;
-use Lartrix\Schema\Components\NaiveUI\NSelect;
-use Lartrix\Schema\Components\NaiveUI\NButton;
-use Lartrix\Schema\Components\NaiveUI\NSpace;
-use Lartrix\Schema\Components\NaiveUI\NModal;
-use Lartrix\Schema\Components\NaiveUI\NDrawer;
-use Lartrix\Schema\Components\NaiveUI\NDrawerContent;
+use Lartrix\Schema\Components\NaiveUI\Card;
+use Lartrix\Schema\Components\NaiveUI\Form;
+use Lartrix\Schema\Components\NaiveUI\FormItem;
+use Lartrix\Schema\Components\NaiveUI\Input;
+use Lartrix\Schema\Components\NaiveUI\Select;
+use Lartrix\Schema\Components\NaiveUI\Button;
+use Lartrix\Schema\Components\NaiveUI\Space;
+use Lartrix\Schema\Components\NaiveUI\Modal;
+use Lartrix\Schema\Components\NaiveUI\Drawer;
+use Lartrix\Schema\Components\NaiveUI\DrawerContent;
 use Lartrix\Schema\Components\Json\JsonDataTable;
-use Lartrix\Schema\Components\NaiveUI\NFlex;
-use Lartrix\Schema\Components\NaiveUI\NPagination;
+use Lartrix\Schema\Components\NaiveUI\Flex;
+use Lartrix\Schema\Components\NaiveUI\Pagination;
 use Lartrix\Schema\Components\Common\TableColumnSetting;
 use Lartrix\Schema\Actions\SetAction;
 use Lartrix\Schema\Actions\CallAction;
@@ -35,6 +35,7 @@ class CrudPage
     // 基础配置
     protected string $title = '';
     protected string $apiPrefix = '';
+    protected array $apiParams = [];
     protected string $rowKey = 'id';
     
     // 表格配置
@@ -100,6 +101,17 @@ class CrudPage
         return $this;
     }
 
+    /**
+     * 设置 API 额外参数
+     * 
+     * @param array $params 额外参数，如 ['action_type' => 'all']
+     */
+    public function apiParams(array $params): static
+    {
+        $this->apiParams = $params;
+        return $this;
+    }
+
     public function rowKey(string $key): static
     {
         $this->rowKey = $key;
@@ -143,9 +155,9 @@ class CrudPage
         return $this;
     }
 
-    public function paginated(bool $paginated = true): static
+    public function pagination(bool $enabled = true): static
     {
-        $this->paginated = $paginated;
+        $this->paginated = $enabled;
         return $this;
     }
 
@@ -358,7 +370,7 @@ class CrudPage
 
     public function build(): array
     {
-        $schema = NCard::make()
+        $schema = Card::make()
             ->props([
                 'title' => $this->title,
                 // 设置 flex 布局，让内容区域能正确继承高度
@@ -408,7 +420,7 @@ class CrudPage
         }
 
         // 树形数据
-        if ($this->isTree && $this->expandedRowKeys) {
+        if ($this->isTree) {
             $data['expandedRowKeys'] = [];
         }
 
@@ -479,9 +491,9 @@ class CrudPage
                     SetAction::make('selectedRowKeys', '{{ $event }}'),
                 ];
                 $methods['handleBatchDelete'] = [
-                    FetchAction::make("{$this->apiPrefix}/batch")
+                    FetchAction::make($this->apiPrefix)
                         ->delete()
-                        ->body(['ids' => '{{ selectedRowKeys }}'])
+                        ->body(['action_type' => 'batch', 'ids' => '{{ selectedRowKeys }}'])
                         ->then([
                             CallAction::make('$message.success', ['批量删除成功']),
                             SetAction::make('selectedRowKeys', []),
@@ -495,8 +507,9 @@ class CrudPage
             
             if ($item === 'exportCurrent' && !isset($methods['handleExportCurrent'])) {
                 $methods['handleExportCurrent'] = [
-                    FetchAction::make("{$this->apiPrefix}/export")
+                    FetchAction::make($this->apiPrefix)
                         ->params([
+                            'action_type' => 'export',
                             'type' => 'current',
                             'page' => '{{ pagination.page }}',
                             'page_size' => '{{ pagination.pageSize }}',
@@ -513,8 +526,8 @@ class CrudPage
             
             if ($item === 'exportAll' && !isset($methods['handleExportAll'])) {
                 $methods['handleExportAll'] = [
-                    FetchAction::make("{$this->apiPrefix}/export")
-                        ->params(['type' => 'all'])
+                    FetchAction::make($this->apiPrefix)
+                        ->params(['action_type' => 'export', 'type' => 'all'])
                         ->responseType('blob')
                         ->then([
                             CallAction::make('$methods.$download', ['{{ $response }}', '导出数据.xlsx']),
@@ -528,6 +541,18 @@ class CrudPage
             if ($item === 'print' && !isset($methods['handlePrint'])) {
                 $methods['handlePrint'] = [
                     CallAction::make('$methods.$window.print'),
+                ];
+            }
+
+            if ($item === 'expandAll' && !isset($methods['handleExpandAll'])) {
+                $methods['handleExpandAll'] = [
+                    ['script' => "const getAllKeys = (items) => items.reduce((keys, item) => { keys.push(item.{$this->rowKey}); if (item.{$this->childrenKey}) keys.push(...getAllKeys(item.{$this->childrenKey})); return keys; }, []); state.expandedRowKeys = getAllKeys(state.tableData);"],
+                ];
+            }
+
+            if ($item === 'collapseAll' && !isset($methods['handleCollapseAll'])) {
+                $methods['handleCollapseAll'] = [
+                    SetAction::make('expandedRowKeys', []),
                 ];
             }
         }
@@ -554,6 +579,12 @@ class CrudPage
     protected function buildLoadDataMethod(): array
     {
         $params = [];
+        
+        // 添加额外的 API 参数
+        foreach ($this->apiParams as $key => $value) {
+            $params[$key] = $value;
+        }
+        
         foreach ($this->searchItems as $item) {
             $name = $item[1];
             $params[$name] = "{{ searchForm.{$name} }}";
@@ -633,7 +664,7 @@ class CrudPage
         }
 
         $children = [
-            NSpace::make()
+            Space::make()
                 ->props([
                     'vertical' => true,
                     'size' => 'large',
@@ -669,24 +700,24 @@ class CrudPage
             [$label, $name, $component] = $item;
             $component->model("searchForm.{$name}");
             
-            $formItems[] = NFormItem::make()
+            $formItems[] = FormItem::make()
                 ->label($label)
                 ->children([$component]);
         }
 
-        $formItems[] = NFormItem::make()->children([
-            NSpace::make()->children([
-                NButton::make()
+        $formItems[] = FormItem::make()->children([
+            Space::make()->children([
+                Button::make()
                     ->type('primary')
                     ->on('click', ['call' => 'search'])
                     ->text('搜索'),
-                NButton::make()
+                Button::make()
                     ->on('click', ['call' => 'resetSearch'])
                     ->text('重置'),
             ]),
         ]);
 
-        return NForm::make()
+        return Form::make()
             ->inline()
             ->props(['labelPlacement' => 'left'])
             ->children($formItems);
@@ -702,18 +733,18 @@ class CrudPage
         }
 
         if (empty($rightComponents)) {
-            return NSpace::make()->children($leftComponents);
+            return Space::make()->children($leftComponents);
         }
 
         if (empty($leftComponents)) {
-            return NSpace::make()->props(['justify' => 'end'])->children($rightComponents);
+            return Space::make()->props(['justify' => 'end'])->children($rightComponents);
         }
 
-        return NSpace::make()
+        return Space::make()
             ->props(['justify' => 'space-between', 'style' => ['width' => '100%']])
             ->children([
-                NSpace::make()->children($leftComponents),
-                NSpace::make()->children($rightComponents),
+                Space::make()->children($leftComponents),
+                Space::make()->children($rightComponents),
             ]);
     }
 
@@ -739,20 +770,26 @@ class CrudPage
     {
         return match ($type) {
             'columnSelector' => TableColumnSetting::make()->columns('columns'),
-            'batchDelete' => NButton::make()
+            'batchDelete' => Button::make()
                 ->type('error')
                 ->props(['disabled' => '{{ selectedRowKeys.length === 0 }}'])
                 ->on('click', ['call' => 'handleBatchDelete'])
                 ->text('批量删除'),
-            'exportCurrent' => NButton::make()
+            'exportCurrent' => Button::make()
                 ->on('click', ['call' => 'handleExportCurrent'])
                 ->text('导出当前页'),
-            'exportAll' => NButton::make()
+            'exportAll' => Button::make()
                 ->on('click', ['call' => 'handleExportAll'])
                 ->text('导出全部'),
-            'print' => NButton::make()
+            'print' => Button::make()
                 ->on('click', ['call' => 'handlePrint'])
                 ->text('打印'),
+            'expandAll' => Button::make()
+                ->on('click', ['call' => 'handleExpandAll'])
+                ->text('展开全部'),
+            'collapseAll' => Button::make()
+                ->on('click', ['call' => 'handleCollapseAll'])
+                ->text('折叠全部'),
             default => null,
         };
     }
@@ -783,12 +820,11 @@ class CrudPage
             if ($this->indent !== null) {
                 $tableProps['indent'] = $this->indent;
             }
-            if ($this->expandedRowKeys) {
-                $tableProps['expandedRowKeys'] = $this->expandedRowKeys;
-            }
+            // 始终绑定 expandedRowKeys 以支持展开/折叠功能
+            $tableProps['expandedRowKeys'] = $this->expandedRowKeys ?: '{{ expandedRowKeys }}';
         }
 
-        $hasBatchDelete = in_array('batchDelete', array_merge($this->toolbarLeft, $this->toolbarRight));
+        $hasBatchDelete = \in_array('batchDelete', [...$this->toolbarLeft, ...$this->toolbarRight]);
         if ($hasBatchDelete) {
             $tableProps['checkedRowKeys'] = '{{ selectedRowKeys }}';
         }
@@ -800,7 +836,7 @@ class CrudPage
         }
 
         // 树形展开事件
-        if ($this->isTree && $this->expandedRowKeys) {
+        if ($this->isTree) {
             $table->on('update:expanded-row-keys', [
                 SetAction::make('expandedRowKeys', '{{ $event }}'),
             ]);
@@ -819,7 +855,7 @@ class CrudPage
      */
     protected function buildPagination(): Component
     {
-        $flex = NFlex::make()
+        $flex = Flex::make()
             ->props([
                 'justify' => 'end',
                 'class' => 'mt-4',
@@ -845,7 +881,7 @@ class CrudPage
         }
 
         return $flex->children([
-            NPagination::make()
+            Pagination::make()
                 ->props($paginationProps)
                 ->on('update:page', ['call' => 'handlePageChange', 'args' => ['{{ $event }}']])
                 ->on('update:page-size', ['call' => 'handlePageSizeChange', 'args' => ['{{ $event }}']]),
@@ -868,7 +904,7 @@ class CrudPage
             $children = $content;
         }
 
-        return NModal::make()
+        return Modal::make()
             ->props([
                 'show' => "{{ {$name}Visible }}",
                 'title' => $config['title'],
@@ -895,7 +931,7 @@ class CrudPage
             $drawerChildren = $content;
         }
 
-        return NDrawer::make()
+        return Drawer::make()
             ->props([
                 'show' => "{{ {$name}Visible }}",
                 'width' => $config['width'],
@@ -903,7 +939,7 @@ class CrudPage
             ])
             ->on('update:show', ['call' => "handle" . ucfirst($name) . "Close"])
             ->children([
-                NDrawerContent::make()
+                DrawerContent::make()
                     ->props(['title' => $config['title']])
                     ->children($drawerChildren),
             ]);

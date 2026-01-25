@@ -74,10 +74,13 @@ class BaseExport implements FromCollection, WithHeadings, WithMapping, ShouldAut
             $value = data_get($row, $key);
             
             // 处理特殊类型
-            if (is_array($value)) {
-                // 数组转为逗号分隔的字符串
-                $value = collect($value)->pluck('title', 'name')->values()->implode(', ');
-            } elseif (is_bool($value)) {
+            if ($value instanceof \Illuminate\Support\Collection || $value instanceof \Illuminate\Database\Eloquent\Collection) {
+                // Eloquent Collection 转为逗号分隔的字符串（优先取 title，其次 name）
+                $value = $value->map(fn($item) => $item->title ?? $item->name ?? '')->filter()->implode(', ');
+            } elseif (\is_array($value)) {
+                // 普通数组转为逗号分隔的字符串
+                $value = collect($value)->map(fn($item) => $item['title'] ?? $item['name'] ?? '')->filter()->implode(', ');
+            } elseif (\is_bool($value)) {
                 $value = $value ? '是' : '否';
             } elseif ($value === null) {
                 $value = '';

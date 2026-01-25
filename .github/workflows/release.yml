@@ -1,0 +1,47 @@
+# 工作流名称
+name: Auto Release on Tag Push
+
+# 触发条件：当推送到GitHub的标签以v开头（如v1.0.0）时触发
+on:
+  push:
+    tags:
+      - 'v*' # 匹配所有以v开头的标签，如v1.0.0、v2.1.3-beta
+
+# 工作流任务
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest # 运行环境
+    steps:
+      # 步骤1：拉取代码到运行环境
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 拉取所有历史，用于生成发布说明
+
+      # 步骤2：自动生成发布说明（可选，基于提交记录）
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          # 获取当前标签
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          # 获取该标签与上一个标签之间的提交记录，作为发布说明
+          RELEASE_NOTES=$(git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 $TAG_NAME^)..$TAG_NAME)
+          # 输出到环境变量，供后续步骤使用
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+          echo "$RELEASE_NOTES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+
+      # 步骤3：创建GitHub Release
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # 发布标题（使用标签名）
+          name: Release ${{ env.TAG_NAME }}
+          # 发布说明（使用上面生成的提交记录）
+          body: ${{ env.RELEASE_NOTES }}
+          # 是否标记为预发布（可选，如beta版本可设为true）
+          prerelease: false
+        env:
+          # 自动使用GitHub Actions的默认令牌授权
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

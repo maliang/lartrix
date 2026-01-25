@@ -3,425 +3,248 @@
 namespace Lartrix\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 use Lartrix\Services\PermissionService;
-use Lartrix\Schema\Components\NaiveUI\NCard;
-use Lartrix\Schema\Components\NaiveUI\NForm;
-use Lartrix\Schema\Components\NaiveUI\NFormItem;
-use Lartrix\Schema\Components\NaiveUI\NInput;
-use Lartrix\Schema\Components\NaiveUI\NSelect;
-use Lartrix\Schema\Components\NaiveUI\NSwitch;
-use Lartrix\Schema\Components\NaiveUI\NButton;
-use Lartrix\Schema\Components\NaiveUI\NSpace;
-use Lartrix\Schema\Components\Json\JsonDataTable;
-use Lartrix\Schema\Components\NaiveUI\NTag;
-use Lartrix\Schema\Components\NaiveUI\NPopconfirm;
-use Lartrix\Schema\Components\NaiveUI\NTree;
-use function Lartrix\Support\success;
-use function Lartrix\Support\error;
+use Lartrix\Schema\Components\NaiveUI\Input;
+use Lartrix\Schema\Components\NaiveUI\Select;
+use Lartrix\Schema\Components\NaiveUI\SwitchC;
+use Lartrix\Schema\Components\NaiveUI\Button;
+use Lartrix\Schema\Components\NaiveUI\Space;
+use Lartrix\Schema\Components\NaiveUI\Tag;
+use Lartrix\Schema\Components\NaiveUI\Popconfirm;
+use Lartrix\Schema\Components\NaiveUI\Tree;
+use Lartrix\Schema\Components\Business\CrudPage;
+use Lartrix\Schema\Components\Business\OptForm;
+use Lartrix\Schema\Actions\SetAction;
+use Lartrix\Schema\Actions\CallAction;
+use Lartrix\Schema\Actions\FetchAction;
 
-class RoleController extends Controller
+class RoleController extends CrudController
 {
     public function __construct(
         protected PermissionService $permissionService
     ) {}
 
-    /**
-     * 获取角色模型类
-     */
-    protected function getRoleModel(): string
+    // ==================== 配置方法 ====================
+
+    protected function getModelClass(): string
     {
         return config('lartrix.models.role', \Lartrix\Models\Role::class);
     }
 
-    /**
-     * 获取权限模型类
-     */
-    protected function getPermissionModel(): string
+    protected function getResourceName(): string
     {
-        return config('lartrix.models.permission', \Lartrix\Models\Permission::class);
+        return '角色';
     }
 
-    /**
-     * 角色列表
-     */
-    public function index(Request $request): array
+    protected function getTable(): string
     {
-        $roleModel = $this->getRoleModel();
-        $query = $roleModel::query();
+        return config('lartrix.tables.roles', 'roles');
+    }
 
-        // 搜索
+    protected function getDefaultOrder(): array
+    {
+        return ['id', 'asc'];
+    }
+
+    protected function getListWith(): array
+    {
+        return ['permissions'];
+    }
+
+    // ==================== 列表重写（非分页） ====================
+
+    /**
+     * 获取列表数据（非分页）
+     */
+    protected function list(Request $request): array
+    {
+        $query = $this->buildListQuery($request);
+        $data = $query->get();
+
+        return success($data->toArray());
+    }
+
+    // ==================== 搜索与筛选 ====================
+
+    protected function applySearch(Builder $query, Request $request): void
+    {
         if ($keyword = $request->input('keyword')) {
             $query->where(function ($q) use ($keyword) {
                 $q->where('name', 'like', "%{$keyword}%")
                     ->orWhere('title', 'like', "%{$keyword}%");
             });
         }
-
-        // 状态筛选
-        if ($request->has('status')) {
-            $query->where('status', $request->boolean('status'));
-        }
-
-        $roles = $query->with('permissions')->orderBy('id')->get();
-
-        return success($roles->toArray());
     }
 
-    /**
-     * 创建角色
-     */
-    public function store(Request $request): array
-    {
-        $roleModel = $this->getRoleModel();
+    // ==================== 验证规则 ====================
 
-        $validated = $request->validate([
+    protected function getStoreRules(): array
+    {
+        return [
             'name' => 'required|string|max:255|unique:roles',
             'title' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'status' => 'boolean',
             'permissions' => 'array',
             'permissions.*' => 'string|exists:permissions,name',
-        ]);
+        ];
+    }
 
-        $role = $roleModel::create([
+    protected function getUpdateRules(int $id): array
+    {
+        return [
+            'name' => "string|max:255|unique:roles,name,{$id}",
+            'title' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'status' => 'boolean',
+            'permissions' => 'array',
+            'permissions.*' => 'string|exists:permissions,name',
+        ];
+    }
+
+    // ==================== 数据处理 ====================
+
+    protected function prepareStoreData(array $validated): array
+    {
+        return [
             'name' => $validated['name'],
             'title' => $validated['title'] ?? null,
             'guard_name' => 'sanctum',
             'description' => $validated['description'] ?? null,
             'status' => $validated['status'] ?? true,
             'is_system' => false,
-        ]);
+        ];
+    }
 
-        // 分配权限
+    protected function afterStore(mixed $model, array $validated): void
+    {
         if (!empty($validated['permissions'])) {
-            $this->permissionService->syncRolePermissions($role, $validated['permissions']);
+            $this->permissionService->syncRolePermissions($model, $validated['permissions']);
         }
-
-        return success('创建成功', $role->load('permissions'));
     }
 
-    /**
-     * 角色详情
-     */
-    public function show(int $id): array
+    protected function afterUpdate(mixed $model, array $validated): void
     {
-        $roleModel = $this->getRoleModel();
-        $role = $roleModel::with('permissions')->find($id);
-
-        if (!$role) {
-            error('角色不存在', null, 40004);
+        if (isset($validated['permissions'])) {
+            $this->permissionService->syncRolePermissions($model, $validated['permissions']);
         }
-
-        return success($role->toArray());
     }
 
-    /**
-     * 更新角色
-     */
-    public function update(Request $request, int $id): array
+    protected function beforeDelete(mixed $model): void
     {
-        $roleModel = $this->getRoleModel();
-        $role = $roleModel::find($id);
-
-        if (!$role) {
-            error('角色不存在', null, 40004);
+        if ($model->isSystemRole()) {
+            throw new \Lartrix\Exceptions\ApiException('不能删除系统内置角色', 40100);
         }
-
-        $validated = $request->validate([
-            'name' => 'string|max:255|unique:roles,name,' . $id,
-            'title' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'boolean',
-        ]);
-
-        $role->fill($validated);
-        $role->save();
-
-        return success('更新成功', $role->load('permissions'));
     }
 
-    /**
-     * 删除角色
-     */
-    public function destroy(int $id): array
-    {
-        $roleModel = $this->getRoleModel();
-        $role = $roleModel::find($id);
-
-        if (!$role) {
-            error('角色不存在', null, 40004);
-        }
-
-        // 系统角色保护
-        if ($role->isSystemRole()) {
-            error('不能删除系统内置角色', null, 40100);
-        }
-
-        $role->delete();
-
-        return success('删除成功');
-    }
+    // ==================== 自定义 action_type ====================
 
     /**
-     * 更新角色权限（批量分配）
+     * 更新角色权限（action_type=permissions）
      */
-    public function updatePermissions(Request $request, int $id): array
+    protected function updatePermissions(Request $request, int $id): array
     {
-        $roleModel = $this->getRoleModel();
-        $role = $roleModel::find($id);
-
-        if (!$role) {
-            error('角色不存在', null, 40004);
-        }
+        $model = $this->findOrFail($id);
 
         $validated = $request->validate([
             'permissions' => 'required|array',
             'permissions.*' => 'string|exists:permissions,name',
         ]);
 
-        $this->permissionService->syncRolePermissions($role, $validated['permissions']);
+        $this->permissionService->syncRolePermissions($model, $validated['permissions']);
 
-        return success('权限更新成功', $role->load('permissions'));
+        return success('权限更新成功', $model->load('permissions')->toArray());
     }
 
-    /**
-     * 角色列表页 UI Schema
-     */
-    public function listUi(): array
+    // ==================== UI Schema ====================
+
+    protected function listUi(): array
     {
-        $schema = NCard::make()
-            ->props(['title' => '角色管理'])
+        // 角色表单
+        $roleForm = OptForm::make('formData')
+            ->fields([
+                ['角色标识', 'name', Input::make()->props(['placeholder' => '请输入角色标识（英文）', 'disabled' => '{{ !!editingId }}'])],
+                ['角色名称', 'title', Input::make()->props(['placeholder' => '请输入角色名称'])],
+                ['描述', 'description', Input::make()->props(['type' => 'textarea', 'placeholder' => '请输入角色描述'])],
+                ['权限', 'permissions', Tree::make()->props([
+                    'data' => $this->getPermissionTree(),
+                    'checkable' => true,
+                    'selectable' => false,
+                    'cascade' => true,
+                    'keyField' => 'name',
+                    'labelField' => 'title',
+                    'childrenField' => 'children',
+                    'virtualScroll' => true,
+                    'style' => ['maxHeight' => '300px'],
+                ]), []],
+                ['状态', 'status', SwitchC::make(), true],
+            ])
+            ->buttons([
+                Button::make()->on('click', SetAction::make('formVisible', false))->text('取消'),
+                Button::make()->type('primary')->props(['loading' => '{{ submitting }}'])->on('click', ['call' => 'handleSubmit'])->text('确定'),
+            ]);
+
+        $schema = CrudPage::make('角色管理')
+            ->apiPrefix('/roles')
+            ->columns($this->getTableColumns())
+            ->scrollX(1000)
+            ->pagination(false)
+            ->search([
+                ['关键词', 'keyword', Input::make()->props(['placeholder' => '角色标识/名称', 'clearable' => true])],
+                ['状态', 'status', Select::make()->props([
+                    'placeholder' => '全部',
+                    'clearable' => true,
+                    'style' => ['width' => '120px'],
+                    'options' => [
+                        ['label' => '启用', 'value' => true],
+                        ['label' => '禁用', 'value' => false],
+                    ],
+                ])],
+            ])
+            ->toolbarLeft([
+                Button::make()
+                    ->type('primary')
+                    ->on('click', [
+                        SetAction::batch([
+                            'editingId' => null,
+                            'formData.name' => '',
+                            'formData.title' => '',
+                            'formData.description' => '',
+                            'formData.permissions' => [],
+                            'formData.status' => true,
+                            'formVisible' => true,
+                        ]),
+                    ])
+                    ->text('新增'),
+            ])
             ->data([
-                'searchForm' => [
-                    'keyword' => '',
-                    'status' => null,
-                ],
-                'tableData' => [],
-                'loading' => false,
-                'columns' => $this->getTableColumns(),
-                'statusOptions' => [
-                    ['label' => '启用', 'value' => true],
-                    ['label' => '禁用', 'value' => false],
-                ],
+                'formData' => $roleForm->getDefaultData(),
+                'editingId' => null,
+                'submitting' => false,
             ])
             ->methods([
-                'loadData' => [
-                    ['set' => 'loading', 'value' => true],
-                    [
-                        'fetch' => '/roles',
-                        'method' => 'GET',
-                        'params' => [
-                            'keyword' => '{{ searchForm.keyword }}',
-                            'status' => '{{ searchForm.status }}',
-                        ],
-                        'then' => [
-                            ['set' => 'tableData', 'value' => '{{ $response.data || [] }}'],
-                        ],
-                        'catch' => [
-                            ['call' => '$message.error', 'args' => ['{{ $error.message || "加载数据失败" }}']],
-                        ],
-                        'finally' => [
-                            ['set' => 'loading', 'value' => false],
-                        ],
-                    ],
-                ],
-                'search' => [
-                    ['call' => 'loadData'],
-                ],
-                'resetSearch' => [
-                    ['set' => 'searchForm.keyword', 'value' => ''],
-                    ['set' => 'searchForm.status', 'value' => null],
-                    ['call' => 'loadData'],
-                ],
-                'handleAdd' => [
-                    ['call' => '$router.push', 'args' => ['/system/role/add']],
-                ],
-                'handleEdit' => [
-                    ['call' => '$router.push', 'args' => ['/system/role/edit?id={{ $event.id }}']],
-                ],
-                'handlePermissions' => [
-                    ['call' => '$router.push', 'args' => ['/system/role/permissions?id={{ $event.id }}']],
-                ],
-                'handleDelete' => [
-                    [
-                        'fetch' => '/roles/{{ $event }}',
-                        'method' => 'DELETE',
-                        'then' => [
-                            ['call' => '$message.success', 'args' => ['删除成功']],
-                            ['call' => 'loadData'],
-                        ],
-                        'catch' => [
-                            ['call' => '$message.error', 'args' => ['{{ $error.message || "删除失败" }}']],
-                        ],
-                    ],
+                'handleSubmit' => [
+                    SetAction::make('submitting', true),
+                    FetchAction::make('{{ editingId ? "/roles/" + editingId : "/roles" }}')
+                        ->method('{{ editingId ? "PUT" : "POST" }}')
+                        ->body('{{ formData }}')
+                        ->then([
+                            CallAction::make('$message.success', ['{{ editingId ? "更新成功" : "创建成功" }}']),
+                            SetAction::make('formVisible', false),
+                            CallAction::make('loadData'),
+                        ])
+                        ->catch([
+                            CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                        ])
+                        ->finally([
+                            SetAction::make('submitting', false),
+                        ]),
                 ],
             ])
-            ->onMounted(['call' => 'loadData'])
-            ->children([
-                NSpace::make()
-                    ->props(['vertical' => true, 'size' => 'large'])
-                    ->children([
-                        // 搜索表单
-                        NForm::make()
-                            ->inline()
-                            ->props(['labelPlacement' => 'left'])
-                            ->children([
-                                NFormItem::make()->label('关键词')->children([
-                                    NInput::make()
-                                        ->props(['placeholder' => '角色名称/标题', 'clearable' => true])
-                                        ->model('searchForm.keyword'),
-                                ]),
-                                NFormItem::make()->label('状态')->children([
-                                    NSelect::make()
-                                        ->props([
-                                            'placeholder' => '全部',
-                                            'clearable' => true,
-                                            'options' => '{{ statusOptions }}',
-                                            'style' => ['width' => '120px'],
-                                        ])
-                                        ->model('searchForm.status'),
-                                ]),
-                                NFormItem::make()->children([
-                                    NSpace::make()->children([
-                                        NButton::make()
-                                            ->type('primary')
-                                            ->on('click', ['call' => 'search'])
-                                            ->text('搜索'),
-                                        NButton::make()
-                                            ->on('click', ['call' => 'resetSearch'])
-                                            ->text('重置'),
-                                    ]),
-                                ]),
-                            ]),
-                        // 操作按钮
-                        NSpace::make()->children([
-                            NButton::make()
-                                ->type('primary')
-                                ->on('click', ['call' => 'handleAdd'])
-                                ->text('新增角色'),
-                        ]),
-                        // 数据表格
-                        JsonDataTable::make()
-                            ->props([
-                                'loading' => '{{ loading }}',
-                                'data' => '{{ tableData }}',
-                                'columns' => '{{ columns }}',
-                                'rowKey' => '{{ row => row.id }}',
-                                'scrollX' => 1000,
-                            ])
-                            ->slot('status', [
-                                NTag::make()
-                                    ->props([
-                                        'type' => "{{ slotData.row.status ? 'success' : 'error' }}",
-                                        'size' => 'small',
-                                    ])
-                                    ->children(["{{ slotData.row.status ? '启用' : '禁用' }}"]),
-                            ], 'slotData')
-                            ->slot('is_system', [
-                                NTag::make()
-                                    ->props([
-                                        'type' => "{{ slotData.row.is_system ? 'warning' : 'default' }}",
-                                        'size' => 'small',
-                                    ])
-                                    ->children(["{{ slotData.row.is_system ? '是' : '否' }}"]),
-                            ], 'slotData')
-                            ->slot('actions', [
-                                NSpace::make()->children([
-                                    NButton::make()
-                                        ->size('small')
-                                        ->props(['type' => 'primary', 'text' => true])
-                                        ->on('click', ['call' => 'handleEdit', 'args' => ['{{ slotData.row }}']])
-                                        ->text('编辑'),
-                                    NButton::make()
-                                        ->size('small')
-                                        ->props(['type' => 'warning', 'text' => true])
-                                        ->on('click', ['call' => 'handlePermissions', 'args' => ['{{ slotData.row }}']])
-                                        ->text('权限'),
-                                    NPopconfirm::make()
-                                        ->if('!slotData.row.is_system')
-                                        ->on('positive-click', ['call' => 'handleDelete', 'args' => ['{{ slotData.row.id }}']])
-                                        ->slot('trigger', [
-                                            NButton::make()
-                                                ->size('small')
-                                                ->props(['type' => 'error', 'text' => true])
-                                                ->text('删除'),
-                                        ])
-                                        ->children(['确定要删除该角色吗？']),
-                                ]),
-                            ], 'slotData'),
-                    ]),
-            ]);
+            ->modal('form', '{{ editingId ? "编辑角色" : "新增角色" }}', $roleForm, ['width' => '600px']);
 
-        return success($schema->toArray());
-    }
-
-    /**
-     * 角色表单 UI Schema（新增/编辑）
-     */
-    public function formUi(Request $request): array
-    {
-        $id = $request->query('id');
-        $isEdit = !empty($id);
-
-        // 获取权限树
-        $permissionTree = $this->getPermissionTree();
-
-        $schema = NCard::make()
-            ->title($isEdit ? '编辑角色' : '新增角色')
-            ->children([
-                NForm::make()
-                    ->props(['labelPlacement' => 'left', 'labelWidth' => 100])
-                    ->children([
-                        NFormItem::make()->label('角色标识')->path('name')
-                            ->props(['required' => true])
-                            ->children([
-                                NInput::make()
-                                    ->props(['placeholder' => '请输入角色标识（英文）', 'disabled' => $isEdit])
-                                    ->model('name'),
-                            ]),
-                        NFormItem::make()->label('角色名称')->path('title')->children([
-                            NInput::make()->props(['placeholder' => '请输入角色名称'])->model('title'),
-                        ]),
-                        NFormItem::make()->label('描述')->path('description')->children([
-                            NInput::make()->props([
-                                'type' => 'textarea',
-                                'placeholder' => '请输入角色描述',
-                            ])->model('description'),
-                        ]),
-                        NFormItem::make()->label('权限')->path('permissions')->children([
-                            NTree::make()->props([
-                                'data' => $permissionTree,
-                                'checkable' => true,
-                                'selectable' => false,
-                                'cascade' => true,
-                                'keyField' => 'name',
-                                'labelField' => 'title',
-                                'childrenField' => 'children',
-                            ])->model('permissions'),
-                        ]),
-                        NFormItem::make()->label('状态')->path('status')->children([
-                            NSwitch::make()->model('status'),
-                        ]),
-                        NFormItem::make()->children([
-                            NSpace::make()->children([
-                                NButton::make()->type('primary')->text('保存')
-                                    ->on('click', ['action' => 'submit']),
-                                NButton::make()->text('返回')
-                                    ->on('click', ['action' => 'back']),
-                            ]),
-                        ]),
-                    ]),
-            ]);
-
-        // 编辑时加载角色数据
-        if ($isEdit) {
-            $schema->initApi([
-                'url' => "roles/{$id}",
-                'method' => 'GET',
-            ]);
-        }
-
-        return success($schema->toArray());
+        return success($schema->build());
     }
 
     /**
@@ -434,9 +257,63 @@ class RoleController extends Controller
             ['key' => 'name', 'title' => '角色标识'],
             ['key' => 'title', 'title' => '角色名称'],
             ['key' => 'description', 'title' => '描述'],
-            ['key' => 'status', 'title' => '状态', 'width' => 80],
-            ['key' => 'is_system', 'title' => '系统角色', 'width' => 100],
-            ['key' => 'actions', 'title' => '操作', 'width' => 180, 'fixed' => 'right'],
+            ['key' => 'status', 'title' => '状态', 'width' => 80, 'slot' => [
+                Tag::make()
+                    ->props([
+                        'type' => "{{ slotData.row.status ? 'success' : 'error' }}",
+                        'size' => 'small',
+                    ])
+                    ->children(["{{ slotData.row.status ? '启用' : '禁用' }}"]),
+            ]],
+            ['key' => 'is_system', 'title' => '系统角色', 'width' => 100, 'slot' => [
+                Tag::make()
+                    ->props([
+                        'type' => "{{ slotData.row.is_system ? 'warning' : 'default' }}",
+                        'size' => 'small',
+                    ])
+                    ->children(["{{ slotData.row.is_system ? '是' : '否' }}"]),
+            ]],
+            ['key' => 'actions', 'title' => '操作', 'width' => 150, 'fixed' => 'right', 'slot' => [
+                Space::make()->children([
+                    Button::make()
+                        ->size('small')
+                        ->props(['type' => 'primary', 'text' => true])
+                        ->on('click', [
+                            SetAction::make('editingId', '{{ slotData.row.id }}'),
+                            SetAction::make('formData.name', '{{ slotData.row.name }}'),
+                            SetAction::make('formData.title', '{{ slotData.row.title || "" }}'),
+                            SetAction::make('formData.description', '{{ slotData.row.description || "" }}'),
+                            SetAction::make('formData.permissions', '{{ (slotData.row.permissions || []).map(p => p.name) }}'),
+                            SetAction::make('formData.status', '{{ slotData.row.status }}'),
+                            SetAction::make('formVisible', true),
+                        ])
+                        ->text('编辑'),
+                    Popconfirm::make()
+                        ->if('!slotData.row.is_system')
+                        ->props([
+                            'positiveText' => '确定',
+                            'negativeText' => '取消',
+                        ])
+                        ->on('positive-click',
+                            FetchAction::make('/roles/{{ slotData.row.id }}')
+                                ->delete()
+                                ->then([
+                                    CallAction::make('$message.success', ['删除成功']),
+                                    CallAction::make('loadData'),
+                                ])
+                                ->catch([
+                                    CallAction::make('$message.error', ['{{ $error.message || "删除失败" }}']),
+                                ])
+                        )
+                        ->slot('trigger', [
+                            Button::make()
+                                ->size('small')
+                                ->props(['type' => 'error', 'text' => true])
+                                ->text('删除'),
+                        ])
+                        ->children(['确定要删除该角色吗？']),
+                ]),
+            ]],
         ];
     }
 
@@ -445,11 +322,11 @@ class RoleController extends Controller
      */
     protected function getPermissionTree(): array
     {
-        $permissionModel = $this->getPermissionModel();
+        $permissionModel = config('lartrix.models.permission', \Lartrix\Models\Permission::class);
         return $permissionModel::query()
             ->whereNull('parent_id')
             ->with('allChildren')
-            ->orderBy('order')
+            ->orderBy('sort')
             ->get()
             ->map(fn ($p) => $this->formatPermissionNode($p))
             ->toArray();

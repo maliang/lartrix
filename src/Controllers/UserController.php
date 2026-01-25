@@ -3,284 +3,54 @@
 namespace Lartrix\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 use Lartrix\Services\AuthService;
-use Lartrix\Exports\BaseExport;
-use Maatwebsite\Excel\Facades\Excel;
-use Lartrix\Schema\Components\NaiveUI\NInput;
-use Lartrix\Schema\Components\NaiveUI\NSelect;
-use Lartrix\Schema\Components\NaiveUI\NSwitch;
-use Lartrix\Schema\Components\NaiveUI\NButton;
-use Lartrix\Schema\Components\NaiveUI\NSpace;
-use Lartrix\Schema\Components\NaiveUI\NTag;
-use Lartrix\Schema\Components\NaiveUI\NPopconfirm;
+use Lartrix\Schema\Components\NaiveUI\Input;
+use Lartrix\Schema\Components\NaiveUI\Select;
+use Lartrix\Schema\Components\NaiveUI\SwitchC;
+use Lartrix\Schema\Components\NaiveUI\Button;
+use Lartrix\Schema\Components\NaiveUI\Space;
+use Lartrix\Schema\Components\NaiveUI\Tag;
+use Lartrix\Schema\Components\NaiveUI\Popconfirm;
 use Lartrix\Schema\Components\Business\CrudPage;
 use Lartrix\Schema\Components\Business\OptForm;
 use Lartrix\Schema\Actions\SetAction;
 use Lartrix\Schema\Actions\CallAction;
 use Lartrix\Schema\Actions\FetchAction;
-use function Lartrix\Support\success;
-use function Lartrix\Support\error;
 
-class UserController extends Controller
+class UserController extends CrudController
 {
     public function __construct(
         protected AuthService $authService
     ) {}
 
-    /**
-     * 获取用户模型类
-     */
-    protected function getUserModel(): string
+    // ==================== 配置方法 ====================
+
+    protected function getModelClass(): string
     {
         return config('lartrix.models.user', \Lartrix\Models\AdminUser::class);
     }
 
-    /**
-     * 获取角色模型类
-     */
-    protected function getRoleModel(): string
+    protected function getResourceName(): string
     {
-        return config('lartrix.models.role', \Lartrix\Models\Role::class);
+        return '用户';
     }
 
-    /**
-     * 用户列表（分页、搜索）
-     */
-    public function index(Request $request): array
+    protected function getTable(): string
     {
-        $userModel = $this->getUserModel();
-        $query = $userModel::query();
-
-        // 搜索
-        if ($keyword = $request->input('keyword')) {
-            $query->where(function ($q) use ($keyword) {
-                $q->where('name', 'like', "%{$keyword}%")
-                    ->orWhere('nick_name', 'like', "%{$keyword}%")
-                    ->orWhere('real_name', 'like', "%{$keyword}%")
-                    ->orWhere('email', 'like', "%{$keyword}%")
-                    ->orWhere('mobile', 'like', "%{$keyword}%");
-            });
-        }
-
-        // 状态筛选
-        if ($request->has('status')) {
-            $query->where('status', $request->boolean('status'));
-        }
-
-        // 分页
-        $perPage = $request->input('page_size', 15);
-        $paginator = $query->with('roles')->orderBy('id', 'desc')->paginate($perPage);
-
-        return success([
-            'list' => $paginator->items(),
-            'total' => $paginator->total(),
-            'page' => $paginator->currentPage(),
-            'page_size' => $paginator->perPage(),
-        ]);
+        return config('lartrix.tables.users', 'admin_users');
     }
 
-    /**
-     * 创建用户
-     */
-    public function store(Request $request): array
+    protected function getListWith(): array
     {
-        $userModel = $this->getUserModel();
-        $table = config('lartrix.tables.users', 'admin_users');
-
-        $validated = $request->validate([
-            'name' => "required|string|max:255|unique:{$table}",
-            'nick_name' => 'nullable|string|max:255',
-            'real_name' => 'nullable|string|max:255',
-            'email' => "required|email|unique:{$table}",
-            'mobile' => 'nullable|string|max:20',
-            'password' => 'required|string|min:6',
-            'status' => 'boolean',
-            'avatar' => 'nullable|string',
-            'roles' => 'array',
-            'roles.*' => 'string|exists:roles,name',
-        ]);
-
-        $user = $userModel::create([
-            'name' => $validated['name'],
-            'nick_name' => $validated['nick_name'] ?? null,
-            'real_name' => $validated['real_name'] ?? null,
-            'email' => $validated['email'],
-            'mobile' => $validated['mobile'] ?? null,
-            'password' => $validated['password'],
-            'status' => $validated['status'] ?? true,
-            'avatar' => $validated['avatar'] ?? null,
-        ]);
-
-        // 分配角色
-        if (!empty($validated['roles'])) {
-            $user->syncRoles($validated['roles']);
-        }
-
-        return success('创建成功', $user->load('roles'));
+        return ['roles'];
     }
 
-    /**
-     * 用户详情
-     */
-    public function show(int $id): array
+    protected function getExportFilenamePrefix(): string
     {
-        $userModel = $this->getUserModel();
-        $user = $userModel::with('roles')->find($id);
-
-        if (!$user) {
-            error('用户不存在', null, 40004);
-        }
-
-        return success($user->toArray());
+        return '用户列表';
     }
 
-    /**
-     * 更新用户
-     */
-    public function update(Request $request, int $id): array
-    {
-        $userModel = $this->getUserModel();
-        $table = config('lartrix.tables.users', 'admin_users');
-        $user = $userModel::find($id);
-
-        if (!$user) {
-            error('用户不存在', null, 40004);
-        }
-
-        $validated = $request->validate([
-            'name' => "string|max:255|unique:{$table},name,{$id}",
-            'nick_name' => 'nullable|string|max:255',
-            'real_name' => 'nullable|string|max:255',
-            'email' => "email|unique:{$table},email,{$id}",
-            'mobile' => 'nullable|string|max:20',
-            'avatar' => 'nullable|string',
-            'roles' => 'array',
-            'roles.*' => 'string|exists:roles,name',
-        ]);
-
-        $user->fill($validated);
-        $user->save();
-
-        // 更新角色
-        if (isset($validated['roles'])) {
-            $user->syncRoles($validated['roles']);
-        }
-
-        return success('更新成功', $user->load('roles'));
-    }
-
-    /**
-     * 删除用户
-     */
-    public function destroy(int $id): array
-    {
-        $userModel = $this->getUserModel();
-        $user = $userModel::find($id);
-
-        if (!$user) {
-            error('用户不存在', null, 40004);
-        }
-
-        // 撤销所有 Token
-        $this->authService->revokeAllTokens($user);
-
-        $user->delete();
-
-        return success('删除成功');
-    }
-
-    /**
-     * 批量删除用户
-     * 
-     * 接口规则：
-     * - 请求方式：DELETE
-     * - 请求路径：{apiPrefix}/batch
-     * - 请求体：{ ids: number[] }
-     * - 响应：{ code: 0, msg: 'success', data: { deleted: number } }
-     */
-    public function batchDestroy(Request $request): array
-    {
-        $validated = $request->validate([
-            'ids' => 'required|array|min:1',
-            'ids.*' => 'integer',
-        ]);
-
-        $userModel = $this->getUserModel();
-        $users = $userModel::whereIn('id', $validated['ids'])->get();
-
-        if ($users->isEmpty()) {
-            return error('未找到要删除的用户');
-        }
-
-        // 撤销所有用户的 Token
-        foreach ($users as $user) {
-            $this->authService->revokeAllTokens($user);
-        }
-
-        $deleted = $userModel::whereIn('id', $validated['ids'])->delete();
-
-        return success('批量删除成功', ['deleted' => $deleted]);
-    }
-
-    /**
-     * 导出用户数据
-     * 
-     * 接口规则：
-     * - 请求方式：GET
-     * - 请求路径：{apiPrefix}/export
-     * - 请求参数：
-     *   - type: 'current' | 'all'（导出类型）
-     *   - page: number（当前页，type=current 时必填）
-     *   - page_size: number（每页数量，type=current 时必填）
-     *   - 其他搜索参数（与列表接口一致）
-     * - 响应：Excel 文件下载
-     */
-    public function export(Request $request)
-    {
-        $userModel = $this->getUserModel();
-        $query = $userModel::query();
-
-        // 应用搜索条件（与 index 方法一致）
-        if ($keyword = $request->input('keyword')) {
-            $query->where(function ($q) use ($keyword) {
-                $q->where('name', 'like', "%{$keyword}%")
-                    ->orWhere('nick_name', 'like', "%{$keyword}%")
-                    ->orWhere('real_name', 'like', "%{$keyword}%")
-                    ->orWhere('email', 'like', "%{$keyword}%")
-                    ->orWhere('mobile', 'like', "%{$keyword}%");
-            });
-        }
-
-        if ($request->has('status')) {
-            $query->where('status', $request->boolean('status'));
-        }
-
-        $query->with('roles')->orderBy('id', 'desc');
-
-        // 根据导出类型获取数据
-        $type = $request->input('type', 'current');
-        
-        if ($type === 'current') {
-            $page = (int) $request->input('page', 1);
-            $pageSize = (int) $request->input('page_size', 15);
-            $data = $query->skip(($page - 1) * $pageSize)->take($pageSize)->get();
-            $filename = "用户列表_第{$page}页_" . date('YmdHis') . '.xlsx';
-        } else {
-            $data = $query->get();
-            $filename = '用户列表_全部_' . date('YmdHis') . '.xlsx';
-        }
-
-        // 获取导出列配置
-        $columns = $this->getExportColumns();
-
-        return Excel::download(new BaseExport($data, $columns), $filename);
-    }
-
-    /**
-     * 获取导出列配置
-     * 
-     * 可重写此方法自定义导出列
-     */
     protected function getExportColumns(): array
     {
         return [
@@ -296,92 +66,155 @@ class UserController extends Controller
         ];
     }
 
-    /**
-     * 更新用户状态
-     */
-    public function updateStatus(Request $request, int $id): array
+    // ==================== 搜索与筛选 ====================
+
+    protected function applySearch(Builder $query, Request $request): void
     {
-        $userModel = $this->getUserModel();
-        $user = $userModel::find($id);
-
-        if (!$user) {
-            error('用户不存在', null, 40004);
+        if ($keyword = $request->input('keyword')) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', "%{$keyword}%")
+                    ->orWhere('nick_name', 'like', "%{$keyword}%")
+                    ->orWhere('real_name', 'like', "%{$keyword}%")
+                    ->orWhere('email', 'like', "%{$keyword}%")
+                    ->orWhere('mobile', 'like', "%{$keyword}%");
+            });
         }
-
-        $validated = $request->validate([
-            'status' => 'required|boolean',
-        ]);
-
-        $user->status = $validated['status'];
-        $user->save();
-
-        // 禁用时撤销所有 Token
-        if (!$user->status) {
-            $this->authService->revokeAllTokens($user);
-        }
-
-        return success('状态更新成功', ['status' => $user->status]);
     }
 
-    /**
-     * 重置密码
-     */
-    public function resetPassword(Request $request, int $id): array
-    {
-        $userModel = $this->getUserModel();
-        $user = $userModel::find($id);
+    // ==================== 验证规则 ====================
 
-        if (!$user) {
-            error('用户不存在', null, 40004);
+    protected function getStoreRules(): array
+    {
+        $table = $this->getTable();
+        return [
+            'name' => "required|string|max:255|unique:{$table}",
+            'nick_name' => 'nullable|string|max:255',
+            'real_name' => 'nullable|string|max:255',
+            'email' => "required|email|unique:{$table}",
+            'mobile' => 'nullable|string|max:20',
+            'password' => 'required|string|min:6',
+            'status' => 'boolean',
+            'avatar' => 'nullable|string',
+            'roles' => 'array',
+            'roles.*' => 'string|exists:roles,name',
+        ];
+    }
+
+    protected function getUpdateRules(int $id): array
+    {
+        $table = $this->getTable();
+        return [
+            'name' => "string|max:255|unique:{$table},name,{$id}",
+            'nick_name' => 'nullable|string|max:255',
+            'real_name' => 'nullable|string|max:255',
+            'email' => "email|unique:{$table},email,{$id}",
+            'mobile' => 'nullable|string|max:20',
+            'avatar' => 'nullable|string',
+            'roles' => 'array',
+            'roles.*' => 'string|exists:roles,name',
+        ];
+    }
+
+    // ==================== 数据处理 ====================
+
+    protected function prepareStoreData(array $validated): array
+    {
+        return [
+            'name' => $validated['name'],
+            'nick_name' => $validated['nick_name'] ?? null,
+            'real_name' => $validated['real_name'] ?? null,
+            'email' => $validated['email'],
+            'mobile' => $validated['mobile'] ?? null,
+            'password' => $validated['password'],
+            'status' => $validated['status'] ?? true,
+            'avatar' => $validated['avatar'] ?? null,
+        ];
+    }
+
+    protected function afterStore(mixed $model, array $validated): void
+    {
+        if (!empty($validated['roles'])) {
+            $model->syncRoles($validated['roles']);
         }
+    }
+
+    protected function afterUpdate(mixed $model, array $validated): void
+    {
+        if (isset($validated['roles'])) {
+            $model->syncRoles($validated['roles']);
+        }
+    }
+
+    // ==================== 状态与删除回调 ====================
+
+    protected function afterStatusUpdate(mixed $model, bool $status): void
+    {
+        // 禁用时撤销所有 Token
+        if (!$status) {
+            $this->authService->revokeAllTokens($model);
+        }
+    }
+
+    protected function beforeDelete(mixed $model): void
+    {
+        $this->authService->revokeAllTokens($model);
+    }
+
+    // ==================== 自定义 action_type ====================
+
+    /**
+     * 重置密码（action_type=reset_password）
+     */
+    protected function updateResetPassword(Request $request, int $id): array
+    {
+        $model = $this->findOrFail($id);
 
         $validated = $request->validate([
             'password' => 'required|string|min:6',
         ]);
 
-        $user->password = $validated['password'];
-        $user->save();
+        $model->password = $validated['password'];
+        $model->save();
 
         // 撤销所有 Token，强制重新登录
-        $this->authService->revokeAllTokens($user);
+        $this->authService->revokeAllTokens($model);
 
         return success('密码重置成功');
     }
 
-    /**
-     * 用户列表页 UI Schema
-     */
-    public function listUi(): array
+    // ==================== UI Schema ====================
+
+    protected function listUi(): array
     {
         // 用户表单
         $userForm = OptForm::make('formData')
             ->fields([
-                ['用户名', 'name', NInput::make()->props(['placeholder' => '请输入用户名', 'disabled' => '{{ !!editingId }}'])],
-                ['昵称', 'nick_name', NInput::make()->props(['placeholder' => '请输入昵称'])],
-                ['真实姓名', 'real_name', NInput::make()->props(['placeholder' => '请输入真实姓名'])],
-                ['邮箱', 'email', NInput::make()->props(['placeholder' => '请输入邮箱'])],
-                ['手机号', 'mobile', NInput::make()->props(['placeholder' => '请输入手机号'])],
-                ['密码', 'password', NInput::make()->props(['type' => 'password', 'showPasswordOn' => 'click', 'placeholder' => '请输入密码']), '', '!editingId'],
-                ['角色', 'roles', NSelect::make()->props(['multiple' => true, 'placeholder' => '请选择角色', 'options' => '{{ roleOptions }}']), []],
-                ['状态', 'status', NSwitch::make(), true],
+                ['用户名', 'name', Input::make()->props(['placeholder' => '请输入用户名', 'disabled' => '{{ !!editingId }}'])],
+                ['昵称', 'nick_name', Input::make()->props(['placeholder' => '请输入昵称'])],
+                ['真实姓名', 'real_name', Input::make()->props(['placeholder' => '请输入真实姓名'])],
+                ['邮箱', 'email', Input::make()->props(['placeholder' => '请输入邮箱'])],
+                ['手机号', 'mobile', Input::make()->props(['placeholder' => '请输入手机号'])],
+                ['密码', 'password', Input::make()->props(['type' => 'password', 'showPasswordOn' => 'click', 'placeholder' => '请输入密码']), '', '!editingId'],
+                ['角色', 'roles', Select::make()->props(['multiple' => true, 'placeholder' => '请选择角色', 'options' => '{{ roleOptions }}']), []],
+                ['状态', 'status', SwitchC::make(), true],
             ])
             ->buttons([
-                NButton::make()->on('click', SetAction::make('formVisible', false))->text('取消'),
-                NButton::make()->type('primary')->props(['loading' => '{{ submitting }}'])->on('click', ['call' => 'handleSubmit'])->text('确定'),
+                Button::make()->on('click', SetAction::make('formVisible', false))->text('取消'),
+                Button::make()->type('primary')->props(['loading' => '{{ submitting }}'])->on('click', ['call' => 'handleSubmit'])->text('确定'),
             ]);
 
         // 重置密码表单
         $resetPwdForm = OptForm::make()
             ->fields([
-                ['新密码', 'newPassword', NInput::make()->props(['type' => 'password', 'showPasswordOn' => 'click', 'placeholder' => '请输入新密码（至少6位）'])],
+                ['新密码', 'newPassword', Input::make()->props(['type' => 'password', 'showPasswordOn' => 'click', 'placeholder' => '请输入新密码（至少6位）'])],
             ])
             ->buttons([
-                NButton::make()->on('click', SetAction::make('resetPwdVisible', false))->text('取消'),
-                NButton::make()->type('primary')->props(['loading' => '{{ resetPwdSubmitting }}'])->on('click', [
+                Button::make()->on('click', SetAction::make('resetPwdVisible', false))->text('取消'),
+                Button::make()->type('primary')->props(['loading' => '{{ resetPwdSubmitting }}'])->on('click', [
                     SetAction::make('resetPwdSubmitting', true),
-                    FetchAction::make('/users/{{ resetPwdUserId }}/reset-password')
+                    FetchAction::make('/users/{{ resetPwdUserId }}')
                         ->put()
-                        ->body(['password' => '{{ newPassword }}'])
+                        ->body(['action_type' => 'reset_password', 'password' => '{{ newPassword }}'])
                         ->then([
                             CallAction::make('$message.success', ['密码重置成功']),
                             SetAction::make('resetPwdVisible', false),
@@ -400,10 +233,9 @@ class UserController extends Controller
             ->columns($this->getTableColumns())
             ->scrollX(1200)
             ->defaultPageSize(15)
-            // 搜索区域
             ->search([
-                ['关键词', 'keyword', NInput::make()->props(['placeholder' => '用户名/昵称/邮箱/手机号', 'clearable' => true])],
-                ['状态', 'status', NSelect::make()->props([
+                ['关键词', 'keyword', Input::make()->props(['placeholder' => '用户名/昵称/邮箱/手机号', 'clearable' => true])],
+                ['状态', 'status', Select::make()->props([
                     'placeholder' => '全部',
                     'clearable' => true,
                     'style' => ['width' => '120px'],
@@ -413,11 +245,10 @@ class UserController extends Controller
                     ],
                 ])],
             ])
-            // 工具栏
             ->toolbarLeft([
                 'columnSelector',
                 'batchDelete',
-                NButton::make()
+                Button::make()
                     ->type('primary')
                     ->on('click', [
                         SetAction::batch([
@@ -440,7 +271,6 @@ class UserController extends Controller
                 'exportAll',
                 'print'
             ])
-            // 数据
             ->data([
                 'roleOptions' => $this->getRoleOptions(),
                 'formData' => $userForm->getDefaultData(),
@@ -451,7 +281,6 @@ class UserController extends Controller
                 'newPassword' => '',
                 'resetPwdSubmitting' => false,
             ])
-            // 方法（只保留重复使用的）
             ->methods([
                 'handleSubmit' => [
                     SetAction::make('submitting', true),
@@ -471,9 +300,7 @@ class UserController extends Controller
                         ]),
                 ],
             ])
-            // 表单弹窗
             ->modal('form', '{{ editingId ? "编辑用户" : "新增用户" }}', $userForm, ['width' => '500px'])
-            // 重置密码弹窗
             ->modal('resetPwd', '重置密码 - {{ resetPwdUserName }}', $resetPwdForm, ['width' => '400px']);
 
         return success($schema->build());
@@ -491,22 +318,22 @@ class UserController extends Controller
             ['key' => 'email', 'title' => '邮箱'],
             ['key' => 'mobile', 'title' => '手机号'],
             ['key' => 'roles', 'title' => '角色', 'width' => 150, 'slot' => [
-                NSpace::make()
+                Space::make()
                     ->props(['size' => 'small'])
                     ->children([
-                        NTag::make()
+                        Tag::make()
                             ->for('role in slotData.row.roles', '{{ role.id }}')
                             ->props(['type' => 'info', 'size' => 'small'])
                             ->children(['{{ role.title || role.name }}']),
                     ]),
             ]],
             ['key' => 'status', 'title' => '状态', 'width' => 80, 'slot' => [
-                NSwitch::make()
+                SwitchC::make()
                     ->props(['value' => '{{ slotData.row.status }}'])
                     ->on('update:value', 
-                        FetchAction::make('/users/{{ slotData.row.id }}/status')
+                        FetchAction::make('/users/{{ slotData.row.id }}')
                             ->put()
-                            ->body(['status' => '{{ $event }}'])
+                            ->body(['action_type' => 'status', 'status' => '{{ $event }}'])
                             ->then([
                                 CallAction::make('$message.success', ['状态更新成功']),
                                 CallAction::make('loadData'),
@@ -518,8 +345,8 @@ class UserController extends Controller
             ]],
             ['key' => 'created_at', 'title' => '创建时间', 'width' => 180],
             ['key' => 'actions', 'title' => '操作', 'width' => 220, 'fixed' => 'right', 'slot' => [
-                NSpace::make()->children([
-                    NButton::make()
+                Space::make()->children([
+                    Button::make()
                         ->size('small')
                         ->props(['type' => 'primary', 'text' => true])
                         ->on('click', [
@@ -534,7 +361,7 @@ class UserController extends Controller
                             SetAction::make('formVisible', true),
                         ])
                         ->text('编辑'),
-                    NButton::make()
+                    Button::make()
                         ->size('small')
                         ->props(['type' => 'warning', 'text' => true])
                         ->on('click', [
@@ -544,7 +371,7 @@ class UserController extends Controller
                             SetAction::make('resetPwdVisible', true),
                         ])
                         ->text('重置密码'),
-                    NPopconfirm::make()
+                    Popconfirm::make()
                         ->props([
                             'positiveText' => '确定',
                             'negativeText' => '取消',
@@ -561,7 +388,7 @@ class UserController extends Controller
                                 ])
                         )
                         ->slot('trigger', [
-                            NButton::make()
+                            Button::make()
                                 ->size('small')
                                 ->props(['type' => 'error', 'text' => true])
                                 ->text('删除'),
@@ -577,7 +404,7 @@ class UserController extends Controller
      */
     protected function getRoleOptions(): array
     {
-        $roleModel = $this->getRoleModel();
+        $roleModel = config('lartrix.models.role', \Lartrix\Models\Role::class);
         return $roleModel::query()
             ->where('status', true)
             ->get(['name', 'title'])
