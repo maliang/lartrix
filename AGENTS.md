@@ -25,17 +25,43 @@ lartrix/
 ├── stubs/migrations/           # 数据库迁移模板
 ├── src/
 │   ├── Commands/               # Artisan 命令
+│   │   ├── InstallCommand.php
+│   │   ├── PublishAssetsCommand.php
+│   │   └── UninstallCommand.php
 │   ├── Controllers/            # API 控制器
 │   │   ├── Controller.php      # 基础控制器
-│   │   └── CrudController.php  # CRUD 基类（推荐继承）
+│   │   ├── CrudController.php  # CRUD 基类（推荐继承）
+│   │   ├── AuthController.php
+│   │   ├── UserController.php
+│   │   ├── RoleController.php
+│   │   ├── PermissionController.php
+│   │   ├── MenuController.php
+│   │   ├── ModuleController.php
+│   │   ├── SettingController.php
+│   │   ├── SystemController.php
+│   │   └── HomeController.php
 │   ├── Middleware/             # 中间件
+│   │   ├── Authenticate.php
+│   │   └── CheckPermission.php
 │   ├── Models/                 # Eloquent 模型
+│   │   ├── AdminUser.php
+│   │   ├── Role.php
+│   │   ├── Permission.php
+│   │   ├── Menu.php
+│   │   ├── Module.php
+│   │   └── Setting.php
 │   ├── Services/               # 业务服务
+│   │   ├── AuthService.php
+│   │   ├── ModuleService.php
+│   │   └── PermissionService.php
 │   ├── Schema/                 # JSON Schema 构建器
+│   │   ├── JsonNodeInterface.php
 │   │   ├── Actions/            # Action 类型
 │   │   └── Components/         # 组件类型
 │   ├── Exceptions/
+│   │   └── ApiException.php
 │   ├── Exports/
+│   │   └── BaseExport.php
 │   └── LartrixServiceProvider.php
 └── tests/
 ```
@@ -150,10 +176,17 @@ NaiveUI 组件类名无 N 前缀，但输出的 `com` 字段保留 N 前缀：
 ```
 Schema/Components/
 ├── Component.php               # 基类
-├── NaiveUI/                    # NaiveUI 组件（100+）
+├── NaiveUI/                    # NaiveUI 组件（120+）
 │   ├── Button.php, Input.php, Select.php, SwitchC.php
-│   ├── Card.php, Modal.php, Drawer.php, Form.php
+│   ├── Card.php, Modal.php, Drawer.php, Form.php, FormItem.php
 │   ├── DataTable.php, Pagination.php, Tag.php
+│   ├── Tabs.php, TabPane.php, Collapse.php, CollapseItem.php
+│   ├── Grid.php, GridItem.php, Row.php, Col.php, Flex.php, Space.php
+│   ├── DatePicker.php, TimePicker.php, ColorPicker.php
+│   ├── Upload.php, Tree.php, TreeSelect.php, Cascader.php
+│   ├── Popconfirm.php, Popover.php, Tooltip.php, Dropdown.php
+│   ├── Alert.php, Badge.php, Avatar.php, Progress.php
+│   ├── Steps.php, Timeline.php, Descriptions.php
 │   └── ...
 ├── Business/                   # 业务组件
 │   ├── CrudPage.php            # CRUD 页面（推荐）
@@ -165,8 +198,18 @@ Schema/Components/
 ├── Custom/                     # 自定义组件
 │   ├── Html.php                # 原生 HTML 标签
 │   ├── SvgIcon.php             # SVG 图标
+│   ├── Icon.php                # 图标组件
 │   ├── VueECharts.php          # ECharts 图表
-│   └── ...
+│   ├── ButtonIcon.php          # 图标按钮
+│   ├── CountTo.php             # 数字动画
+│   ├── FullScreen.php          # 全屏切换
+│   ├── GlobalSearch.php        # 全局搜索
+│   ├── HeaderNotification.php  # 头部通知
+│   ├── LangSwitch.php          # 语言切换
+│   ├── ThemeButton.php         # 主题按钮
+│   ├── ThemeSchemaSwitch.php   # 主题模式切换
+│   ├── UserAvatar.php          # 用户头像
+│   └── BetterScroll.php        # 滚动组件
 ├── Json/                       # JSON 渲染组件
 │   ├── JsonDataTable.php       # 数据表格
 │   └── SchemaEditor.php        # Schema 编辑器
@@ -178,6 +221,7 @@ Schema/Components/
 
 ```
 Schema/Actions/
+├── ActionInterface.php         # Action 接口
 ├── SetAction.php               # 设置状态值
 ├── CallAction.php              # 调用方法
 ├── FetchAction.php             # API 请求
@@ -260,17 +304,69 @@ error('用户不存在', null, 40004);   // 抛出 ApiException
 
 CrudController 通过 `action_type` 参数路由不同操作：
 
-| action_type | HTTP 方法 | 说明 |
-|-------------|----------|------|
-| (空) | GET | 列表数据（分页） |
-| list_ui | GET | 列表页面 Schema |
-| form_ui | GET | 表单页面 Schema |
-| export | GET | 导出数据 |
-| (空) | POST | 创建记录 |
-| (空) | PUT | 更新记录 |
-| status | PUT | 更新状态 |
-| batch | DELETE | 批量删除 |
-| (空) | DELETE | 删除记录 |
+### index 方法（GET 请求）
+
+| action_type | 说明 |
+|-------------|------|
+| list（默认） | 列表数据（分页） |
+| list_ui | 列表页面 Schema |
+| form_ui | 表单页面 Schema |
+| export | 导出数据 |
+| batch_destroy | 批量删除 |
+
+### update 方法（PUT 请求）
+
+| action_type | 说明 |
+|-------------|------|
+| update（默认） | 更新记录 |
+| status | 更新状态 |
+| 自定义 | 子类可定义 `updateXxx` 方法处理 |
+
+### destroy 方法（DELETE 请求）
+
+| action_type | 说明 |
+|-------------|------|
+| delete（默认） | 删除记录 |
+| batch | 批量删除 |
+
+### CrudController 可重写方法
+
+```php
+// 配置方法
+protected function getModelClass(): string;      // 必须实现
+protected function getResourceName(): string;    // 资源名称
+protected function getTable(): string;           // 数据表名
+protected function getPrimaryKey(): string;      // 主键名
+protected function getDefaultOrder(): array;     // 默认排序
+protected function getDefaultPageSize(): int;    // 默认分页大小
+protected function getListWith(): array;         // 列表预加载关联
+protected function getShowWith(): array;         // 详情预加载关联
+protected function getExportColumns(): array;    // 导出列配置
+protected function getExportFilenamePrefix(): string; // 导出文件名前缀
+
+// 查询方法
+protected function applySearch(Builder $query, Request $request): void;  // 搜索条件
+protected function applyFilters(Builder $query, Request $request): void; // 筛选条件
+
+// 验证方法
+protected function getStoreRules(): array;       // 创建验证规则
+protected function getUpdateRules(int $id): array; // 更新验证规则
+
+// 数据处理方法
+protected function prepareStoreData(array $validated): array;  // 准备创建数据
+protected function prepareUpdateData(array $validated): array; // 准备更新数据
+
+// 回调方法
+protected function afterStore(mixed $model, array $validated): void;
+protected function afterUpdate(mixed $model, array $validated): void;
+protected function afterStatusUpdate(mixed $model, bool $status): void;
+protected function beforeDelete(mixed $model): void;
+protected function afterDelete(mixed $model): void;
+
+// UI Schema 方法
+protected function listUi(): array;              // 列表页 Schema
+protected function formUi(): array;              // 表单页 Schema
+```
 
 ## 常用命令
 
@@ -280,6 +376,9 @@ php artisan lartrix:install
 
 # 发布前端资源
 php artisan lartrix:publish-assets
+
+# 卸载 Lartrix
+php artisan lartrix:uninstall
 
 # 创建模块
 php artisan module:make ModuleName

@@ -12,6 +12,7 @@ Lartrix 是一个 Laravel 后台管理包，为 Trix 前端提供 API 接口。�
 - Laravel Sanctum（认证）
 - Spatie Laravel Permission（权限管理）
 - nwidart/laravel-modules（模块化开发）
+- Maatwebsite Excel（导出）
 
 ## 开发模式
 
@@ -96,13 +97,39 @@ NaiveUI 组件类名无 N 前缀，输出保留 N 前缀：
 ### 常用组件
 
 ```php
+// NaiveUI 组件（120+）
 use Lartrix\Schema\Components\NaiveUI\{
     Button, Input, Select, SwitchC, Tag,
     Card, Modal, Drawer, Form, FormItem,
-    Space, Flex, Popconfirm, DataTable
+    Space, Flex, Grid, Row, Col,
+    Popconfirm, Popover, Tooltip, Dropdown,
+    DataTable, Pagination, Tabs, TabPane,
+    DatePicker, TimePicker, ColorPicker,
+    Upload, Tree, TreeSelect, Cascader,
+    Alert, Badge, Avatar, Progress
 };
-use Lartrix\Schema\Components\Business\{CrudPage, OptForm};
-use Lartrix\Schema\Actions\{SetAction, CallAction, FetchAction, IfAction, ScriptAction};
+
+// 业务组件
+use Lartrix\Schema\Components\Business\{
+    CrudPage, OptForm, FlowEditor,
+    MarkdownEditor, RichEditor, IconPicker
+};
+
+// 自定义组件
+use Lartrix\Schema\Components\Custom\{
+    Html, SvgIcon, Icon, VueECharts,
+    ButtonIcon, CountTo, FullScreen
+};
+
+// JSON 组件
+use Lartrix\Schema\Components\Json\{JsonDataTable, SchemaEditor};
+
+// Action 类型
+use Lartrix\Schema\Actions\{
+    SetAction, CallAction, FetchAction,
+    IfAction, ScriptAction, EmitAction,
+    CopyAction, WebSocketAction
+};
 ```
 
 ### Component 基类方法
@@ -128,13 +155,17 @@ CrudPage::make('标题')
     ->apiPrefix('/api/path')
     ->apiParams(['key' => 'value'])
     ->columns([...])
+    ->scrollX(1200)
     ->pagination(true)
+    ->defaultPageSize(15)
     ->tree('children', false)
     ->search([...])
     ->toolbarLeft([...])
+    ->toolbarRight([...])
     ->data([...])
     ->methods([...])
     ->modal('name', '标题', $form)
+    ->drawer('name', '标题', $form)
     ->build()
 ```
 
@@ -163,13 +194,65 @@ error('错误信息', null, 40004);
 
 ## CrudController action_type
 
-| action_type | 方法 | 说明 |
-|-------------|------|------|
-| (空) | GET | 列表数据 |
-| list_ui | GET | 列表 Schema |
-| form_ui | GET | 表单 Schema |
-| status | PUT | 更新状态 |
-| batch | DELETE | 批量删除 |
+### index 方法（GET）
+
+| action_type | 说明 |
+|-------------|------|
+| list（默认） | 列表数据 |
+| list_ui | 列表 Schema |
+| form_ui | 表单 Schema |
+| export | 导出数据 |
+| batch_destroy | 批量删除 |
+
+### update 方法（PUT）
+
+| action_type | 说明 |
+|-------------|------|
+| update（默认） | 更新记录 |
+| status | 更新状态 |
+| 自定义 | 子类定义 `updateXxx` 方法 |
+
+### destroy 方法（DELETE）
+
+| action_type | 说明 |
+|-------------|------|
+| delete（默认） | 删除记录 |
+| batch | 批量删除 |
+
+### CrudController 可重写方法
+
+```php
+// 配置
+protected function getModelClass(): string;      // 必须实现
+protected function getResourceName(): string;
+protected function getDefaultOrder(): array;
+protected function getDefaultPageSize(): int;
+protected function getListWith(): array;
+protected function getExportColumns(): array;
+
+// 查询
+protected function applySearch(Builder $query, Request $request): void;
+protected function applyFilters(Builder $query, Request $request): void;
+
+// 验证
+protected function getStoreRules(): array;
+protected function getUpdateRules(int $id): array;
+
+// 数据处理
+protected function prepareStoreData(array $validated): array;
+protected function prepareUpdateData(array $validated): array;
+
+// 回调
+protected function afterStore(mixed $model, array $validated): void;
+protected function afterUpdate(mixed $model, array $validated): void;
+protected function afterStatusUpdate(mixed $model, bool $status): void;
+protected function beforeDelete(mixed $model): void;
+protected function afterDelete(mixed $model): void;
+
+// UI Schema
+protected function listUi(): array;
+protected function formUi(): array;
+```
 
 ## 开发规范
 
