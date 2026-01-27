@@ -17,13 +17,12 @@ use Lartrix\Schema\Components\NaiveUI\Divider;
 use Lartrix\Schema\Components\NaiveUI\Icon;
 use Lartrix\Schema\Components\Custom\SvgIcon;
 use Lartrix\Schema\Components\NaiveUI\Result;
-use Lartrix\Schema\Components\Custom\GlobalSearch;
-use Lartrix\Schema\Components\Custom\HeaderNotification;
-use Lartrix\Schema\Components\Custom\FullScreen;
-use Lartrix\Schema\Components\Custom\LangSwitch;
-use Lartrix\Schema\Components\Custom\ThemeSchemaSwitch;
-use Lartrix\Schema\Components\Custom\ThemeButton;
-use Lartrix\Schema\Components\Custom\UserAvatar;
+use Lartrix\Schema\Components\Common\GlobalSearch;
+use Lartrix\Schema\Components\Common\FullScreen;
+use Lartrix\Schema\Components\Common\LangSwitch;
+use Lartrix\Schema\Components\Common\ThemeSchemaSwitch;
+use Lartrix\Schema\Components\Common\ThemeButton;
+use Lartrix\Schema\Components\Common\UserAvatar;
 
 class SystemController extends Controller
 {
