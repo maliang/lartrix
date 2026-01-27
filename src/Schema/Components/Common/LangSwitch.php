@@ -5,7 +5,7 @@ namespace Lartrix\Schema\Components\Common;
 use Lartrix\Schema\Components\Component;
 
 /**
- * LangSwitch - trix 语言切换组件
+ * LangSwitch - 语言切换组件
  */
 class LangSwitch extends Component
 {
@@ -17,5 +17,20 @@ class LangSwitch extends Component
     public static function make(): static
     {
         return new static();
+    }
+
+    public function langOptions(array $options): static
+    {
+        return $this->props(['langOptions' => $options]);
+    }
+
+    public function defaultLang(string $lang): static
+    {
+        return $this->props(['defaultLang' => $lang]);
+    }
+
+    public function submitUrl(string $url): static
+    {
+        return $this->props(['submitUrl' => $url]);
     }
 }

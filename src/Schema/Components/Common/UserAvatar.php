@@ -1,6 +1,6 @@
 <?php
 
-namespace Lartrix\Schema\Components\Custom;
+namespace Lartrix\Schema\Components\Common;
 
 use Lartrix\Schema\Components\Component;
 

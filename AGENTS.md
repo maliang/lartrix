@@ -198,23 +198,25 @@ Schema/Components/
 ├── Custom/                     # 自定义组件
 │   ├── Html.php                # 原生 HTML 标签
 │   ├── SvgIcon.php             # SVG 图标
-│   ├── Icon.php                # 图标组件
-│   ├── VueECharts.php          # ECharts 图表
+│   ├── Icon.php                # Iconify 图标
 │   ├── ButtonIcon.php          # 图标按钮
 │   ├── CountTo.php             # 数字动画
-│   ├── FullScreen.php          # 全屏切换
-│   ├── GlobalSearch.php        # 全局搜索
-│   ├── HeaderNotification.php  # 头部通知
-│   ├── LangSwitch.php          # 语言切换
-│   ├── ThemeButton.php         # 主题按钮
-│   ├── ThemeSchemaSwitch.php   # 主题模式切换
-│   ├── UserAvatar.php          # 用户头像
-│   └── BetterScroll.php        # 滚动组件
+│   ├── BetterScroll.php        # 滚动组件
+│   └── VueECharts.php          # ECharts 图表
 ├── Json/                       # JSON 渲染组件
 │   ├── JsonDataTable.php       # 数据表格
 │   └── SchemaEditor.php        # Schema 编辑器
 └── Common/                     # 通用组件
-    └── TableColumnSetting.php  # 表格列设置
+    ├── DarkModeContainer.php   # 暗色模式容器
+    ├── FullScreen.php          # 全屏切换
+    ├── GlobalSearch.php        # 全局搜索
+    ├── HeaderNotification.php  # 头部通知
+    ├── IconTooltip.php         # 图标提示
+    ├── LangSwitch.php          # 语言切换
+    ├── TableColumnSetting.php  # 表格列设置
+    ├── ThemeButton.php         # 主题按钮
+    ├── ThemeSchemaSwitch.php   # 主题模式切换
+    └── UserAvatar.php          # 用户头像
 ```
 
 ### Action 类型

@@ -118,7 +118,14 @@ use Lartrix\Schema\Components\Business\{
 // 自定义组件
 use Lartrix\Schema\Components\Custom\{
     Html, SvgIcon, Icon, VueECharts,
-    ButtonIcon, CountTo, FullScreen
+    ButtonIcon, CountTo, BetterScroll
+};
+
+// 通用组件
+use Lartrix\Schema\Components\Common\{
+    DarkModeContainer, FullScreen, GlobalSearch,
+    HeaderNotification, IconTooltip, LangSwitch,
+    TableColumnSetting, ThemeButton, ThemeSchemaSwitch, UserAvatar
 };
 
 // JSON 组件

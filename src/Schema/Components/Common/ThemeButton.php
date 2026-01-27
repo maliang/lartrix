@@ -1,17 +1,17 @@
 <?php
 
-namespace Lartrix\Schema\Components\Custom;
+namespace Lartrix\Schema\Components\Common;
 
 use Lartrix\Schema\Components\Component;
 
 /**
- * FullScreen - 全屏切换组件
+ * ThemeButton - 主题设置按钮组件
  */
-class FullScreen extends Component
+class ThemeButton extends Component
 {
     public function __construct()
     {
-        parent::__construct('FullScreen');
+        parent::__construct('ThemeButton');
     }
 
     public static function make(): static
