@@ -13,7 +13,6 @@ use Lartrix\Schema\Components\NaiveUI\Space;
 use Lartrix\Schema\Components\NaiveUI\Modal;
 use Lartrix\Schema\Components\NaiveUI\Drawer;
 use Lartrix\Schema\Components\NaiveUI\DrawerContent;
-use Lartrix\Schema\Components\Json\JsonDataTable;
 use Lartrix\Schema\Components\NaiveUI\Flex;
 use Lartrix\Schema\Components\NaiveUI\Pagination;
 use Lartrix\Schema\Components\Common\TableColumnSetting;
@@ -829,7 +828,7 @@ class CrudPage
             $tableProps['checkedRowKeys'] = '{{ selectedRowKeys }}';
         }
 
-        $table = JsonDataTable::make()->props($tableProps);
+        $table = DataTable::make()->props($tableProps);
 
         if ($hasBatchDelete) {
             $table->on('update:checked-row-keys', ['call' => 'handleSelectionChange', 'args' => ['{{ $event }}']]);

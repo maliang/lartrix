@@ -179,7 +179,7 @@ Schema/Components/
 ├── NaiveUI/                    # NaiveUI 组件（120+）
 │   ├── Button.php, Input.php, Select.php, SwitchC.php
 │   ├── Card.php, Modal.php, Drawer.php, Form.php, FormItem.php
-│   ├── DataTable.php, Pagination.php, Tag.php
+│   ├── Pagination.php, Tag.php
 │   ├── Tabs.php, TabPane.php, Collapse.php, CollapseItem.php
 │   ├── Grid.php, GridItem.php, Row.php, Col.php, Flex.php, Space.php
 │   ├── DatePicker.php, TimePicker.php, ColorPicker.php
@@ -191,6 +191,7 @@ Schema/Components/
 ├── Business/                   # 业务组件
 │   ├── CrudPage.php            # CRUD 页面（推荐）
 │   ├── OptForm.php             # 表单构建器
+│   ├── DataTable.php           # 数据表格
 │   ├── FlowEditor.php          # 流程编辑器
 │   ├── MarkdownEditor.php      # Markdown 编辑器
 │   ├── RichEditor.php          # 富文本编辑器
@@ -204,7 +205,6 @@ Schema/Components/
 │   ├── BetterScroll.php        # 滚动组件
 │   └── VueECharts.php          # ECharts 图表
 ├── Json/                       # JSON 渲染组件
-│   ├── JsonDataTable.php       # 数据表格
 │   └── SchemaEditor.php        # Schema 编辑器
 └── Common/                     # 通用组件
     ├── DarkModeContainer.php   # 暗色模式容器

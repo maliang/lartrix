@@ -103,7 +103,7 @@ use Lartrix\Schema\Components\NaiveUI\{
     Card, Modal, Drawer, Form, FormItem,
     Space, Flex, Grid, Row, Col,
     Popconfirm, Popover, Tooltip, Dropdown,
-    DataTable, Pagination, Tabs, TabPane,
+    Pagination, Tabs, TabPane,
     DatePicker, TimePicker, ColorPicker,
     Upload, Tree, TreeSelect, Cascader,
     Alert, Badge, Avatar, Progress
@@ -111,7 +111,7 @@ use Lartrix\Schema\Components\NaiveUI\{
 
 // 业务组件
 use Lartrix\Schema\Components\Business\{
-    CrudPage, OptForm, FlowEditor,
+    CrudPage, OptForm, DataTable, FlowEditor,
     MarkdownEditor, RichEditor, IconPicker
 };
 
@@ -129,7 +129,7 @@ use Lartrix\Schema\Components\Common\{
 };
 
 // JSON 组件
-use Lartrix\Schema\Components\Json\{JsonDataTable, SchemaEditor};
+use Lartrix\Schema\Components\Json\SchemaEditor;
 
 // Action 类型
 use Lartrix\Schema\Actions\{
