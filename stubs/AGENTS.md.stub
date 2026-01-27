@@ -190,10 +190,14 @@ CrudPage::make('标题')
     ->toolbarRight([...])           // 右侧工具栏
     ->data([...])                   // 额外数据
     ->methods([...])                // 额外方法
-    ->modal('name', '标题', $form)  // 弹窗
-    ->drawer('name', '标题', $form) // 抽屉
+    ->modal('form', '标题', $form)  // 弹窗（自动生成 formVisible 状态）
+    ->drawer('detail', '标题', $content) // 抽屉（自动生成 detailVisible 状态）
     ->build()                       // 构建 Schema
 ```
+
+modal/drawer 的 name 参数会自动生成 `{name}Visible` 状态和 `handle{Name}Close` 方法：
+- `->modal('form', ...)` → 生成 `formVisible` 状态、`handleFormClose` 方法
+- `->drawer('detail', ...)` → 生成 `detailVisible` 状态、`handleDetailClose` 方法
 
 ### OptForm 表单构建器
 
