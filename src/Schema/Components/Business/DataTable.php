@@ -9,9 +9,29 @@ use Lartrix\Schema\Components\Component;
  *
  * 封装 JsonDataTable，支持通过 JSON schema 的 slots 配置来渲染自定义列内容
  * 对应前端 trix 的 JsonDataTable 组件
+ *
+ * 列配置支持两种方式：
+ * 1. 简单方式：直接传入列数组
+ *    ->columns([
+ *        ['key' => 'id', 'title' => 'ID', 'width' => 80],
+ *        ['key' => 'name', 'title' => '名称'],
+ *    ])
+ *
+ * 2. 带插槽方式（类似 CrudPage）：
+ *    ->columns([
+ *        ['key' => 'id', 'title' => 'ID', 'width' => 80],
+ *        ['key' => 'status', 'title' => '状态', 'slot' => [
+ *            SwitchC::make()->props(['value' => '{{ slotData.row.status }}'])
+ *        ]],
+ *        ['key' => 'actions', 'title' => '操作', 'slot' => [
+ *            Space::make()->children([...])
+ *        ]],
+ *    ])
  */
 class DataTable extends Component
 {
+    protected array $tableSlots = [];
+
     public function __construct()
     {
         parent::__construct('JsonDataTable');
@@ -23,13 +43,45 @@ class DataTable extends Component
     }
 
     /**
-     * 设置表格列配置
+     * 设置表格列配置（支持 slot 配置）
+     *
+     * 示例：
+     * ->columns([
+     *     ['key' => 'id', 'title' => 'ID', 'width' => 80],
+     *     ['key' => 'status', 'title' => '状态', 'slot' => [SwitchC::make()->...]],
+     *     ['key' => 'actions', 'title' => '操作', 'slot' => [Space::make()->...], 'slotProps' => 'row'],
+     * ])
+     *
+     * @param array|string $columns 列配置数组或表达式
      */
     public function columns(array|string $columns): static
     {
-        return $this->props([
-            'columns' => is_string($columns) ? "{{ $columns }}" : $columns
-        ]);
+        if (is_string($columns)) {
+            return $this->props(['columns' => "{{ $columns }}"]);
+        }
+
+        $processedColumns = [];
+        $this->tableSlots = [];
+
+        foreach ($columns as $col) {
+            if (isset($col['slot'])) {
+                $this->tableSlots[$col['key']] = [
+                    'content' => $col['slot'],
+                    'slotProps' => $col['slotProps'] ?? 'slotData',
+                ];
+                unset($col['slot'], $col['slotProps']);
+            }
+            $processedColumns[] = $col;
+        }
+
+        $this->props(['columns' => $processedColumns]);
+
+        // 注册插槽
+        foreach ($this->tableSlots as $column => $config) {
+            $this->slot($column, $config['content'], $config['slotProps']);
+        }
+
+        return $this;
     }
 
     /**
