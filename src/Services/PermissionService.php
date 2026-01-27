@@ -6,7 +6,7 @@ use Lartrix\Models\Permission;
 use Lartrix\Models\Role;
 use Lartrix\Models\AdminUser;
 
-class PermissionService
+class PermissionService extends BaseService
 {
     /**
      * 获取权限树（按模块分组）

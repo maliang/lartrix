@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Event;
 use Lartrix\Models\Module;
 use Nwidart\Modules\Facades\Module as ModuleFacade;
 
-class ModuleService
+class ModuleService extends BaseService
 {
     /**
      * 获取所有模块列表
@@ -24,6 +24,7 @@ class ModuleService
      */
     public function enable(string $name): bool
     {
+        /** @var Module|null $module */
         $module = Module::where('name', $name)->first();
 
         if (!$module) {
@@ -50,6 +51,7 @@ class ModuleService
      */
     public function disable(string $name): bool
     {
+        /** @var Module|null $module */
         $module = Module::where('name', $name)->first();
 
         if (!$module) {
@@ -113,6 +115,7 @@ class ModuleService
      */
     public function isEnabled(string $name): bool
     {
+        /** @var Module|null $module */
         $module = Module::where('name', $name)->first();
         return $module && $module->isEnabled();
     }

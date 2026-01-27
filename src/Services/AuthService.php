@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Sanctum\NewAccessToken;
 
-class AuthService
+class AuthService extends BaseService
 {
     /**
      * 获取用户模型类
