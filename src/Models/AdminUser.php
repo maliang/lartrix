@@ -5,6 +5,7 @@ namespace Lartrix\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Lartrix\Models\Permission;
 use Spatie\Permission\Traits\HasRoles;
 
 class AdminUser extends Authenticatable
@@ -61,10 +62,25 @@ class AdminUser extends Authenticatable
     }
 
     /**
+     * 检查用户是否为超级管理员
+     */
+    public function isSuperAdmin(): bool
+    {
+        $superAdminRole = config('lartrix.super_admin_role', 'super-admin');
+        return $this->hasRole($superAdminRole);
+    }
+
+    /**
      * 获取用户的有效权限（排除禁用角色的权限）
+     * 超级管理员返回所有权限
      */
     public function getActivePermissions(): \Illuminate\Support\Collection
     {
+        // 超级管理员拥有所有权限
+        if ($this->isSuperAdmin()) {
+            return Permission::all();
+        }
+
         return $this->roles()
             ->where('status', true)
             ->with('permissions')
@@ -76,9 +92,15 @@ class AdminUser extends Authenticatable
 
     /**
      * 检查用户是否有指定权限（排除禁用角色）
+     * 超级管理员拥有所有权限
      */
     public function hasActivePermission(string $permission): bool
     {
+        // 超级管理员拥有所有权限
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
         return $this->getActivePermissions()->contains('name', $permission);
     }
 
