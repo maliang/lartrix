@@ -55,13 +55,13 @@ class UserController extends CrudController
     {
         return [
             ['key' => 'id', 'title' => 'ID'],
-            ['key' => 'name', 'title' => '用户名'],
-            ['key' => 'nick_name', 'title' => '昵称'],
-            ['key' => 'real_name', 'title' => '真实姓名'],
+            ['key' => 'username', 'title' => '用户名'],
+            ['key' => 'nickname', 'title' => '昵称'],
             ['key' => 'email', 'title' => '邮箱'],
-            ['key' => 'mobile', 'title' => '手机号'],
+            ['key' => 'phone', 'title' => '手机号'],
             ['key' => 'roles', 'title' => '角色'],
             ['key' => 'status', 'title' => '状态'],
+            ['key' => 'last_login_time', 'title' => '最后登录时间'],
             ['key' => 'created_at', 'title' => '创建时间'],
         ];
     }
@@ -72,11 +72,10 @@ class UserController extends CrudController
     {
         if ($keyword = $request->input('keyword')) {
             $query->where(function ($q) use ($keyword) {
-                $q->where('name', 'like', "%{$keyword}%")
-                    ->orWhere('nick_name', 'like', "%{$keyword}%")
-                    ->orWhere('real_name', 'like', "%{$keyword}%")
+                $q->where('username', 'like', "%{$keyword}%")
+                    ->orWhere('nickname', 'like', "%{$keyword}%")
                     ->orWhere('email', 'like', "%{$keyword}%")
-                    ->orWhere('mobile', 'like', "%{$keyword}%");
+                    ->orWhere('phone', 'like', "%{$keyword}%");
             });
         }
     }
@@ -87,14 +86,14 @@ class UserController extends CrudController
     {
         $table = $this->getTable();
         return [
-            'name' => "required|string|max:255|unique:{$table}",
-            'nick_name' => 'nullable|string|max:255',
-            'real_name' => 'nullable|string|max:255',
-            'email' => "required|email|unique:{$table}",
-            'mobile' => 'nullable|string|max:20',
+            'username' => "required|string|max:20|unique:{$table}",
             'password' => 'required|string|min:6',
-            'status' => 'boolean',
+            'nickname' => 'nullable|string|max:20',
             'avatar' => 'nullable|string',
+            'email' => 'nullable|email',
+            'phone' => 'nullable|string|max:20',
+            'status' => 'nullable|string|max:10',
+            'remark' => 'nullable|string|max:255',
             'roles' => 'array',
             'roles.*' => 'string|exists:roles,name',
         ];
@@ -104,12 +103,12 @@ class UserController extends CrudController
     {
         $table = $this->getTable();
         return [
-            'name' => "string|max:255|unique:{$table},name,{$id}",
-            'nick_name' => 'nullable|string|max:255',
-            'real_name' => 'nullable|string|max:255',
-            'email' => "email|unique:{$table},email,{$id}",
-            'mobile' => 'nullable|string|max:20',
+            'username' => "string|max:20|unique:{$table},username,{$id}",
+            'nickname' => 'nullable|string|max:20',
             'avatar' => 'nullable|string',
+            'email' => 'nullable|email',
+            'phone' => 'nullable|string|max:20',
+            'remark' => 'nullable|string|max:255',
             'roles' => 'array',
             'roles.*' => 'string|exists:roles,name',
         ];
@@ -120,14 +119,14 @@ class UserController extends CrudController
     protected function prepareStoreData(array $validated): array
     {
         return [
-            'name' => $validated['name'],
-            'nick_name' => $validated['nick_name'] ?? null,
-            'real_name' => $validated['real_name'] ?? null,
-            'email' => $validated['email'],
-            'mobile' => $validated['mobile'] ?? null,
+            'username' => $validated['username'],
             'password' => $validated['password'],
-            'status' => $validated['status'] ?? true,
+            'nickname' => $validated['nickname'] ?? null,
             'avatar' => $validated['avatar'] ?? null,
+            'email' => $validated['email'] ?? null,
+            'phone' => $validated['phone'] ?? null,
+            'status' => $validated['status'] ?? '1',
+            'remark' => $validated['remark'] ?? null,
         ];
     }
 
@@ -146,6 +145,25 @@ class UserController extends CrudController
     }
 
     // ==================== 状态与删除回调 ====================
+
+    /**
+     * 更新状态（重写以支持字符串类型的 status）
+     */
+    protected function updateStatus(Request $request, int $id): array
+    {
+        $model = $this->findOrFail($id);
+
+        $validated = $request->validate([
+            'status' => 'required|string|in:0,1',
+        ]);
+
+        $model->status = $validated['status'];
+        $model->save();
+
+        $this->afterStatusUpdate($model, $validated['status'] === '1');
+
+        return success('状态更新成功', ['status' => $model->status]);
+    }
 
     protected function afterStatusUpdate(mixed $model, bool $status): void
     {
@@ -189,14 +207,14 @@ class UserController extends CrudController
         // 用户表单
         $userForm = OptForm::make('formData')
             ->fields([
-                ['用户名', 'name', Input::make()->props(['placeholder' => '请输入用户名', 'disabled' => '{{ !!editingId }}'])],
-                ['昵称', 'nick_name', Input::make()->props(['placeholder' => '请输入昵称'])],
-                ['真实姓名', 'real_name', Input::make()->props(['placeholder' => '请输入真实姓名'])],
+                ['用户名', 'username', Input::make()->props(['placeholder' => '请输入用户名', 'disabled' => '{{ !!editingId }}'])],
+                ['昵称', 'nickname', Input::make()->props(['placeholder' => '请输入昵称'])],
                 ['邮箱', 'email', Input::make()->props(['placeholder' => '请输入邮箱'])],
-                ['手机号', 'mobile', Input::make()->props(['placeholder' => '请输入手机号'])],
+                ['手机号', 'phone', Input::make()->props(['placeholder' => '请输入手机号'])],
                 ['密码', 'password', Input::make()->props(['type' => 'password', 'showPasswordOn' => 'click', 'placeholder' => '请输入密码']), '', '!editingId'],
                 ['角色', 'roles', Select::make()->props(['multiple' => true, 'placeholder' => '请选择角色', 'options' => '{{ roleOptions }}']), []],
-                ['状态', 'status', SwitchC::make(), true],
+                ['备注', 'remark', Input::make()->props(['type' => 'textarea', 'placeholder' => '请输入备注'])],
+                ['状态', 'status', SwitchC::make()->props(['checkedValue' => '1', 'uncheckedValue' => '0']), '1'],
             ])
             ->buttons([
                 Button::make()->on('click', SetAction::make('formVisible', false))->text('取消'),
@@ -240,8 +258,8 @@ class UserController extends CrudController
                     'clearable' => true,
                     'style' => ['width' => '120px'],
                     'options' => [
-                        ['label' => '启用', 'value' => true],
-                        ['label' => '禁用', 'value' => false],
+                        ['label' => '启用', 'value' => '1'],
+                        ['label' => '禁用', 'value' => '0'],
                     ],
                 ])],
             ])
@@ -253,14 +271,14 @@ class UserController extends CrudController
                     ->on('click', [
                         SetAction::batch([
                             'editingId' => null,
-                            'formData.name' => '',
-                            'formData.nick_name' => '',
-                            'formData.real_name' => '',
+                            'formData.username' => '',
+                            'formData.nickname' => '',
                             'formData.email' => '',
-                            'formData.mobile' => '',
+                            'formData.phone' => '',
                             'formData.password' => '',
                             'formData.roles' => [],
-                            'formData.status' => true,
+                            'formData.remark' => '',
+                            'formData.status' => '1',
                             'formVisible' => true,
                         ]),
                     ])
@@ -313,10 +331,10 @@ class UserController extends CrudController
     {
         return [
             ['key' => 'id', 'title' => 'ID', 'width' => 80],
-            ['key' => 'name', 'title' => '用户名'],
-            ['key' => 'nick_name', 'title' => '昵称'],
+            ['key' => 'username', 'title' => '用户名'],
+            ['key' => 'nickname', 'title' => '昵称'],
             ['key' => 'email', 'title' => '邮箱'],
-            ['key' => 'mobile', 'title' => '手机号'],
+            ['key' => 'phone', 'title' => '手机号'],
             ['key' => 'roles', 'title' => '角色', 'width' => 150, 'slot' => [
                 Space::make()
                     ->props(['size' => 'small'])
@@ -329,11 +347,11 @@ class UserController extends CrudController
             ]],
             ['key' => 'status', 'title' => '状态', 'width' => 80, 'slot' => [
                 SwitchC::make()
-                    ->props(['value' => '{{ slotData.row.status }}'])
-                    ->on('update:value', 
+                    ->props(['value' => '{{ slotData.row.status === "1" }}'])
+                    ->on('update:value',
                         FetchAction::make('/users/{{ slotData.row.id }}')
                             ->put()
-                            ->body(['action_type' => 'status', 'status' => '{{ $event }}'])
+                            ->body(['action_type' => 'status', 'status' => '{{ $event ? "1" : "0" }}'])
                             ->then([
                                 CallAction::make('$message.success', ['状态更新成功']),
                                 CallAction::make('loadData'),
@@ -343,6 +361,7 @@ class UserController extends CrudController
                             ])
                     ),
             ]],
+            ['key' => 'last_login_time', 'title' => '最后登录', 'width' => 180],
             ['key' => 'created_at', 'title' => '创建时间', 'width' => 180],
             ['key' => 'actions', 'title' => '操作', 'width' => 220, 'fixed' => 'right', 'slot' => [
                 Space::make()->children([
@@ -351,12 +370,12 @@ class UserController extends CrudController
                         ->props(['type' => 'primary', 'text' => true])
                         ->on('click', [
                             SetAction::make('editingId', '{{ slotData.row.id }}'),
-                            SetAction::make('formData.name', '{{ slotData.row.name }}'),
-                            SetAction::make('formData.nick_name', '{{ slotData.row.nick_name || "" }}'),
-                            SetAction::make('formData.real_name', '{{ slotData.row.real_name || "" }}'),
-                            SetAction::make('formData.email', '{{ slotData.row.email }}'),
-                            SetAction::make('formData.mobile', '{{ slotData.row.mobile || "" }}'),
+                            SetAction::make('formData.username', '{{ slotData.row.username }}'),
+                            SetAction::make('formData.nickname', '{{ slotData.row.nickname || "" }}'),
+                            SetAction::make('formData.email', '{{ slotData.row.email || "" }}'),
+                            SetAction::make('formData.phone', '{{ slotData.row.phone || "" }}'),
                             SetAction::make('formData.roles', '{{ (slotData.row.roles || []).map(r => r.name) }}'),
+                            SetAction::make('formData.remark', '{{ slotData.row.remark || "" }}'),
                             SetAction::make('formData.status', '{{ slotData.row.status }}'),
                             SetAction::make('formVisible', true),
                         ])
@@ -366,7 +385,7 @@ class UserController extends CrudController
                         ->props(['type' => 'warning', 'text' => true])
                         ->on('click', [
                             SetAction::make('resetPwdUserId', '{{ slotData.row.id }}'),
-                            SetAction::make('resetPwdUserName', '{{ slotData.row.name }}'),
+                            SetAction::make('resetPwdUserName', '{{ slotData.row.username }}'),
                             SetAction::make('newPassword', ''),
                             SetAction::make('resetPwdVisible', true),
                         ])
@@ -376,7 +395,7 @@ class UserController extends CrudController
                             'positiveText' => '确定',
                             'negativeText' => '取消',
                         ])
-                        ->on('positive-click', 
+                        ->on('positive-click',
                             FetchAction::make('/users/{{ slotData.row.id }}')
                                 ->delete()
                                 ->then([
@@ -393,7 +412,7 @@ class UserController extends CrudController
                                 ->props(['type' => 'error', 'text' => true])
                                 ->text('删除'),
                         ])
-                        ->children(['确定要删除用户 {{ slotData.row.name }} 吗？']),
+                        ->children(['确定要删除用户 {{ slotData.row.username }} 吗？']),
                 ]),
             ]],
         ];

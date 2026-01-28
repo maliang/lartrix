@@ -2,6 +2,7 @@
 
 namespace Lartrix\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -10,7 +11,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class AdminUser extends Authenticatable
 {
-    use HasApiTokens, HasRoles, Notifiable;
+    use HasApiTokens, HasRoles, Notifiable, SoftDeletes;
 
     /**
      * 表名
@@ -20,20 +21,22 @@ class AdminUser extends Authenticatable
     /**
      * 权限 guard 名称
      */
-    protected string $guard_name = 'sanctum';
+    protected string $guard_name = 'admin';
 
     /**
      * 可批量赋值的属性
      */
     protected $fillable = [
-        'name',
-        'nick_name',
-        'real_name',
-        'email',
-        'mobile',
+        'username',
         'password',
-        'status',
+        'nickname',
         'avatar',
+        'email',
+        'phone',
+        'status',
+        'remark',
+        'last_login_ip',
+        'last_login_time',
     ];
 
     /**
@@ -48,9 +51,8 @@ class AdminUser extends Authenticatable
      * 属性类型转换
      */
     protected $casts = [
-        'status' => 'boolean',
         'password' => 'hashed',
-        'email_verified_at' => 'datetime',
+        'last_login_time' => 'datetime',
     ];
 
     /**
@@ -109,6 +111,6 @@ class AdminUser extends Authenticatable
      */
     public function isActive(): bool
     {
-        return $this->status === true;
+        return $this->status == 1 || $this->status === '1' || $this->status === true;
     }
 }

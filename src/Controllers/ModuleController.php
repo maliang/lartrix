@@ -3,17 +3,19 @@
 namespace Lartrix\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
 use Lartrix\Services\ModuleService;
+use Nwidart\Modules\Facades\Module as ModuleFacade;
 use Lartrix\Schema\Components\NaiveUI\Card;
 use Lartrix\Schema\Components\NaiveUI\Space;
-use Lartrix\Schema\Components\NaiveUI\Grid;
-use Lartrix\Schema\Components\NaiveUI\GridItem;
 use Lartrix\Schema\Components\NaiveUI\Button;
 use Lartrix\Schema\Components\NaiveUI\Tag;
 use Lartrix\Schema\Components\NaiveUI\Result;
-use Lartrix\Schema\Components\NaiveUI\Descriptions;
-use Lartrix\Schema\Components\NaiveUI\DescriptionsItem;
+use Lartrix\Schema\Components\NaiveUI\Avatar;
+use Lartrix\Schema\Components\NaiveUI\Popconfirm;
+use Lartrix\Schema\Components\Business\DataTable;
 use Lartrix\Schema\Components\Custom\SvgIcon;
+use Lartrix\Schema\Components\Custom\Html;
 use Lartrix\Schema\Actions\SetAction;
 use Lartrix\Schema\Actions\CallAction;
 use Lartrix\Schema\Actions\FetchAction;
@@ -84,6 +86,51 @@ class ModuleController extends Controller
     }
 
     /**
+     * 获取模块 Logo
+     */
+    public function logo(string $name)
+    {
+        $module = ModuleFacade::find($name);
+
+        if (!$module) {
+            abort(404, '模块不存在');
+        }
+
+        $moduleJson = $module->json();
+        $logoFile = $moduleJson->get('logo', '');
+
+        if (empty($logoFile)) {
+            abort(404, 'Logo 未配置');
+        }
+
+        // 构建完整路径（模块目录 + logo 文件名）
+        $fullPath = $module->getPath() . '/' . $logoFile;
+
+        if (!file_exists($fullPath)) {
+            abort(404, 'Logo 文件不存在');
+        }
+
+        // 获取 MIME 类型
+        $extension = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+        $mimeTypes = [
+            'png' => 'image/png',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'svg' => 'image/svg+xml',
+            'webp' => 'image/webp',
+            'ico' => 'image/x-icon',
+        ];
+
+        $mimeType = $mimeTypes[$extension] ?? 'application/octet-stream';
+
+        return Response::file($fullPath, [
+            'Content-Type' => $mimeType,
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
+    }
+
+    /**
      * 模块市场 UI Schema
      */
     protected function marketUi(): array
@@ -110,11 +157,14 @@ class ModuleController extends Controller
      */
     protected function installedUi(): array
     {
+        $routePrefix = '/' . config('lartrix.route_prefix', 'api/admin');
+
         $schema = Card::make()
             ->props(['title' => '已安装模块'])
             ->data([
                 'modules' => [],
                 'loading' => false,
+                'routePrefix' => $routePrefix,
             ])
             ->methods([
                 'loadData' => [
@@ -156,88 +206,63 @@ class ModuleController extends Controller
             ])
             ->onMounted(CallAction::make('loadData'))
             ->children([
-                Space::make()
-                    ->props(['vertical' => true, 'size' => 'large'])
-                    ->children([
-                        // 无模块时显示空状态
-                        Result::make()
-                            ->if('modules.length === 0 && !loading')
-                            ->props([
-                                'status' => 'info',
-                                'title' => '暂无已安装模块',
-                                'description' => '您可以从模块市场安装模块',
+                DataTable::make()
+                    ->dataSource('modules')
+                    ->loading('loading')
+                    ->rowKey('name')
+                    ->columns([
+                        ['key' => 'logo', 'title' => 'Logo', 'width' => 60, 'slot' => [
+                            Avatar::make()
+                                ->if('slotData.row.logo')
+                                ->props(['src' => '{{ routePrefix + "/modules/" + slotData.row.name + "/logo" }}', 'size' => 32, 'objectFit' => 'contain']),
+                            SvgIcon::make('carbon:cube')
+                                ->if('!slotData.row.logo')
+                                ->props(['class' => 'text-2xl text-primary']),
+                        ]],
+                        ['key' => 'name', 'title' => '模块名称', 'width' => 150],
+                        ['key' => 'version', 'title' => '版本', 'width' => 80],
+                        ['key' => 'description', 'title' => '描述', 'ellipsis' => true],
+                        ['key' => 'author', 'title' => '作者', 'width' => 100],
+                        ['key' => 'website', 'title' => '网址', 'width' => 120, 'ellipsis' => true, 'slot' => [
+                            Button::make()
+                                ->if('slotData.row.website')
+                                ->size('small')
+                                ->props(['text' => true, 'type' => 'primary', 'tag' => 'a', 'href' => '{{ slotData.row.website }}', 'target' => '_blank'])
+                                ->children(['访问']),
+                        ]],
+                        ['key' => 'enabled', 'title' => '状态', 'width' => 80, 'slot' => [
+                            Tag::make()
+                                ->props([
+                                    'type' => "{{ slotData.row.enabled ? 'success' : 'default' }}",
+                                    'size' => 'small',
+                                ])
+                                ->children(["{{ slotData.row.enabled ? '已启用' : '已禁用' }}"]),
+                        ]],
+                        ['key' => 'actions', 'title' => '操作', 'width' => 120, 'slot' => [
+                            Space::make()->children([
+                                Button::make()
+                                    ->if('!slotData.row.enabled')
+                                    ->size('small')
+                                    ->type('primary')
+                                    ->props(['text' => true])
+                                    ->on('click', ['call' => 'handleEnable', 'args' => ['{{ slotData.row.name }}']])
+                                    ->text('启用'),
+                                Popconfirm::make()
+                                    ->if('slotData.row.enabled')
+                                    ->on('positive-click', ['call' => 'handleDisable', 'args' => ['{{ slotData.row.name }}']])
+                                    ->slot('trigger', [
+                                        Button::make()
+                                            ->size('small')
+                                            ->type('warning')
+                                            ->props(['text' => true])
+                                            ->text('禁用'),
+                                    ])
+                                    ->children(['确定禁用该模块？']),
                             ]),
-                        // 模块列表
-                        Grid::make()
-                            ->if('modules.length > 0')
-                            ->props([
-                                'cols' => '1 s:2 m:3',
-                                'xGap' => 16,
-                                'yGap' => 16,
-                                'responsive' => 'screen',
-                            ])
-                            ->children([
-                                GridItem::make()
-                                    ->for('module in modules', '{{ module.name }}')
-                                    ->children([
-                                        $this->buildModuleCard(),
-                                    ]),
-                            ]),
+                        ]],
                     ]),
             ]);
 
         return success($schema->toArray());
-    }
-
-    /**
-     * 构建模块卡片
-     */
-    protected function buildModuleCard()
-    {
-        return Card::make()
-            ->props(['class' => 'h-full'])
-            ->children([
-                Space::make()
-                    ->props(['vertical' => true, 'size' => 'medium'])
-                    ->children([
-                        // 模块名称和状态
-                        Space::make()
-                            ->props(['justify' => 'space-between', 'align' => 'center', 'style' => ['width' => '100%']])
-                            ->children([
-                                Space::make()->children([
-                                    SvgIcon::make('carbon:cube')->props(['class' => 'text-xl text-primary']),
-                                    '{{ module.name }}',
-                                ]),
-                                Tag::make()
-                                    ->props([
-                                        'type' => "{{ module.enabled ? 'success' : 'default' }}",
-                                        'size' => 'small',
-                                    ])
-                                    ->children(["{{ module.enabled ? '已启用' : '已禁用' }}"]),
-                            ]),
-                        // 模块描述
-                        Descriptions::make()
-                            ->props(['column' => 1, 'labelPlacement' => 'left', 'size' => 'small'])
-                            ->children([
-                                DescriptionsItem::make()->props(['label' => '版本'])->children(['{{ module.version || "-" }}']),
-                                DescriptionsItem::make()->props(['label' => '描述'])->children(['{{ module.description || "-" }}']),
-                            ]),
-                        // 操作按钮
-                        Space::make()->children([
-                            Button::make()
-                                ->if('!module.enabled')
-                                ->size('small')
-                                ->type('primary')
-                                ->on('click', ['call' => 'handleEnable', 'args' => ['{{ module.name }}']])
-                                ->text('启用'),
-                            Button::make()
-                                ->if('module.enabled')
-                                ->size('small')
-                                ->type('warning')
-                                ->on('click', ['call' => 'handleDisable', 'args' => ['{{ module.name }}']])
-                                ->text('禁用'),
-                        ]),
-                    ]),
-            ]);
     }
 }

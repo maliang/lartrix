@@ -21,6 +21,7 @@ class Module extends Model
         'version',
         'author',
         'website',
+        'logo',
         'enabled',
         'config',
     ];

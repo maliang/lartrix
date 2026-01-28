@@ -48,13 +48,18 @@ class InstallCommand extends Command
         $this->publishDependencies();
         $this->info('   依赖包发布完成。');
 
+        // 配置 auth.php
+        $this->info('3. 配置 auth.php...');
+        $this->configureAuthConfig();
+        $this->info('   auth.php 配置完成。');
+
         // 配置 composer merge-plugin（用于模块化开发）
-        $this->info('3. 配置 composer.json...');
+        $this->info('4. 配置 composer.json...');
         $this->configureComposerMergePlugin();
         $this->info('   composer.json 配置完成。');
 
         // 执行数据库迁移
-        $this->info('4. 执行数据库迁移...');
+        $this->info('5. 执行数据库迁移...');
         $migrateResult = Artisan::call('migrate', ['--force' => true]);
         if ($migrateResult === 0) {
             $this->info('   迁移完成。');
@@ -63,12 +68,12 @@ class InstallCommand extends Command
         }
 
         // 创建超级管理员角色
-        $this->info('5. 创建超级管理员角色...');
+        $this->info('6. 创建超级管理员角色...');
         $superAdminRole = $this->createSuperAdminRole();
         $this->info('   角色创建完成。');
 
         // 创建基础权限
-        $this->info('6. 创建基础权限...');
+        $this->info('7. 创建基础权限...');
         $this->createBasePermissions();
         $this->info('   权限创建完成。');
 
@@ -76,23 +81,23 @@ class InstallCommand extends Command
         $superAdminRole->syncPermissions(Permission::all());
 
         // 初始化系统设置
-        $this->info('7. 初始化系统设置...');
+        $this->info('8. 初始化系统设置...');
         $this->initializeSettings();
         $this->info('   系统设置初始化完成。');
 
         // 创建默认菜单
-        $this->info('8. 创建默认菜单...');
+        $this->info('9. 创建默认菜单...');
         $this->createDefaultMenus();
         $this->info('   默认菜单创建完成。');
 
         // 交互式创建超级管理员账户
-        $this->info('9. 创建超级管理员账户...');
+        $this->info('10. 创建超级管理员账户...');
         $admin = $this->createSuperAdmin($superAdminRole);
 
         // 创建 AI 开发指南文件
-        $this->info('10. 创建 AI 开发指南文件...');
+        $this->info('11. 创建 AI 开发指南文件...');
         $this->createAiGuideFiles();
-        $this->info('   AI 开发指南文件创建完成。');
+        $this->info('    AI 开发指南文件创建完成。');
 
         // 输出安装摘要
         $this->newLine();
@@ -105,8 +110,7 @@ class InstallCommand extends Command
             [
                 ['前端资源目录', public_path('admin')],
                 ['超级管理员角色', $superAdminRole->name],
-                ['管理员用户名', $admin->name],
-                ['管理员邮箱', $admin->email],
+                ['管理员用户名', $admin->username],
                 ['权限数量', Permission::count()],
             ]
         );
@@ -204,6 +208,74 @@ class InstallCommand extends Command
             '--tag' => 'lartrix-config',
             '--force' => true,
         ]);
+    }
+
+    /**
+     * 配置 auth.php
+     * 添加 admin guard 和 admins provider
+     */
+    protected function configureAuthConfig(): void
+    {
+        $authPath = config_path('auth.php');
+
+        if (!file_exists($authPath)) {
+            $this->warn('   auth.php 不存在，跳过配置。');
+            return;
+        }
+
+        $content = file_get_contents($authPath);
+
+        // 检查是否已配置 admin guard
+        if (str_contains($content, "'admin'") && str_contains($content, "'admins'")) {
+            $this->line('   admin guard 已配置，跳过。');
+            return;
+        }
+
+        // 添加 admin guard
+        if (!str_contains($content, "'admin'")) {
+            $guardConfig = <<<'PHP'
+'web' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
+
+        // Admin 后台管理 guard
+        'admin' => [
+            'driver' => 'sanctum',
+            'provider' => 'admins',
+        ],
+PHP;
+            $content = str_replace(
+                "'web' => [\n            'driver' => 'session',\n            'provider' => 'users',\n        ],",
+                $guardConfig,
+                $content
+            );
+            $this->line('   已添加 admin guard。');
+        }
+
+        // 添加 admins provider
+        if (!str_contains($content, "'admins'")) {
+            $providerConfig = <<<'PHP'
+'users' => [
+            'driver' => 'eloquent',
+            'model' => env('AUTH_MODEL', App\Models\User::class),
+        ],
+
+        // Admins provider 用于后台管理认证
+        'admins' => [
+            'driver' => 'eloquent',
+            'model' => \Lartrix\Models\AdminUser::class,
+        ],
+PHP;
+            $content = str_replace(
+                "'users' => [\n            'driver' => 'eloquent',\n            'model' => env('AUTH_MODEL', App\Models\User::class),\n        ],",
+                $providerConfig,
+                $content
+            );
+            $this->line('   已添加 admins provider。');
+        }
+
+        file_put_contents($authPath, $content);
     }
 
     /**
@@ -324,7 +396,7 @@ class InstallCommand extends Command
         $roleName = config('lartrix.permission.super_admin_role', 'super-admin');
 
         return Role::updateOrCreate(
-            ['name' => $roleName, 'guard_name' => 'sanctum'],
+            ['name' => $roleName, 'guard_name' => 'admin'],
             [
                 'title' => '超级管理员',
                 'description' => '拥有所有权限的超级管理员',
@@ -438,10 +510,10 @@ class InstallCommand extends Command
             // 继承父级的 module
             $permission['module'] = $permission['module'] ?? $module;
             $permission['parent_id'] = $parentId;
-            $permission['guard_name'] = 'sanctum';
+            $permission['guard_name'] = 'admin';
 
             $created = Permission::updateOrCreate(
-                ['name' => $permission['name'], 'guard_name' => 'sanctum'],
+                ['name' => $permission['name'], 'guard_name' => 'admin'],
                 $permission
             );
 
@@ -457,8 +529,7 @@ class InstallCommand extends Command
      */
     protected function createSuperAdmin(Role $role): AdminUser
     {
-        $name = $this->ask('请输入管理员用户名', 'admin');
-        $email = $this->ask('请输入管理员邮箱', 'admin@example.com');
+        $username = $this->ask('请输入管理员用户名', 'admin');
         $password = $this->secret('请输入管理员密码（至少6位）') ?: 'password';
 
         while (strlen($password) < 6) {
@@ -467,11 +538,11 @@ class InstallCommand extends Command
         }
 
         $admin = AdminUser::updateOrCreate(
-            ['email' => $email],
+            ['username' => $username],
             [
-                'name' => $name,
                 'password' => $password,
-                'status' => true,
+                'nickname' => '超级管理员',
+                'status' => '1',
             ]
         );
 

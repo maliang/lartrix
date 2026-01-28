@@ -86,11 +86,12 @@ class ModuleService extends BaseService
             Module::updateOrCreate(
                 ['name' => $name],
                 [
-                    'title' => $moduleJson->get('title', $name),
-                    'description' => $moduleJson->get('description'),
-                    'version' => $moduleJson->get('version'),
-                    'author' => $moduleJson->get('author'),
-                    'website' => $moduleJson->get('website'),
+                    'title' => $moduleJson->get('title') ?: $moduleJson->get('name', $name),
+                    'description' => $moduleJson->get('description', ''),
+                    'version' => $moduleJson->get('version', ''),
+                    'author' => $moduleJson->get('author', ''),
+                    'website' => $moduleJson->get('website') ?: $moduleJson->get('url', ''),
+                    'logo' => $moduleJson->get('logo', ''),
                     'enabled' => $laravelModule->isEnabled(),
                     'config' => $moduleJson->getAttributes(),
                 ]

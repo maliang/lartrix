@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('version')->nullable()->comment('版本');
             $table->string('author')->nullable()->comment('作者');
             $table->string('website')->nullable()->comment('网址');
+            $table->string('logo')->nullable()->comment('Logo图片路径');
             $table->boolean('enabled')->default(true)->comment('是否启用');
             $table->json('config')->nullable()->comment('配置信息');
             $table->timestamps();

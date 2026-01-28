@@ -13,16 +13,18 @@ return new class extends Migration
     {
         Schema::create('admin_users', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique()->comment('用户名');
-            $table->string('nick_name')->nullable()->comment('昵称');
-            $table->string('real_name')->nullable()->comment('真实姓名');
-            $table->string('email')->unique()->comment('邮箱');
-            $table->string('mobile')->nullable()->comment('手机号');
+            $table->string('username', 20)->comment('用户名');
             $table->string('password')->comment('密码');
-            $table->boolean('status')->default(true)->comment('状态：启用/禁用');
+            $table->string('nickname', 20)->nullable()->comment('昵称');
             $table->string('avatar')->nullable()->comment('头像');
-            $table->timestamp('email_verified_at')->nullable();
+            $table->string('email')->nullable()->comment('邮箱');
+            $table->string('phone', 20)->nullable()->comment('手机号');
+            $table->string('status', 10)->default('1')->comment('状态');
+            $table->string('remark')->nullable()->comment('备注');
+            $table->string('last_login_ip', 20)->nullable()->comment('最后登录IP');
+            $table->timestamp('last_login_time')->nullable()->comment('最后登录时间');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

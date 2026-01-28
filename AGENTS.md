@@ -225,7 +225,7 @@ Schema/Components/
 Schema/Actions/
 ├── ActionInterface.php         # Action 接口
 ├── SetAction.php               # 设置状态值
-├── CallAction.php              # 调用方法
+├── CallAction.php              # 调用方法（自动补全 $methods. 前缀）
 ├── FetchAction.php             # API 请求
 ├── IfAction.php                # 条件判断
 ├── ScriptAction.php            # 执行脚本
@@ -233,6 +233,29 @@ Schema/Actions/
 ├── CopyAction.php              # 复制到剪贴板
 └── WebSocketAction.php         # WebSocket 操作
 ```
+
+### CallAction 内置方法
+
+`CallAction` 会自动补全 `$methods.` 前缀，以下写法等效：
+
+```php
+// 简写（推荐）
+CallAction::make('$message.success', ['操作成功'])
+CallAction::make('$nav.push', ['/users'])
+
+// 完整写法
+CallAction::make('$methods.$message.success', ['操作成功'])
+```
+
+支持的内置方法：
+- `$message.success/error/warning/info` - 消息提示
+- `$dialog.success/error/warning` - 对话框
+- `$notification.success/error/warning/info` - 通知
+- `$loadingBar.start/finish/error` - 加载条
+- `$nav.push/replace/back` - 页面导航
+- `$tab.close/open/fix` - 标签页操作
+- `$window.open` - 打开新窗口
+- `$download` - 下载文件
 
 ### Component 基类方法
 
@@ -401,3 +424,22 @@ php artisan module:make ModuleName
 4. NaiveUI 组件类名无 N 前缀
 5. 使用 `$request->filled()` 检查非空参数
 6. action_type 使用下划线格式：`list_ui`, `form_ui`, `reset_password`
+
+## 模块 Logo API
+
+模块可在 `module.json` 中配置 `logo` 字段（文件名），通过 API 访问：
+
+- 路由：`GET /api/admin/modules/{name}/logo`
+- 无需认证，公开访问
+- 支持格式：png, jpg, jpeg, gif, svg, webp, ico
+- 缓存：24 小时
+
+配置示例：
+```json
+{
+    "name": "Blog",
+    "logo": "logo.svg"
+}
+```
+
+logo 文件放置在模块根目录下（如 `Modules/Blog/logo.svg`）。

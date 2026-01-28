@@ -58,6 +58,10 @@ class CrudPage
     
     // 表格高度配置
     protected bool $flexHeight = true;
+
+    // 虚拟滚动配置
+    protected bool $virtualScroll = false;
+    protected int $minRowHeight = 48;
     
     // 搜索配置
     protected array $searchItems = [];
@@ -255,12 +259,28 @@ class CrudPage
 
     /**
      * 设置表格弹性高度
-     * 
+     *
      * @param bool $flexHeight 是否启用弹性高度，默认 true
      */
     public function flexHeight(bool $flexHeight = true): static
     {
         $this->flexHeight = $flexHeight;
+        return $this;
+    }
+
+    /**
+     * 启用虚拟滚动
+     *
+     * 当表格数据量大时（如 100+ 条），启用虚拟滚动可以显著提升性能
+     * 虚拟滚动只渲染可视区域内的行，大幅减少 DOM 节点数量
+     *
+     * @param bool $enabled 是否启用虚拟滚动，默认 true
+     * @param int $minRowHeight 最小行高（像素），用于计算虚拟滚动，默认 48
+     */
+    public function virtualScroll(bool $enabled = true, int $minRowHeight = 48): static
+    {
+        $this->virtualScroll = $enabled;
+        $this->minRowHeight = $minRowHeight;
         return $this;
     }
 
@@ -803,6 +823,12 @@ class CrudPage
             'scrollX' => $this->scrollX,
             'flexHeight' => $this->flexHeight,
         ];
+
+        // 虚拟滚动配置
+        if ($this->virtualScroll) {
+            $tableProps['virtualScroll'] = true;
+            $tableProps['minRowHeight'] = $this->minRowHeight;
+        }
 
         // 当 flexHeight 为 true 时，添加样式让表格占据剩余空间
         if ($this->flexHeight) {

@@ -30,6 +30,7 @@ Route::prefix($prefix)->group(function () use (
     Route::post('auth/login', [$authController, 'login']);
     Route::get('login/page', [$systemController, 'loginPage']);
     Route::get('system/theme-config', [$systemController, 'getThemeConfig']);
+    Route::get('modules/{name}/logo', [$moduleController, 'logo'])->where('name', '[a-zA-Z0-9_-]+');
 
     // 需要认证的路由
     Route::middleware(['auth:sanctum', \Lartrix\Middleware\Authenticate::class])->group(function () use (

@@ -14,7 +14,7 @@ use Lartrix\Schema\Components\NaiveUI\Button;
 use Lartrix\Schema\Components\NaiveUI\Checkbox;
 use Lartrix\Schema\Components\NaiveUI\Text;
 use Lartrix\Schema\Components\NaiveUI\Divider;
-use Lartrix\Schema\Components\NaiveUI\Icon;
+use Lartrix\Schema\Components\Custom\Icon;
 use Lartrix\Schema\Components\Custom\SvgIcon;
 use Lartrix\Schema\Components\NaiveUI\Result;
 use Lartrix\Schema\Components\Common\GlobalSearch;
@@ -298,9 +298,8 @@ class SystemController extends Controller
                                     ->size('large')
                                     ->clearable()
                                     ->slot('prefix', [
-                                        Icon::make()
-                                            ->props(['style' => ['color' => '#999']])
-                                            ->children([SvgIcon::make('carbon:user')]),
+                                        Icon::make('carbon:user')
+                                            ->props(['style' => ['color' => '#999']]),
                                     ]),
                             ]),
                         // 密码
@@ -315,9 +314,8 @@ class SystemController extends Controller
                                     ->showPasswordOn('click')
                                     ->clearable()
                                     ->slot('prefix', [
-                                        Icon::make()
-                                            ->props(['style' => ['color' => '#999']])
-                                            ->children([SvgIcon::make('carbon:password')]),
+                                        Icon::make('carbon:password')
+                                            ->props(['style' => ['color' => '#999']]),
                                     ]),
                             ]),
                         // 记住我 & 忘记密码
@@ -393,9 +391,8 @@ class SystemController extends Controller
                                     ->clearable()
                                     ->maxlength(11)
                                     ->slot('prefix', [
-                                        Icon::make()
-                                            ->props(['style' => ['color' => '#999']])
-                                            ->children([SvgIcon::make('carbon:phone')]),
+                                        Icon::make('carbon:phone')
+                                            ->props(['style' => ['color' => '#999']]),
                                     ]),
                             ]),
                         // 验证码
@@ -412,9 +409,8 @@ class SystemController extends Controller
                                             ->maxlength(6)
                                             ->props(['style' => ['flex' => '1']])
                                             ->slot('prefix', [
-                                                Icon::make()
-                                                    ->props(['style' => ['color' => '#999']])
-                                                    ->children([SvgIcon::make('carbon:security')]),
+                                                Icon::make('carbon:security')
+                                                    ->props(['style' => ['color' => '#999']]),
                                             ]),
                                         Button::make()
                                             ->type('primary')
@@ -441,9 +437,8 @@ class SystemController extends Controller
                                     ->showPasswordOn('click')
                                     ->clearable()
                                     ->slot('prefix', [
-                                        Icon::make()
-                                            ->props(['style' => ['color' => '#999']])
-                                            ->children([SvgIcon::make('carbon:password')]),
+                                        Icon::make('carbon:password')
+                                            ->props(['style' => ['color' => '#999']]),
                                     ]),
                             ]),
                         // 确认密码
@@ -458,9 +453,8 @@ class SystemController extends Controller
                                     ->showPasswordOn('click')
                                     ->clearable()
                                     ->slot('prefix', [
-                                        Icon::make()
-                                            ->props(['style' => ['color' => '#999']])
-                                            ->children([SvgIcon::make('carbon:checkmark')]),
+                                        Icon::make('carbon:checkmark')
+                                            ->props(['style' => ['color' => '#999']]),
                                     ]),
                             ]),
                         // 重置按钮

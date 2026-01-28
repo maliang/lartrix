@@ -19,7 +19,7 @@ class AuthService extends BaseService
     /**
      * 用户登录
      *
-     * @param string $username 用户名或邮箱
+     * @param string $username 用户名
      * @param string $password 密码
      * @return array{user: Model, token: NewAccessToken}|null
      */
@@ -27,10 +27,8 @@ class AuthService extends BaseService
     {
         $userModel = $this->getUserModel();
 
-        // 查找用户（支持用户名或邮箱登录）
-        $user = $userModel::where('name', $username)
-            ->orWhere('email', $username)
-            ->first();
+        // 查找用户
+        $user = $userModel::where('username', $username)->first();
 
         if (!$user || !Hash::check($password, $user->password)) {
             return null;
@@ -40,6 +38,11 @@ class AuthService extends BaseService
         if (!$user->isActive()) {
             return null;
         }
+
+        // 更新最后登录信息
+        $user->last_login_ip = request()->ip();
+        $user->last_login_time = now();
+        $user->save();
 
         // 是否撤销之前的 Token
         if (config('lartrix.sanctum.revoke_previous_tokens', false)) {

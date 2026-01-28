@@ -67,12 +67,11 @@ class AuthController extends Controller
 
         return success([
             'id' => $user->id,
-            'name' => $user->name,
-            'nick_name' => $user->nick_name,
-            'real_name' => $user->real_name,
-            'email' => $user->email,
-            'mobile' => $user->mobile,
+            'username' => $user->username,
+            'nickname' => $user->nickname,
             'avatar' => $user->avatar,
+            'email' => $user->email,
+            'phone' => $user->phone,
             'status' => $user->status,
             'roles' => $user->getRoleNames(),
             'permissions' => $user->getActivePermissions()->pluck('name'),
