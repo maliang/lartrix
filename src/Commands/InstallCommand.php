@@ -90,9 +90,17 @@ class InstallCommand extends Command
         $this->createDefaultMenus();
         $this->info('   默认菜单创建完成。');
 
-        // 交互式创建超级管理员账户
-        $this->info('10. 创建超级管理员账户...');
-        $admin = $this->createSuperAdmin($superAdminRole);
+        // 检查是否已有 admin 用户
+        $existingAdmin = AdminUser::where('username', 'admin')->first();
+        if ($existingAdmin) {
+            $this->info('10. 检测到已有 admin 用户，跳过创建超级管理员账户...');
+            $existingAdmin->syncRoles([$superAdminRole->name]);
+            $admin = $existingAdmin;
+        } else {
+            // 交互式创建超级管理员账户
+            $this->info('10. 创建超级管理员账户...');
+            $admin = $this->createSuperAdmin($superAdminRole);
+        }
 
         // 创建 AI 开发指南文件
         $this->info('11. 创建 AI 开发指南文件...');
@@ -395,15 +403,21 @@ PHP;
     {
         $roleName = config('lartrix.permission.super_admin_role', 'super-admin');
 
-        return Role::updateOrCreate(
-            ['name' => $roleName, 'guard_name' => 'admin'],
-            [
-                'title' => '超级管理员',
-                'description' => '拥有所有权限的超级管理员',
-                'status' => true,
-                'is_system' => true,
-            ]
-        );
+        // 检查角色是否已存在
+        $existingRole = Role::where('name', $roleName)->where('guard_name', 'admin')->first();
+        if ($existingRole) {
+            $this->line('   超级管理员角色已存在，跳过创建。');
+            return $existingRole;
+        }
+
+        return Role::create([
+            'name' => $roleName,
+            'guard_name' => 'admin',
+            'title' => '超级管理员',
+            'description' => '拥有所有权限的超级管理员',
+            'status' => true,
+            'is_system' => true,
+        ]);
     }
 
     /**
@@ -413,83 +427,105 @@ PHP;
     {
         // 定义权限树结构
         $permissionTree = [
-            // 用户管理
+            // 系统管理（父级）
             [
-                'name' => 'user',
-                'title' => '用户管理',
+                'name' => 'system',
+                'title' => '系统管理',
                 'module' => 'system',
-                'sort' => 1,
+                'sort' => 9999,
                 'children' => [
-                    ['name' => 'user.list', 'title' => '用户列表', 'sort' => 1],
-                    ['name' => 'user.create', 'title' => '创建用户', 'sort' => 2],
-                    ['name' => 'user.update', 'title' => '编辑用户', 'sort' => 3],
-                    ['name' => 'user.delete', 'title' => '删除用户', 'sort' => 4],
-                    ['name' => 'user.status', 'title' => '修改状态', 'sort' => 5],
-                    ['name' => 'user.password', 'title' => '重置密码', 'sort' => 6],
+                    // 用户管理
+                    [
+                        'name' => 'user',
+                        'title' => '用户管理',
+                        'sort' => 1,
+                        'children' => [
+                            ['name' => 'user.list', 'title' => '用户列表', 'sort' => 1],
+                            ['name' => 'user.create', 'title' => '创建用户', 'sort' => 2],
+                            ['name' => 'user.update', 'title' => '编辑用户', 'sort' => 3],
+                            ['name' => 'user.delete', 'title' => '删除用户', 'sort' => 4],
+                            ['name' => 'user.status', 'title' => '修改状态', 'sort' => 5],
+                            ['name' => 'user.password', 'title' => '重置密码', 'sort' => 6],
+                        ],
+                    ],
+                    // 角色管理
+                    [
+                        'name' => 'role',
+                        'title' => '角色管理',
+                        'sort' => 2,
+                        'children' => [
+                            ['name' => 'role.list', 'title' => '角色列表', 'sort' => 1],
+                            ['name' => 'role.create', 'title' => '创建角色', 'sort' => 2],
+                            ['name' => 'role.update', 'title' => '编辑角色', 'sort' => 3],
+                            ['name' => 'role.delete', 'title' => '删除角色', 'sort' => 4],
+                            ['name' => 'role.permissions', 'title' => '分配权限', 'sort' => 5],
+                        ],
+                    ],
+                    // 权限管理
+                    [
+                        'name' => 'permission',
+                        'title' => '权限管理',
+                        'sort' => 3,
+                        'children' => [
+                            ['name' => 'permission.list', 'title' => '权限列表', 'sort' => 1],
+                            ['name' => 'permission.create', 'title' => '创建权限', 'sort' => 2],
+                            ['name' => 'permission.update', 'title' => '编辑权限', 'sort' => 3],
+                            ['name' => 'permission.delete', 'title' => '删除权限', 'sort' => 4],
+                        ],
+                    ],
+                    // 菜单管理
+                    [
+                        'name' => 'menu',
+                        'title' => '菜单管理',
+                        'sort' => 4,
+                        'children' => [
+                            ['name' => 'menu.list', 'title' => '菜单列表', 'sort' => 1],
+                            ['name' => 'menu.create', 'title' => '创建菜单', 'sort' => 2],
+                            ['name' => 'menu.update', 'title' => '编辑菜单', 'sort' => 3],
+                            ['name' => 'menu.delete', 'title' => '删除菜单', 'sort' => 4],
+                            ['name' => 'menu.sort', 'title' => '菜单排序', 'sort' => 5],
+                        ],
+                    ],
+                    // 设置管理
+                    [
+                        'name' => 'setting',
+                        'title' => '系统设置',
+                        'sort' => 5,
+                        'children' => [
+                            ['name' => 'setting.list', 'title' => '设置列表', 'sort' => 1],
+                            ['name' => 'setting.update', 'title' => '更新设置', 'sort' => 2],
+                        ],
+                    ],
                 ],
             ],
-            // 角色管理
-            [
-                'name' => 'role',
-                'title' => '角色管理',
-                'module' => 'system',
-                'sort' => 2,
-                'children' => [
-                    ['name' => 'role.list', 'title' => '角色列表', 'sort' => 1],
-                    ['name' => 'role.create', 'title' => '创建角色', 'sort' => 2],
-                    ['name' => 'role.update', 'title' => '编辑角色', 'sort' => 3],
-                    ['name' => 'role.delete', 'title' => '删除角色', 'sort' => 4],
-                    ['name' => 'role.permissions', 'title' => '分配权限', 'sort' => 5],
-                ],
-            ],
-            // 权限管理
-            [
-                'name' => 'permission',
-                'title' => '权限管理',
-                'module' => 'system',
-                'sort' => 3,
-                'children' => [
-                    ['name' => 'permission.list', 'title' => '权限列表', 'sort' => 1],
-                    ['name' => 'permission.create', 'title' => '创建权限', 'sort' => 2],
-                    ['name' => 'permission.update', 'title' => '编辑权限', 'sort' => 3],
-                    ['name' => 'permission.delete', 'title' => '删除权限', 'sort' => 4],
-                ],
-            ],
-            // 菜单管理
-            [
-                'name' => 'menu',
-                'title' => '菜单管理',
-                'module' => 'system',
-                'sort' => 4,
-                'children' => [
-                    ['name' => 'menu.list', 'title' => '菜单列表', 'sort' => 1],
-                    ['name' => 'menu.create', 'title' => '创建菜单', 'sort' => 2],
-                    ['name' => 'menu.update', 'title' => '编辑菜单', 'sort' => 3],
-                    ['name' => 'menu.delete', 'title' => '删除菜单', 'sort' => 4],
-                    ['name' => 'menu.sort', 'title' => '菜单排序', 'sort' => 5],
-                ],
-            ],
-            // 模块管理
+            // 模块管理（顶级）
             [
                 'name' => 'module',
                 'title' => '模块管理',
                 'module' => 'system',
-                'sort' => 5,
+                'sort' => 9980,
                 'children' => [
-                    ['name' => 'module.list', 'title' => '模块列表', 'sort' => 1],
-                    ['name' => 'module.enable', 'title' => '启用模块', 'sort' => 2],
-                    ['name' => 'module.disable', 'title' => '禁用模块', 'sort' => 3],
-                ],
-            ],
-            // 设置管理
-            [
-                'name' => 'setting',
-                'title' => '系统设置',
-                'module' => 'system',
-                'sort' => 6,
-                'children' => [
-                    ['name' => 'setting.list', 'title' => '设置列表', 'sort' => 1],
-                    ['name' => 'setting.update', 'title' => '更新设置', 'sort' => 2],
+                    // 已装模块
+                    [
+                        'name' => 'module.installed',
+                        'title' => '已装模块',
+                        'sort' => 1,
+                        'children' => [
+                            ['name' => 'module.installed.list', 'title' => '模块列表', 'sort' => 1],
+                            ['name' => 'module.installed.enable', 'title' => '启用模块', 'sort' => 2],
+                            ['name' => 'module.installed.disable', 'title' => '禁用模块', 'sort' => 3],
+                        ],
+                    ],
+                    // 模块市场
+                    [
+                        'name' => 'module.market',
+                        'title' => '模块市场',
+                        'sort' => 2,
+                        'children' => [
+                            ['name' => 'module.market.list', 'title' => '市场列表', 'sort' => 1],
+                            ['name' => 'module.market.install', 'title' => '安装模块', 'sort' => 2],
+                        ],
+                    ],
                 ],
             ],
         ];

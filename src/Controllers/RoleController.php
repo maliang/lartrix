@@ -18,6 +18,7 @@ use Lartrix\Schema\Components\Business\OptForm;
 use Lartrix\Schema\Actions\SetAction;
 use Lartrix\Schema\Actions\CallAction;
 use Lartrix\Schema\Actions\FetchAction;
+use Lartrix\Schema\Actions\IfAction;
 
 class RoleController extends CrudController
 {
@@ -226,20 +227,39 @@ class RoleController extends CrudController
             ->methods([
                 'handleSubmit' => [
                     SetAction::make('submitting', true),
-                    FetchAction::make('{{ editingId ? "/roles/" + editingId : "/roles" }}')
-                        ->method('{{ editingId ? "PUT" : "POST" }}')
-                        ->body('{{ formData }}')
-                        ->then([
-                            CallAction::make('$message.success', ['{{ editingId ? "更新成功" : "创建成功" }}']),
-                            SetAction::make('formVisible', false),
-                            CallAction::make('loadData'),
-                        ])
-                        ->catch([
-                            CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
-                        ])
-                        ->finally([
-                            SetAction::make('submitting', false),
-                        ]),
+                    IfAction::make('editingId')
+                        ->then(
+                            FetchAction::make('{{ "/roles/" + editingId }}')
+                                ->put()
+                                ->body('{{ formData }}')
+                                ->then([
+                                    CallAction::make('$message.success', ['更新成功']),
+                                    SetAction::make('formVisible', false),
+                                    CallAction::make('loadData'),
+                                ])
+                                ->catch([
+                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                ])
+                                ->finally([
+                                    SetAction::make('submitting', false),
+                                ])
+                        )
+                        ->else(
+                            FetchAction::make('/roles')
+                                ->post()
+                                ->body('{{ formData }}')
+                                ->then([
+                                    CallAction::make('$message.success', ['创建成功']),
+                                    SetAction::make('formVisible', false),
+                                    CallAction::make('loadData'),
+                                ])
+                                ->catch([
+                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                ])
+                                ->finally([
+                                    SetAction::make('submitting', false),
+                                ])
+                        ),
                 ],
             ])
             ->modal('form', '{{ editingId ? "编辑角色" : "新增角色" }}', $roleForm, ['width' => '600px']);
