@@ -95,8 +95,8 @@ class SystemController extends Controller
         return [
             'mode' => 'login',
             'form' => [
-                'username' => 'admin',
-                'password' => '123456',
+                'username' => '',
+                'password' => '',
             ],
             'resetForm' => [
                 'phone' => '',
