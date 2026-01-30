@@ -85,8 +85,10 @@ class Menu extends Model
 
     /**
      * 转换为 MenuRoute 格式（对应 trix 前端类型）
+     * 
+     * @param array|null $userPermissions 用户权限列表，用于过滤子菜单
      */
-    public function toMenuRoute(): array
+    public function toMenuRoute(?array $userPermissions = null): array
     {
         $route = [
             'name' => $this->name,
@@ -125,7 +127,14 @@ class Menu extends Model
         // 递归处理子菜单（支持 children 和 allChildren 两种关系）
         $childrenRelation = $this->relationLoaded('allChildren') ? 'allChildren' : 'children';
         if ($this->relationLoaded($childrenRelation) && $this->$childrenRelation->isNotEmpty()) {
-            $route['children'] = $this->$childrenRelation->map(fn($child) => $child->toMenuRoute())->toArray();
+            // 如果提供了用户权限，则过滤子菜单
+            $children = $this->$childrenRelation;
+            if ($userPermissions !== null) {
+                $children = $children->filter(fn($child) => $child->canAccess($userPermissions));
+            }
+            if ($children->isNotEmpty()) {
+                $route['children'] = $children->map(fn($child) => $child->toMenuRoute($userPermissions))->values()->toArray();
+            }
         }
 
         return $route;
@@ -144,7 +153,7 @@ class Menu extends Model
             ->orderBy('order')
             ->get()
             ->filter(fn($menu) => $menu->canAccess($userPermissions))
-            ->map(fn($menu) => $menu->toMenuRoute())
+            ->map(fn($menu) => $menu->toMenuRoute($userPermissions))
             ->values()
             ->toArray();
     }
