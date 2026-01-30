@@ -436,64 +436,64 @@ PHP;
                 'children' => [
                     // 用户管理
                     [
-                        'name' => 'user',
+                        'name' => 'system.user',
                         'title' => '用户管理',
                         'sort' => 1,
                         'children' => [
-                            ['name' => 'user.list', 'title' => '用户列表', 'sort' => 1],
-                            ['name' => 'user.create', 'title' => '创建用户', 'sort' => 2],
-                            ['name' => 'user.update', 'title' => '编辑用户', 'sort' => 3],
-                            ['name' => 'user.delete', 'title' => '删除用户', 'sort' => 4],
-                            ['name' => 'user.status', 'title' => '修改状态', 'sort' => 5],
-                            ['name' => 'user.password', 'title' => '重置密码', 'sort' => 6],
+                            ['name' => 'system.user.list', 'title' => '用户列表', 'sort' => 1],
+                            ['name' => 'system.user.create', 'title' => '创建用户', 'sort' => 2],
+                            ['name' => 'system.user.update', 'title' => '编辑用户', 'sort' => 3],
+                            ['name' => 'system.user.delete', 'title' => '删除用户', 'sort' => 4],
+                            ['name' => 'system.user.status', 'title' => '修改状态', 'sort' => 5],
+                            ['name' => 'system.user.password', 'title' => '重置密码', 'sort' => 6],
                         ],
                     ],
                     // 角色管理
                     [
-                        'name' => 'role',
+                        'name' => 'system.role',
                         'title' => '角色管理',
                         'sort' => 2,
                         'children' => [
-                            ['name' => 'role.list', 'title' => '角色列表', 'sort' => 1],
-                            ['name' => 'role.create', 'title' => '创建角色', 'sort' => 2],
-                            ['name' => 'role.update', 'title' => '编辑角色', 'sort' => 3],
-                            ['name' => 'role.delete', 'title' => '删除角色', 'sort' => 4],
-                            ['name' => 'role.permissions', 'title' => '分配权限', 'sort' => 5],
+                            ['name' => 'system.role.list', 'title' => '角色列表', 'sort' => 1],
+                            ['name' => 'system.role.create', 'title' => '创建角色', 'sort' => 2],
+                            ['name' => 'system.role.update', 'title' => '编辑角色', 'sort' => 3],
+                            ['name' => 'system.role.delete', 'title' => '删除角色', 'sort' => 4],
+                            ['name' => 'system.role.permissions', 'title' => '分配权限', 'sort' => 5],
                         ],
                     ],
                     // 权限管理
                     [
-                        'name' => 'permission',
+                        'name' => 'system.permission',
                         'title' => '权限管理',
                         'sort' => 3,
                         'children' => [
-                            ['name' => 'permission.list', 'title' => '权限列表', 'sort' => 1],
-                            ['name' => 'permission.create', 'title' => '创建权限', 'sort' => 2],
-                            ['name' => 'permission.update', 'title' => '编辑权限', 'sort' => 3],
-                            ['name' => 'permission.delete', 'title' => '删除权限', 'sort' => 4],
+                            ['name' => 'system.permission.list', 'title' => '权限列表', 'sort' => 1],
+                            ['name' => 'system.permission.create', 'title' => '创建权限', 'sort' => 2],
+                            ['name' => 'system.permission.update', 'title' => '编辑权限', 'sort' => 3],
+                            ['name' => 'system.permission.delete', 'title' => '删除权限', 'sort' => 4],
                         ],
                     ],
                     // 菜单管理
                     [
-                        'name' => 'menu',
+                        'name' => 'system.menu',
                         'title' => '菜单管理',
                         'sort' => 4,
                         'children' => [
-                            ['name' => 'menu.list', 'title' => '菜单列表', 'sort' => 1],
-                            ['name' => 'menu.create', 'title' => '创建菜单', 'sort' => 2],
-                            ['name' => 'menu.update', 'title' => '编辑菜单', 'sort' => 3],
-                            ['name' => 'menu.delete', 'title' => '删除菜单', 'sort' => 4],
-                            ['name' => 'menu.sort', 'title' => '菜单排序', 'sort' => 5],
+                            ['name' => 'system.menu.list', 'title' => '菜单列表', 'sort' => 1],
+                            ['name' => 'system.menu.create', 'title' => '创建菜单', 'sort' => 2],
+                            ['name' => 'system.menu.update', 'title' => '编辑菜单', 'sort' => 3],
+                            ['name' => 'system.menu.delete', 'title' => '删除菜单', 'sort' => 4],
+                            ['name' => 'system.menu.sort', 'title' => '菜单排序', 'sort' => 5],
                         ],
                     ],
                     // 设置管理
                     [
-                        'name' => 'setting',
+                        'name' => 'system.setting',
                         'title' => '系统设置',
                         'sort' => 5,
                         'children' => [
-                            ['name' => 'setting.list', 'title' => '设置列表', 'sort' => 1],
-                            ['name' => 'setting.update', 'title' => '更新设置', 'sort' => 2],
+                            ['name' => 'system.setting.list', 'title' => '设置列表', 'sort' => 1],
+                            ['name' => 'system.setting.update', 'title' => '更新设置', 'sort' => 2],
                         ],
                     ],
                 ],
@@ -815,7 +815,7 @@ PHP;
                 ],
                 'children' => [
                     [
-                        'name' => 'user',
+                        'name' => 'system.user',
                         'path' => 'user',
                         'meta' => [
                             'title' => '成员管理',
@@ -826,7 +826,7 @@ PHP;
                         ],
                     ],
                     [
-                        'name' => 'role',
+                        'name' => 'system.role',
                         'path' => 'role',
                         'meta' => [
                             'title' => '角色管理',
@@ -837,7 +837,7 @@ PHP;
                         ],
                     ],
                     [
-                        'name' => 'menu',
+                        'name' => 'system.menu',
                         'path' => 'menu',
                         'meta' => [
                             'title' => '菜单管理',
@@ -848,7 +848,7 @@ PHP;
                         ],
                     ],
                     [
-                        'name' => 'permission',
+                        'name' => 'system.permission',
                         'path' => 'permission',
                         'meta' => [
                             'title' => '权限管理',
@@ -859,7 +859,7 @@ PHP;
                         ],
                     ],
                     [
-                        'name' => 'setting',
+                        'name' => 'system.setting',
                         'path' => 'setting',
                         'meta' => [
                             'title' => '系统设置',
