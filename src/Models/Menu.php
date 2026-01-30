@@ -161,15 +161,47 @@ class Menu extends Model
 
     /**
      * 检查用户是否有权限访问此菜单
+     * 
+     * 过滤逻辑：
+     * 1. 如果菜单设置了 permissions 字段，检查用户是否拥有其中任一权限
+     * 2. 如果菜单没有设置 permissions，则检查用户是否拥有与菜单 name 同名的权限
+     * 3. 如果都没有匹配，则允许访问（兼容没有权限控制的菜单）
      */
     public function canAccess(array $userPermissions): bool
     {
-        // 如果菜单没有设置权限要求，则允许访问
-        if (empty($this->permissions)) {
+        // 如果菜单设置了权限要求，检查用户是否拥有其中任一权限
+        if (!empty($this->permissions)) {
+            return !empty(array_intersect($this->permissions, $userPermissions));
+        }
+
+        // 如果菜单名称在权限列表中存在，则需要用户拥有该权限
+        // 这样可以通过菜单名称自动关联权限
+        if (in_array($this->name, $userPermissions)) {
             return true;
         }
 
-        // 检查用户是否拥有菜单要求的任一权限
-        return !empty(array_intersect($this->permissions, $userPermissions));
+        // 检查是否存在以菜单名称开头的权限（如 user.list, user.create 等）
+        // 如果存在，说明这是一个需要权限控制的菜单
+        $menuNamePrefix = $this->name . '.';
+        foreach ($userPermissions as $permission) {
+            if (str_starts_with($permission, $menuNamePrefix)) {
+                return true;
+            }
+        }
+
+        // 检查权限表中是否存在与菜单名称相关的权限
+        // 如果存在但用户没有，则不允许访问
+        $permissionModel = config('lartrix.models.permission', \Lartrix\Models\Permission::class);
+        $relatedPermissionExists = $permissionModel::query()
+            ->where('name', $this->name)
+            ->orWhere('name', 'like', $this->name . '.%')
+            ->exists();
+
+        if ($relatedPermissionExists) {
+            return false;
+        }
+
+        // 没有相关权限控制，允许访问
+        return true;
     }
 }
