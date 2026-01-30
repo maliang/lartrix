@@ -86,11 +86,11 @@ class RoleController extends CrudController
     protected function getStoreRules(): array
     {
         return [
-            'name' => 'required|string|max:255|unique:roles',
+            'name' => 'required|string|max:255|unique:roles,name,NULL,id,guard_name,admin',
             'title' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'status' => 'boolean',
-            'permissions' => 'array',
+            'permissions' => 'nullable|array',
             'permissions.*' => 'string|exists:permissions,name',
         ];
     }
@@ -98,11 +98,11 @@ class RoleController extends CrudController
     protected function getUpdateRules(int $id): array
     {
         return [
-            'name' => "string|max:255|unique:roles,name,{$id}",
+            'name' => "string|max:255|unique:roles,name,{$id},id,guard_name,admin",
             'title' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'status' => 'boolean',
-            'permissions' => 'array',
+            'permissions' => 'nullable|array',
             'permissions.*' => 'string|exists:permissions,name',
         ];
     }
