@@ -17,6 +17,7 @@ use Lartrix\Schema\Components\Business\OptForm;
 use Lartrix\Schema\Actions\SetAction;
 use Lartrix\Schema\Actions\CallAction;
 use Lartrix\Schema\Actions\FetchAction;
+use Lartrix\Schema\Actions\IfAction;
 
 class UserController extends CrudController
 {
@@ -302,20 +303,39 @@ class UserController extends CrudController
             ->methods([
                 'handleSubmit' => [
                     SetAction::make('submitting', true),
-                    FetchAction::make('{{ editingId ? "/users/" + editingId : "/users" }}')
-                        ->method('{{ editingId ? "PUT" : "POST" }}')
-                        ->body('{{ formData }}')
-                        ->then([
-                            CallAction::make('$message.success', ['{{ editingId ? "更新成功" : "创建成功" }}']),
-                            SetAction::make('formVisible', false),
-                            CallAction::make('loadData'),
-                        ])
-                        ->catch([
-                            CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
-                        ])
-                        ->finally([
-                            SetAction::make('submitting', false),
-                        ]),
+                    IfAction::make('editingId')
+                        ->then(
+                            FetchAction::make('{{ "/users/" + editingId }}')
+                                ->put()
+                                ->body('{{ formData }}')
+                                ->then([
+                                    CallAction::make('$message.success', ['更新成功']),
+                                    SetAction::make('formVisible', false),
+                                    CallAction::make('loadData'),
+                                ])
+                                ->catch([
+                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                ])
+                                ->finally([
+                                    SetAction::make('submitting', false),
+                                ])
+                        )
+                        ->else(
+                            FetchAction::make('/users')
+                                ->post()
+                                ->body('{{ formData }}')
+                                ->then([
+                                    CallAction::make('$message.success', ['创建成功']),
+                                    SetAction::make('formVisible', false),
+                                    CallAction::make('loadData'),
+                                ])
+                                ->catch([
+                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                ])
+                                ->finally([
+                                    SetAction::make('submitting', false),
+                                ])
+                        ),
                 ],
             ])
             ->modal('form', '{{ editingId ? "编辑用户" : "新增用户" }}', $userForm, ['width' => '500px'])
