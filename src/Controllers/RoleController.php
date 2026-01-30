@@ -111,7 +111,7 @@ class RoleController extends CrudController
         return [
             'name' => $validated['name'],
             'title' => $validated['title'] ?? null,
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
             'description' => $validated['description'] ?? null,
             'status' => $validated['status'] ?? true,
             'is_system' => false,
