@@ -122,12 +122,12 @@ class UserController extends CrudController
         return [
             'username' => $validated['username'],
             'password' => $validated['password'],
-            'nickname' => $validated['nickname'] ?: null,
-            'avatar' => $validated['avatar'] ?: null,
-            'email' => $validated['email'] ?: null,
-            'phone' => $validated['phone'] ?: null,
+            'nickname' => ($validated['nickname'] ?? null) ?: null,
+            'avatar' => ($validated['avatar'] ?? null) ?: null,
+            'email' => ($validated['email'] ?? null) ?: null,
+            'phone' => ($validated['phone'] ?? null) ?: null,
             'status' => $validated['status'] ?? '1',
-            'remark' => $validated['remark'] ?: null,
+            'remark' => ($validated['remark'] ?? null) ?: null,
         ];
     }
 
