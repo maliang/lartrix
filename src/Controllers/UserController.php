@@ -91,11 +91,11 @@ class UserController extends CrudController
             'password' => 'required|string|min:6',
             'nickname' => 'nullable|string|max:20',
             'avatar' => 'nullable|string',
-            'email' => 'nullable|email',
+            'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:20',
             'status' => 'nullable|string|max:10',
             'remark' => 'nullable|string|max:255',
-            'roles' => 'array',
+            'roles' => 'nullable|array',
             'roles.*' => 'string|exists:roles,name',
         ];
     }
@@ -122,12 +122,12 @@ class UserController extends CrudController
         return [
             'username' => $validated['username'],
             'password' => $validated['password'],
-            'nickname' => $validated['nickname'] ?? null,
-            'avatar' => $validated['avatar'] ?? null,
-            'email' => $validated['email'] ?? null,
-            'phone' => $validated['phone'] ?? null,
+            'nickname' => $validated['nickname'] ?: null,
+            'avatar' => $validated['avatar'] ?: null,
+            'email' => $validated['email'] ?: null,
+            'phone' => $validated['phone'] ?: null,
             'status' => $validated['status'] ?? '1',
-            'remark' => $validated['remark'] ?? null,
+            'remark' => $validated['remark'] ?: null,
         ];
     }
 
