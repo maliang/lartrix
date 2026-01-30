@@ -439,13 +439,14 @@ class UserController extends CrudController
     }
 
     /**
-     * 获取角色选项
+     * 获取角色选项（只返回 admin guard 的角色）
      */
     protected function getRoleOptions(): array
     {
         $roleModel = config('lartrix.models.role', \Lartrix\Models\Role::class);
         return $roleModel::query()
             ->where('status', true)
+            ->where('guard_name', 'admin')
             ->get(['name', 'title'])
             ->map(fn ($role) => [
                 'label' => $role->title ?: $role->name,
