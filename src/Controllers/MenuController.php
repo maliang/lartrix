@@ -18,6 +18,7 @@ use Lartrix\Schema\Components\Business\OptForm;
 use Lartrix\Schema\Actions\SetAction;
 use Lartrix\Schema\Actions\CallAction;
 use Lartrix\Schema\Actions\FetchAction;
+use Lartrix\Schema\Actions\IfAction;
 
 class MenuController extends CrudController
 {
@@ -287,20 +288,39 @@ class MenuController extends CrudController
                 ],
                 'handleSubmit' => [
                     SetAction::make('submitting', true),
-                    FetchAction::make('{{ editingId ? "/menus/" + editingId : "/menus" }}')
-                        ->method('{{ editingId ? "PUT" : "POST" }}')
-                        ->body('{{ formData }}')
-                        ->then([
-                            CallAction::make('$message.success', ['{{ editingId ? "更新成功" : "创建成功" }}']),
-                            SetAction::make('formVisible', false),
-                            CallAction::make('loadData'),
-                        ])
-                        ->catch([
-                            CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
-                        ])
-                        ->finally([
-                            SetAction::make('submitting', false),
-                        ]),
+                    IfAction::make('editingId')
+                        ->then(
+                            FetchAction::make('{{ "/menus/" + editingId }}')
+                                ->put()
+                                ->body('{{ formData }}')
+                                ->then([
+                                    CallAction::make('$message.success', ['更新成功']),
+                                    SetAction::make('formVisible', false),
+                                    CallAction::make('loadData'),
+                                ])
+                                ->catch([
+                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                ])
+                                ->finally([
+                                    SetAction::make('submitting', false),
+                                ])
+                        )
+                        ->else(
+                            FetchAction::make('/menus')
+                                ->post()
+                                ->body('{{ formData }}')
+                                ->then([
+                                    CallAction::make('$message.success', ['创建成功']),
+                                    SetAction::make('formVisible', false),
+                                    CallAction::make('loadData'),
+                                ])
+                                ->catch([
+                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                ])
+                                ->finally([
+                                    SetAction::make('submitting', false),
+                                ])
+                        ),
                 ],
                 'handleAddChild' => [
                     SetAction::batch([
