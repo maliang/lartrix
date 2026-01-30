@@ -351,7 +351,7 @@ class MenuController extends CrudController
             ['key' => 'title', 'title' => '菜单标题'],
             ['key' => 'name', 'title' => '路由名称'],
             ['key' => 'path', 'title' => '路由路径'],
-            ['key' => 'icon', 'title' => '图标', 'width' => 100],
+            ['key' => 'icon', 'title' => '图标'],
             ['key' => 'order', 'title' => '排序', 'width' => 80],
             ['key' => 'hide_in_menu', 'title' => '隐藏', 'width' => 80, 'slot' => [
                 Tag::make()
