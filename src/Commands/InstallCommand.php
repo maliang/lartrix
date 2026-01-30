@@ -815,7 +815,7 @@ PHP;
                 ],
                 'children' => [
                     [
-                        'name' => 'system-user',
+                        'name' => 'user',
                         'path' => 'user',
                         'meta' => [
                             'title' => '成员管理',
@@ -826,7 +826,7 @@ PHP;
                         ],
                     ],
                     [
-                        'name' => 'system-role',
+                        'name' => 'role',
                         'path' => 'role',
                         'meta' => [
                             'title' => '角色管理',
@@ -837,7 +837,7 @@ PHP;
                         ],
                     ],
                     [
-                        'name' => 'system-menu',
+                        'name' => 'menu',
                         'path' => 'menu',
                         'meta' => [
                             'title' => '菜单管理',
@@ -848,7 +848,7 @@ PHP;
                         ],
                     ],
                     [
-                        'name' => 'system-permission',
+                        'name' => 'permission',
                         'path' => 'permission',
                         'meta' => [
                             'title' => '权限管理',
@@ -859,7 +859,7 @@ PHP;
                         ],
                     ],
                     [
-                        'name' => 'system-setting',
+                        'name' => 'setting',
                         'path' => 'setting',
                         'meta' => [
                             'title' => '系统设置',
@@ -883,7 +883,7 @@ PHP;
                 ],
                 'children' => [
                     [
-                        'name' => 'module-market',
+                        'name' => 'module.market',
                         'path' => 'market',
                         'meta' => [
                             'title' => '模块市场',
@@ -894,7 +894,7 @@ PHP;
                         ],
                     ],
                     [
-                        'name' => 'module-installed',
+                        'name' => 'module.installed',
                         'path' => 'installed',
                         'meta' => [
                             'title' => '已装模块',
