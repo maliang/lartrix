@@ -70,6 +70,9 @@ class RoleController extends CrudController
 
     protected function applySearch(Builder $query, Request $request): void
     {
+        // 只显示 admin guard 的角色
+        $query->where('guard_name', 'admin');
+
         if ($keyword = $request->input('keyword')) {
             $query->where(function ($q) use ($keyword) {
                 $q->where('name', 'like', "%{$keyword}%")
