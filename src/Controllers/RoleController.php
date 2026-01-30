@@ -165,23 +165,28 @@ class RoleController extends CrudController
 
     protected function listUi(): array
     {
+        // 权限树组件（需要特殊绑定 checkedKeys）
+        $permissionTree = Tree::make()
+            ->props([
+                'data' => $this->getPermissionTree(),
+                'checkable' => true,
+                'selectable' => false,
+                'cascade' => true,
+                'keyField' => 'name',
+                'labelField' => 'title',
+                'childrenField' => 'children',
+                'virtualScroll' => true,
+                'style' => ['maxHeight' => '300px'],
+            ])
+            ->model(['checkedKeys' => 'formData.permissions']);
+
         // 角色表单
         $roleForm = OptForm::make('formData')
             ->fields([
                 ['角色标识', 'name', Input::make()->props(['placeholder' => '请输入角色标识（英文）', 'disabled' => '{{ !!editingId }}'])],
                 ['角色名称', 'title', Input::make()->props(['placeholder' => '请输入角色名称'])],
                 ['描述', 'description', Input::make()->props(['type' => 'textarea', 'placeholder' => '请输入角色描述'])],
-                ['权限', 'permissions', Tree::make()->props([
-                    'data' => $this->getPermissionTree(),
-                    'checkable' => true,
-                    'selectable' => false,
-                    'cascade' => true,
-                    'keyField' => 'name',
-                    'labelField' => 'title',
-                    'childrenField' => 'children',
-                    'virtualScroll' => true,
-                    'style' => ['maxHeight' => '300px'],
-                ]), []],
+                ['权限', 'permissions', $permissionTree, []],
                 ['状态', 'status', SwitchC::make(), true],
             ])
             ->buttons([

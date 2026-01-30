@@ -154,8 +154,12 @@ class OptForm implements JsonNodeInterface
             $name = $field[1];
             $component = $field[2];
             
-            // 自动绑定 model
-            $component->model("{$this->modelPath}.{$name}");
+            // 自动绑定 model（如果组件没有预设数组格式的 model）
+            // 数组格式的 model 用于特殊组件如 Tree 的 checkedKeys 绑定
+            $componentArray = $component->toArray();
+            if (!isset($componentArray['model']) || !is_array($componentArray['model'])) {
+                $component->model("{$this->modelPath}.{$name}");
+            }
             
             $formItem = FormItem::make()->label($label);
             
