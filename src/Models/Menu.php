@@ -145,7 +145,8 @@ class Menu extends Model
      */
     public static function getRoutesForUser($user): array
     {
-        $userPermissions = $user->getAllPermissions()->pluck('name')->toArray();
+        // 使用 getActivePermissions 方法，超级管理员会自动获得所有权限
+        $userPermissions = $user->getActivePermissions()->pluck('name')->toArray();
 
         return static::query()
             ->whereNull('parent_id')
