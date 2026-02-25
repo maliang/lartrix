@@ -1,0 +1,20 @@
+<?php
+
+return [
+    'name' => '{{MODULE_NAME}}',
+
+    /*
+    |--------------------------------------------------------------------------
+    | 后台配置
+    |--------------------------------------------------------------------------
+    */
+    'backend' => [
+        'app_title' => '{{APP_TITLE}}',
+        'logo' => null,
+        'path' => '{{PATH}}',
+        'api_prefix' => '{{API_PREFIX}}',
+        'guard' => '{{GUARD}}',
+        'model' => \Modules\{{MODULE_NAME}}\Models\{{MODEL_NAME}}::class,
+        'table' => '{{TABLE}}',
+    ],
+];

@@ -496,6 +496,18 @@ PHP;
                             ['name' => 'system.setting.update', 'title' => '更新设置', 'sort' => 2],
                         ],
                     ],
+                    // 字典管理
+                    [
+                        'name' => 'system.dict',
+                        'title' => '字典管理',
+                        'sort' => 6,
+                        'children' => [
+                            ['name' => 'system.dict.list', 'title' => '字典列表', 'sort' => 1],
+                            ['name' => 'system.dict.create', 'title' => '创建字典', 'sort' => 2],
+                            ['name' => 'system.dict.update', 'title' => '编辑字典', 'sort' => 3],
+                            ['name' => 'system.dict.delete', 'title' => '删除字典', 'sort' => 4],
+                        ],
+                    ],
                 ],
             ],
             // 模块管理（顶级）
@@ -867,6 +879,17 @@ PHP;
                             'order' => 5,
                             'useJsonRenderer' => true,
                             'schemaSource' => '/settings?action_type=form_ui',
+                        ],
+                    ],
+                    [
+                        'name' => 'system.dict',
+                        'path' => 'dict',
+                        'meta' => [
+                            'title' => '字典管理',
+                            'icon' => 'mdi:book-alphabet',
+                            'order' => 6,
+                            'useJsonRenderer' => true,
+                            'schemaSource' => '/dicts/groups?action_type=list_ui',
                         ],
                     ],
                 ],

@@ -100,4 +100,17 @@ class AuthController extends Controller
 
         return success('撤销成功');
     }
+
+    /**
+     * 获取后台配置（API 接口）
+     * 注意：只返回前端必需的公开信息
+     */
+    public function config(): array
+    {
+        return success([
+            'apiPrefix' => '/' . ltrim(config('lartrix.api_prefix', 'api/admin'), '/'),
+            'appTitle' => config('lartrix.app_title', 'Lartrix Admin'),
+            'logo' => config('lartrix.logo'),
+        ]);
+    }
 }

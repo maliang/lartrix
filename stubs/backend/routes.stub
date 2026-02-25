@@ -1,0 +1,47 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+
+$config = config('{{LOWER_NAME}}');
+$path = $config['backend']['path'] ?? '/{{LOWER_NAME}}';
+$prefix = $config['backend']['api_prefix'] ?? 'api/{{LOWER_NAME}}';
+$guard = $config['backend']['guard'] ?? '{{GUARD}}';
+
+// 前端入口路由（处理 SPA 路由）
+Route::get($path . '/{any?}', [\Modules\{{MODULE_NAME}}\Http\Controllers\AuthController::class, 'entry'])->where('any', '.*');
+
+Route::prefix($prefix)->group(function () use ($guard) {
+    // 公开路由（无需认证）
+    Route::post('auth/login', [\Modules\{{MODULE_NAME}}\Http\Controllers\AuthController::class, 'login']);
+    Route::get('auth/config', [\Modules\{{MODULE_NAME}}\Http\Controllers\AuthController::class, 'config']);
+
+    // 需要认证的路由
+    Route::middleware(["auth:{$guard}"])->group(function () {
+        // 认证相关
+        Route::prefix('auth')->group(function () {
+            Route::post('logout', [\Modules\{{MODULE_NAME}}\Http\Controllers\AuthController::class, 'logout']);
+            Route::post('refresh', [\Modules\{{MODULE_NAME}}\Http\Controllers\AuthController::class, 'refresh']);
+            Route::get('user', [\Modules\{{MODULE_NAME}}\Http\Controllers\AuthController::class, 'user']);
+        });
+
+        // 菜单管理
+        Route::resource('menus', \Modules\{{MODULE_NAME}}\Http\Controllers\MenuController::class)
+            ->parameters(['menus' => 'id'])
+            ->except(['create', 'edit']);
+
+        // 角色管理
+        Route::resource('roles', \Modules\{{MODULE_NAME}}\Http\Controllers\RoleController::class)
+            ->parameters(['roles' => 'id'])
+            ->except(['create', 'edit']);
+
+        // 权限管理
+        Route::resource('permissions', \Modules\{{MODULE_NAME}}\Http\Controllers\PermissionController::class)
+            ->parameters(['permissions' => 'id'])
+            ->except(['create', 'edit']);
+
+        // 管理员管理
+        Route::resource('users', \Modules\{{MODULE_NAME}}\Http\Controllers\UserController::class)
+            ->parameters(['users' => 'id'])
+            ->except(['create', 'edit']);
+    });
+});

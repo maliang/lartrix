@@ -64,7 +64,8 @@ class MenuController extends CrudController
     protected function list(Request $request): array
     {
         $modelClass = $this->getModelClass();
-        $routes = $modelClass::getRoutesForUser($request->user());
+        $guard = config('lartrix.guard', 'admin');
+        $routes = $modelClass::getRoutesForUser($request->user(), $guard);
         return success($routes);
     }
 
@@ -143,6 +144,15 @@ class MenuController extends CrudController
         }
     }
 
+    /**
+     * 创建时自动设置 guard_name
+     */
+    protected function prepareStoreData(array $validated): array
+    {
+        $validated['guard_name'] = config('lartrix.guard', 'admin');
+        return $validated;
+    }
+
     // ==================== 自定义方法 ====================
 
     /**
@@ -151,7 +161,10 @@ class MenuController extends CrudController
     protected function all(): array
     {
         $modelClass = $this->getModelClass();
+        $guard = config('lartrix.guard', 'admin');
+
         $menus = $modelClass::query()
+            ->forGuard($guard)
             ->whereNull('parent_id')
             ->with('allChildren')
             ->orderBy('order')

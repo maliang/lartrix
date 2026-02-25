@@ -1,0 +1,74 @@
+<?php
+
+namespace Modules\{{MODULE_NAME}}\Models;
+
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
+
+class {{MODEL_NAME}} extends Authenticatable
+{
+    use HasApiTokens, Notifiable, HasRoles;
+
+    /**
+     * 表名
+     */
+    protected $table = '{{TABLE}}';
+
+    /**
+     * Guard 名称
+     */
+    protected $guard_name = '{{GUARD}}';
+
+    /**
+     * 可批量赋值的属性
+     */
+    protected $fillable = [
+        'username',
+        'password',
+        'nickname',
+        'email',
+        'phone',
+        'avatar',
+        'status',
+    ];
+
+    /**
+     * 隐藏属性
+     */
+    protected $hidden = [
+        'password',
+    ];
+
+    /**
+     * 属性类型转换
+     */
+    protected $casts = [
+        'status' => 'boolean',
+    ];
+
+    /**
+     * 序列化日期格式
+     */
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return $date->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * 获取用户的有效权限
+     * 超级管理员返回所有权限
+     */
+    public function getActivePermissions()
+    {
+        $superAdminRole = config('lartrix.super_admin_role', 'super-admin');
+
+        if ($this->hasRole($superAdminRole)) {
+            $permissionModel = config('lartrix.models.permission', \Lartrix\Models\Permission::class);
+            return $permissionModel::where('guard_name', $this->guard_name)->get();
+        }
+
+        return $this->getAllPermissions();
+    }
+}

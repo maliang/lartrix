@@ -1,0 +1,29 @@
+<?php
+
+namespace Modules\{{MODULE_NAME}}\Http\Controllers;
+
+use Lartrix\Controllers\UserController as BaseUserController;
+use Modules\{{MODULE_NAME}}\Models\{{MODEL_NAME}};
+
+class UserController extends BaseUserController
+{
+    protected function getModelClass(): string
+    {
+        return {{MODEL_NAME}}::class;
+    }
+
+    protected function getTable(): string
+    {
+        return '{{TABLE}}';
+    }
+
+    protected function getGuard(): string
+    {
+        return config('{{LOWER_NAME}}.backend.guard', '{{GUARD}}');
+    }
+
+    protected function getResourceName(): string
+    {
+        return '管理员';
+    }
+}

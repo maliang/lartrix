@@ -15,6 +15,7 @@ class Menu extends Model
      * 可批量赋值的属性
      */
     protected $fillable = [
+        'guard_name',
         'parent_id',
         'name',
         'path',
@@ -57,6 +58,15 @@ class Menu extends Model
     protected function serializeDate(\DateTimeInterface $date): string
     {
         return $date->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * 按 guard 过滤菜单
+     */
+    public function scopeForGuard($query, ?string $guard = null)
+    {
+        $guard = $guard ?? config('lartrix.guard', 'admin');
+        return $query->where('guard_name', $guard);
     }
 
     /**
@@ -143,12 +153,14 @@ class Menu extends Model
     /**
      * 获取用户可访问的菜单树（MenuRoute 格式）
      */
-    public static function getRoutesForUser($user): array
+    public static function getRoutesForUser($user, ?string $guard = null): array
     {
         // 使用 getActivePermissions 方法，超级管理员会自动获得所有权限
         $userPermissions = $user->getActivePermissions()->pluck('name')->toArray();
+        $guard = $guard ?? config('lartrix.guard', 'admin');
 
         return static::query()
+            ->forGuard($guard)
             ->whereNull('parent_id')
             ->with('allChildren')
             ->orderBy('order')

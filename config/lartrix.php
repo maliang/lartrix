@@ -6,8 +6,9 @@ return [
     | 路由配置
     |--------------------------------------------------------------------------
     */
-    'route_prefix' => env('LARTRIX_ROUTE_PREFIX', 'api/admin'),
-    'guard' => env('LARTRIX_GUARD', 'sanctum'),
+    'path' => env('LARTRIX_PATH', '/admin'),
+    'api_prefix' => env('LARTRIX_API_PREFIX', 'api/admin'),
+    'guard' => env('LARTRIX_GUARD', 'admin'),
 
     /*
     |--------------------------------------------------------------------------
@@ -92,4 +93,24 @@ return [
     |--------------------------------------------------------------------------
     */
     'default_avatar' => env('LARTRIX_DEFAULT_AVATAR', null),
+
+    /*
+    |--------------------------------------------------------------------------
+    | 模块市场配置
+    | 连接远程模块市场获取可用模块
+    |--------------------------------------------------------------------------
+    */
+    'module_market' => [
+        // 是否启用模块市场
+        'enabled' => env('LARTRIX_MODULE_MARKET_ENABLED', true),
+
+        // 模块市场 API 地址
+        'api_url' => env('LARTRIX_MODULE_MARKET_URL', 'https://market.lartrix.com/api/market'),
+
+        // API 超时时间（秒）
+        'timeout' => env('LARTRIX_MODULE_MARKET_TIMEOUT', 30),
+
+        // 缓存时间（秒）
+        'cache_ttl' => env('LARTRIX_MODULE_MARKET_CACHE_TTL', 3600),
+    ],
 ];

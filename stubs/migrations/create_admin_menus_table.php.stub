@@ -14,6 +14,7 @@ return new class extends Migration
     {
         Schema::create('admin_menus', function (Blueprint $table) {
             $table->id();
+            $table->string('guard_name')->default('admin')->comment('Guard名称');
             $table->unsignedBigInteger('parent_id')->nullable()->comment('父级菜单ID');
             
             // 基础路由字段
@@ -41,6 +42,7 @@ return new class extends Migration
             
             $table->timestamps();
 
+            $table->index('guard_name');
             $table->foreign('parent_id')
                 ->references('id')
                 ->on('admin_menus')

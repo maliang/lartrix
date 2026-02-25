@@ -1,0 +1,53 @@
+<?php
+
+namespace Modules\{{MODULE_NAME}}\Http\Controllers;
+
+use Lartrix\Controllers\MenuController as BaseMenuController;
+
+class MenuController extends BaseMenuController
+{
+    protected function getGuard(): string
+    {
+        return config('{{LOWER_NAME}}.backend.guard', '{{GUARD}}');
+    }
+
+    /**
+     * 所有菜单（管理用）
+     */
+    protected function all(): array
+    {
+        $modelClass = $this->getModelClass();
+        $guard = $this->getGuard();
+
+        $menus = $modelClass::query()
+            ->forGuard($guard)
+            ->whereNull('parent_id')
+            ->with('allChildren')
+            ->orderBy('order')
+            ->get();
+
+        $result = $this->transformMenuChildren($menus->toArray());
+
+        return success($result);
+    }
+
+    /**
+     * 当前用户可见菜单（MenuRoute 格式）
+     */
+    protected function list(\Illuminate\Http\Request $request): array
+    {
+        $modelClass = $this->getModelClass();
+        $guard = $this->getGuard();
+        $routes = $modelClass::getRoutesForUser($request->user(), $guard);
+        return success($routes);
+    }
+
+    /**
+     * 创建时自动设置 guard_name
+     */
+    protected function prepareStoreData(array $validated): array
+    {
+        $validated['guard_name'] = $this->getGuard();
+        return $validated;
+    }
+}

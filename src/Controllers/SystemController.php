@@ -3,6 +3,7 @@
 namespace Lartrix\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Lartrix\Schema\Components\Custom\Html;
 use Lartrix\Schema\Components\NaiveUI\Card;
 use Lartrix\Schema\Components\NaiveUI\Flex;
@@ -26,6 +27,45 @@ use Lartrix\Schema\Components\Common\UserAvatar;
 
 class SystemController extends Controller
 {
+    /**
+     * 前端入口
+     * 读取 index.html 并注入后台配置
+     */
+    public function entry(): Response
+    {
+        $path = config('lartrix.path', '/admin');
+        $publicPath = ltrim($path, '/') ?: 'admin';
+        $indexPath = public_path($publicPath . '/index.html');
+
+        if (!file_exists($indexPath)) {
+            abort(404, '前端资源未发布，请运行 php artisan vendor:publish --tag=lartrix-assets');
+        }
+
+        $html = file_get_contents($indexPath);
+
+        // 构建注入的配置
+        $config = $this->getEntryConfig();
+        $script = '<script>window.__LARTRIX_CONFIG__ = ' . json_encode($config, JSON_UNESCAPED_UNICODE) . ';</script>';
+
+        // 注入到 <head> 中
+        $html = str_replace('<head>', '<head>' . "\n    " . $script, $html);
+
+        return response($html)->header('Content-Type', 'text/html');
+    }
+
+    /**
+     * 获取前端入口配置
+     * 注意：只返回前端必需的公开信息，不暴露内部实现细节
+     */
+    protected function getEntryConfig(): array
+    {
+        return [
+            'apiPrefix' => '/' . ltrim(config('lartrix.api_prefix', 'api/admin'), '/'),
+            'appTitle' => config('lartrix.app_title', 'Lartrix Admin'),
+            'logo' => config('lartrix.logo'),
+        ];
+    }
+
     /**
      * 获取设置模型类
      */

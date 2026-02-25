@@ -1,0 +1,56 @@
+<?php
+
+namespace Modules\{{MODULE_NAME}}\Providers;
+
+use Illuminate\Support\ServiceProvider;
+
+class {{MODULE_NAME}}ServiceProvider extends ServiceProvider
+{
+    /**
+     * 模块名称
+     */
+    protected string $moduleName = '{{MODULE_NAME}}';
+
+    /**
+     * 模块名称（小写）
+     */
+    protected string $moduleNameLower = '{{LOWER_NAME}}';
+
+    /**
+     * 注册服务
+     */
+    public function register(): void
+    {
+        $this->mergeConfigFrom(
+            module_path($this->moduleName, 'config/config.php'),
+            $this->moduleNameLower
+        );
+    }
+
+    /**
+     * 启动服务
+     */
+    public function boot(): void
+    {
+        $this->registerConfig();
+        $this->loadMigrationsFrom(module_path($this->moduleName, 'database/migrations'));
+    }
+
+    /**
+     * 注册配置
+     */
+    protected function registerConfig(): void
+    {
+        $this->publishes([
+            module_path($this->moduleName, 'config/config.php') => config_path($this->moduleNameLower . '.php'),
+        ], 'config');
+    }
+
+    /**
+     * 获取服务提供者提供的服务
+     */
+    public function provides(): array
+    {
+        return [];
+    }
+}

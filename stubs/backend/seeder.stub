@@ -1,0 +1,178 @@
+<?php
+
+namespace Modules\{{MODULE_NAME}}\Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
+
+class {{MODULE_NAME}}BackendSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        $guard = '{{GUARD}}';
+        $modelClass = \Modules\{{MODULE_NAME}}\Models\{{MODEL_NAME}}::class;
+        $menuModel = config('lartrix.models.menu', \Lartrix\Models\Menu::class);
+
+        // 创建默认菜单
+        $this->createMenus($menuModel, $guard);
+
+        // 创建默认权限
+        $this->createPermissions($guard);
+
+        // 创建超级管理员角色
+        $role = Role::firstOrCreate(
+            ['name' => 'super-admin', 'guard_name' => $guard],
+            ['name' => 'super-admin', 'guard_name' => $guard]
+        );
+
+        // 创建默认管理员账号
+        $admin = $modelClass::firstOrCreate(
+            ['username' => 'admin'],
+            [
+                'username' => 'admin',
+                'password' => Hash::make('123456'),
+                'nickname' => '超级管理员',
+                'status' => true,
+            ]
+        );
+
+        // 分配角色
+        if (!$admin->hasRole('super-admin')) {
+            $admin->assignRole($role);
+        }
+    }
+
+    /**
+     * 创建默认菜单
+     */
+    protected function createMenus($menuModel, string $guard): void
+    {
+        $menus = [
+            [
+                'guard_name' => $guard,
+                'name' => 'home',
+                'path' => '/home',
+                'title' => '首页',
+                'icon' => 'mdi:home',
+                'order' => 1,
+            ],
+            [
+                'guard_name' => $guard,
+                'name' => 'system',
+                'path' => '/system',
+                'title' => '系统管理',
+                'icon' => 'mdi:cog',
+                'order' => 99,
+                'children' => [
+                    [
+                        'guard_name' => $guard,
+                        'name' => 'system_menu',
+                        'path' => '/system/menu',
+                        'title' => '菜单管理',
+                        'icon' => 'mdi:menu',
+                        'order' => 1,
+                        'component' => 'view.json-renderer',
+                        'use_json_renderer' => true,
+                        'schema_source' => '/menus?action_type=list_ui',
+                    ],
+                    [
+                        'guard_name' => $guard,
+                        'name' => 'system_role',
+                        'path' => '/system/role',
+                        'title' => '角色管理',
+                        'icon' => 'mdi:account-group',
+                        'order' => 2,
+                        'component' => 'view.json-renderer',
+                        'use_json_renderer' => true,
+                        'schema_source' => '/roles?action_type=list_ui',
+                    ],
+                    [
+                        'guard_name' => $guard,
+                        'name' => 'system_permission',
+                        'path' => '/system/permission',
+                        'title' => '权限管理',
+                        'icon' => 'mdi:shield-key',
+                        'order' => 3,
+                        'component' => 'view.json-renderer',
+                        'use_json_renderer' => true,
+                        'schema_source' => '/permissions?action_type=list_ui',
+                    ],
+                    [
+                        'guard_name' => $guard,
+                        'name' => 'system_user',
+                        'path' => '/system/user',
+                        'title' => '管理员管理',
+                        'icon' => 'mdi:account',
+                        'order' => 4,
+                        'component' => 'view.json-renderer',
+                        'use_json_renderer' => true,
+                        'schema_source' => '/users?action_type=list_ui',
+                    ],
+                ],
+            ],
+        ];
+
+        foreach ($menus as $menu) {
+            $this->createMenu($menuModel, $menu);
+        }
+    }
+
+    /**
+     * 递归创建菜单
+     */
+    protected function createMenu($menuModel, array $data, ?int $parentId = null): void
+    {
+        $children = $data['children'] ?? [];
+        unset($data['children']);
+
+        $data['parent_id'] = $parentId;
+
+        $menu = $menuModel::firstOrCreate(
+            ['name' => $data['name'], 'guard_name' => $data['guard_name']],
+            $data
+        );
+
+        foreach ($children as $child) {
+            $this->createMenu($menuModel, $child, $menu->id);
+        }
+    }
+
+    /**
+     * 创建默认权限
+     */
+    protected function createPermissions(string $guard): void
+    {
+        $permissions = [
+            // 菜单管理
+            'system.menu.list',
+            'system.menu.create',
+            'system.menu.update',
+            'system.menu.delete',
+            // 角色管理
+            'system.role.list',
+            'system.role.create',
+            'system.role.update',
+            'system.role.delete',
+            // 权限管理
+            'system.permission.list',
+            'system.permission.sync',
+            // 管理员管理
+            'system.user.list',
+            'system.user.create',
+            'system.user.update',
+            'system.user.delete',
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate(
+                ['name' => $permission, 'guard_name' => $guard],
+                ['name' => $permission, 'guard_name' => $guard]
+            );
+        }
+    }
+}

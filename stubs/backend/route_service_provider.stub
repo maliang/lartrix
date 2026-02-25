@@ -1,0 +1,38 @@
+<?php
+
+namespace Modules\{{MODULE_NAME}}\Providers;
+
+use Illuminate\Support\Facades\Route;
+use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
+
+class RouteServiceProvider extends ServiceProvider
+{
+    /**
+     * 模块命名空间
+     */
+    protected string $moduleNamespace = 'Modules\{{MODULE_NAME}}\Http\Controllers';
+
+    /**
+     * 启动服务
+     */
+    public function boot(): void
+    {
+        parent::boot();
+    }
+
+    /**
+     * 定义路由
+     */
+    public function map(): void
+    {
+        $this->mapApiRoutes();
+    }
+
+    /**
+     * 定义 API 路由
+     */
+    protected function mapApiRoutes(): void
+    {
+        Route::middleware('api')->group(module_path('{{MODULE_NAME}}', '/routes/api.php'));
+    }
+}

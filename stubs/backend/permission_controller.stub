@@ -1,0 +1,30 @@
+<?php
+
+namespace Modules\{{MODULE_NAME}}\Http\Controllers;
+
+use Lartrix\Controllers\PermissionController as BasePermissionController;
+
+class PermissionController extends BasePermissionController
+{
+    protected function getGuard(): string
+    {
+        return config('{{LOWER_NAME}}.backend.guard', '{{GUARD}}');
+    }
+
+    /**
+     * 获取权限列表时按 guard 过滤
+     */
+    protected function buildIndexQuery(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where('guard_name', $this->getGuard());
+    }
+
+    /**
+     * 创建时自动设置 guard_name
+     */
+    protected function prepareStoreData(array $validated): array
+    {
+        $validated['guard_name'] = $this->getGuard();
+        return $validated;
+    }
+}

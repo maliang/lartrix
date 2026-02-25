@@ -1,0 +1,12 @@
+{
+    "name": "{{MODULE_NAME}}",
+    "alias": "{{LOWER_NAME}}",
+    "description": "{{APP_TITLE}}后台模块",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\{{MODULE_NAME}}\\Providers\\{{MODULE_NAME}}ServiceProvider",
+        "Modules\\{{MODULE_NAME}}\\Providers\\RouteServiceProvider"
+    ],
+    "files": []
+}

@@ -294,6 +294,129 @@ protected function formUi(): array;
 4. `$request->filled()` 检查非空参数
 5. action_type 下划线格式：`list_ui`, `form_ui`
 
+## 二级后台开发
+
+### 创建二级后台
+
+使用 Artisan 命令创建独立的二级后台模块：
+
+```bash
+php artisan lartrix:make-backend Merchant --path=/merchant --api-prefix=api/merchant --title=商户管理系统
+```
+
+### 命令参数
+
+| 参数 | 说明 | 默认值 |
+|------|------|--------|
+| name | 模块名称（StudlyCase） | 必填 |
+| --path | 前端访问路径 | /{lower_name} |
+| --api-prefix | API 接口前缀 | api/{lower_name} |
+| --table | 用户表名 | {lower_name}s |
+| --title | 后台标题 | {name}管理系统 |
+
+### 生成的模块结构
+
+```
+Modules/Merchant/
+├── app/
+│   ├── Http/Controllers/
+│   │   ├── AuthController.php      # 认证（登录/登出/刷新）
+│   │   ├── MenuController.php      # 菜单 CRUD
+│   │   ├── RoleController.php      # 角色 CRUD
+│   │   ├── PermissionController.php # 权限 CRUD
+│   │   └── UserController.php      # 用户 CRUD
+│   ├── Models/
+│   │   └── Merchant.php            # 用户模型（HasApiTokens, HasRoles）
+│   └── Providers/
+├── config/config.php               # 后台配置
+├── database/migrations/            # 用户表迁移
+├── database/seeders/               # 初始数据
+└── routes/api.php                  # API 路由
+```
+
+### 部署步骤
+
+```bash
+# 1. 运行迁移
+php artisan migrate
+
+# 2. 运行 Seeder（创建超级管理员）
+php artisan module:seed Merchant
+
+# 3. 发布前端资源到 public/merchant/
+```
+
+### 配置 auth.php
+
+在 `config/auth.php` 中添加：
+
+```php
+'guards' => [
+    'merchant' => [
+        'driver' => 'sanctum',
+        'provider' => 'merchants',
+    ],
+],
+'providers' => [
+    'merchants' => [
+        'driver' => 'eloquent',
+        'model' => \Modules\Merchant\Models\Merchant::class,
+    ],
+],
+```
+
+### 数据隔离
+
+二级后台通过 `guard_name` 字段隔离数据：
+
+- 菜单：`admin_menus.guard_name = 'merchant'`
+- 角色：`roles.guard_name = 'merchant'`
+- 权限：`permissions.guard_name = 'merchant'`
+
+### 扩展二级后台
+
+在二级后台模块中添加业务控制器：
+
+```php
+<?php
+
+namespace Modules\Merchant\Http\Controllers;
+
+use Lartrix\Controllers\CrudController;
+
+class ProductController extends CrudController
+{
+    protected function getModelClass(): string
+    {
+        return \Modules\Merchant\Models\Product::class;
+    }
+
+    protected function getResourceName(): string
+    {
+        return '商品';
+    }
+
+    // 限制只能访问当前商户的数据
+    protected function applyFilters(Builder $query, Request $request): void
+    {
+        $query->where('merchant_id', $request->user()->id);
+    }
+}
+```
+
+在 `routes/api.php` 中添加路由：
+
+```php
+Route::middleware(["auth:{$guard}"])->group(function () {
+    // ... 已有路由
+    
+    // 商品管理
+    Route::resource('products', \Modules\Merchant\Http\Controllers\ProductController::class)
+        ->parameters(['products' => 'id'])
+        ->except(['create', 'edit']);
+});
+```
+
 ## 模块 Logo API
 
 模块可在 `module.json` 中配置 `logo` 字段（文件名），通过 API 访问：

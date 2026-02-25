@@ -425,6 +425,188 @@ php artisan module:make ModuleName
 5. 使用 `$request->filled()` 检查非空参数
 6. action_type 使用下划线格式：`list_ui`, `form_ui`, `reset_password`
 
+## 二级后台（多后台系统）
+
+Lartrix 支持创建独立的二级后台（如商户后台），与主后台共享前端代码，但拥有独立的用户、菜单、角色和权限。
+
+### 架构概述
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Backend: admin              Backend: merchant           │
+│  ├─ path: /admin             ├─ path: /merchant          │
+│  ├─ api_prefix: api/admin    ├─ api_prefix: api/merchant │
+│  ├─ guard: admin             ├─ guard: merchant          │
+│  ├─ model: AdminUser::class  ├─ model: Merchant::class   │
+│  └─ 独立菜单/角色/权限        └─ 独立菜单/角色/权限        │
+├─────────────────────────────────────────────────────────┤
+│                    共享前端 (trix)                        │
+│                  配置通过路由动态注入                      │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 创建二级后台
+
+使用 Artisan 命令创建：
+
+```bash
+php artisan lartrix:make-backend Merchant --path=/merchant --api-prefix=api/merchant --title=商户管理系统
+```
+
+命令参数：
+| 参数 | 说明 | 默认值 |
+|------|------|--------|
+| name | 模块名称（StudlyCase） | 必填 |
+| --path | 前端访问路径 | /{lower_name} |
+| --api-prefix | API 接口前缀 | api/{lower_name} |
+| --table | 用户表名 | {lower_name}s |
+| --title | 后台标题 | {name}管理系统 |
+
+### 生成的模块结构
+
+```
+Modules/Merchant/
+├── app/
+│   ├── Http/Controllers/
+│   │   ├── AuthController.php      # 认证控制器
+│   │   ├── MenuController.php      # 菜单管理
+│   │   ├── RoleController.php      # 角色管理
+│   │   ├── PermissionController.php # 权限管理
+│   │   └── UserController.php      # 用户管理
+│   ├── Models/
+│   │   └── Merchant.php            # 用户模型
+│   └── Providers/
+│       ├── MerchantServiceProvider.php
+│       └── RouteServiceProvider.php
+├── config/
+│   └── config.php                  # 后台配置
+├── database/
+│   ├── migrations/
+│   │   └── create_merchants_table.php
+│   └── seeders/
+│       └── MerchantBackendSeeder.php
+├── routes/
+│   └── api.php                     # API 路由
+└── module.json
+```
+
+### 后台配置文件
+
+`config/config.php` 示例：
+
+```php
+return [
+    'name' => 'Merchant',
+    'backend' => [
+        'app_title' => '商户管理系统',
+        'logo' => null,
+        'path' => '/merchant',
+        'api_prefix' => 'api/merchant',
+        'guard' => 'merchant',
+        'model' => \Modules\Merchant\Models\Merchant::class,
+        'table' => 'merchants',
+    ],
+];
+```
+
+### 用户模型
+
+生成的用户模型继承 `Authenticatable`，使用 Sanctum 和 Spatie Permission：
+
+```php
+class Merchant extends Authenticatable
+{
+    use HasApiTokens, Notifiable, HasRoles;
+
+    protected $table = 'merchants';
+    protected $guard_name = 'merchant';
+
+    protected $fillable = [
+        'username', 'password', 'nickname',
+        'email', 'phone', 'avatar', 'status',
+    ];
+
+    // 获取用户的有效权限（超级管理员返回所有权限）
+    public function getActivePermissions()
+    {
+        if ($this->hasRole(config('lartrix.super_admin_role', 'super-admin'))) {
+            return Permission::where('guard_name', $this->guard_name)->get();
+        }
+        return $this->getAllPermissions();
+    }
+}
+```
+
+### 数据隔离
+
+二级后台通过 `guard_name` 字段实现数据隔离：
+
+- **菜单隔离**：`admin_menus.guard_name = 'merchant'`
+- **角色隔离**：`roles.guard_name = 'merchant'`
+- **权限隔离**：`permissions.guard_name = 'merchant'`
+
+### 前端配置注入
+
+AuthController 的 `entry()` 方法将配置注入到前端：
+
+```php
+public function entry(): Response
+{
+    $config = config('merchant.backend', []);
+    $entryConfig = [
+        'apiPrefix' => '/' . ltrim($config['api_prefix'] ?? 'api/merchant', '/'),
+        'appTitle' => $config['app_title'] ?? '商户管理系统',
+        'logo' => $config['logo'] ?? config('lartrix.logo'),
+    ];
+    
+    // 注入到 HTML <head> 中
+    $script = '<script>window.__LARTRIX_CONFIG__ = ' . json_encode($entryConfig) . ';</script>';
+    // ...
+}
+```
+
+### 部署步骤
+
+创建二级后台后：
+
+1. **运行迁移**：`php artisan migrate`
+2. **运行 Seeder**：`php artisan module:seed Merchant`
+3. **发布前端资源**：将 trix 构建产物复制到 `public/merchant/`
+4. **配置 auth.php**：添加 guard 和 provider
+
+```php
+// config/auth.php
+'guards' => [
+    'merchant' => [
+        'driver' => 'sanctum',
+        'provider' => 'merchants',
+    ],
+],
+'providers' => [
+    'merchants' => [
+        'driver' => 'eloquent',
+        'model' => \Modules\Merchant\Models\Merchant::class,
+    ],
+],
+```
+
+### API 路由
+
+二级后台提供完整的 API 路由：
+
+| 路由 | 方法 | 说明 |
+|------|------|------|
+| /merchant | GET | 前端入口（SPA） |
+| api/merchant/auth/login | POST | 登录 |
+| api/merchant/auth/logout | POST | 登出 |
+| api/merchant/auth/refresh | POST | 刷新 Token |
+| api/merchant/auth/user | GET | 当前用户信息 |
+| api/merchant/auth/config | GET | 后台配置 |
+| api/merchant/menus | CRUD | 菜单管理 |
+| api/merchant/roles | CRUD | 角色管理 |
+| api/merchant/permissions | CRUD | 权限管理 |
+| api/merchant/users | CRUD | 用户管理 |
+
 ## 模块 Logo API
 
 模块可在 `module.json` 中配置 `logo` 字段（文件名），通过 API 访问：
