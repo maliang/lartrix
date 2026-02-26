@@ -2,6 +2,8 @@
 
 namespace Modules\{{MODULE_NAME}}\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 use Lartrix\Controllers\UserController as BaseUserController;
 use Modules\{{MODULE_NAME}}\Models\{{MODEL_NAME}};
 
@@ -25,5 +27,323 @@ class UserController extends BaseUserController
     protected function getResourceName(): string
     {
         return '管理员';
+    }
+
+    /**
+     * 获取角色选项（按 guard 过滤）
+     */
+    protected function getRoleOptions(): array
+    {
+        $roleModel = config('lartrix.models.role', \Lartrix\Models\Role::class);
+        return $roleModel::query()
+            ->where('status', true)
+            ->where('guard_name', $this->getGuard())
+            ->get(['name', 'title'])
+            ->map(fn ($role) => [
+                'label' => $role->title ?: $role->name,
+                'value' => $role->name,
+            ])
+            ->toArray();
+    }
+
+    /**
+     * 创建数据（status 使用 boolean）
+     */
+    protected function prepareStoreData(array $validated): array
+    {
+        return [
+            'username' => $validated['username'],
+            'password' => $validated['password'],
+            'nickname' => ($validated['nickname'] ?? null) ?: null,
+            'avatar' => ($validated['avatar'] ?? null) ?: null,
+            'email' => ($validated['email'] ?? null) ?: null,
+            'phone' => ($validated['phone'] ?? null) ?: null,
+            'status' => $validated['status'] ?? true,
+            'remark' => ($validated['remark'] ?? null) ?: null,
+        ];
+    }
+
+    /**
+     * 验证规则（status 使用 boolean）
+     */
+    protected function getStoreRules(): array
+    {
+        $table = $this->getTable();
+        return [
+            'username' => "required|string|max:20|unique:{$table}",
+            'password' => 'required|string|min:6',
+            'nickname' => 'nullable|string|max:20',
+            'avatar' => 'nullable|string',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'status' => 'nullable|boolean',
+            'remark' => 'nullable|string|max:255',
+            'roles' => 'nullable|array',
+            'roles.*' => 'string|exists:roles,name',
+        ];
+    }
+
+    protected function getUpdateRules(int $id): array
+    {
+        $table = $this->getTable();
+        return [
+            'username' => "string|max:20|unique:{$table},username,{$id}",
+            'nickname' => 'nullable|string|max:20',
+            'avatar' => 'nullable|string',
+            'email' => 'nullable|email',
+            'phone' => 'nullable|string|max:20',
+            'remark' => 'nullable|string|max:255',
+            'roles' => 'array',
+            'roles.*' => 'string|exists:roles,name',
+        ];
+    }
+
+    /**
+     * 状态更新（boolean 类型）
+     */
+    protected function updateStatus(Request $request, int $id): array
+    {
+        $model = $this->findOrFail($id);
+
+        $validated = $request->validate([
+            'status' => 'required|boolean',
+        ]);
+
+        $model->status = $validated['status'];
+        $model->save();
+
+        $this->afterStatusUpdate($model, $validated['status']);
+
+        return success('状态更新成功', ['status' => $model->status]);
+    }
+
+    /**
+     * 表格列配置（status 使用 boolean 判断）
+     */
+    protected function getTableColumns(): array
+    {
+        return [
+            ['key' => 'id', 'title' => 'ID', 'width' => 80],
+            ['key' => 'username', 'title' => '用户名'],
+            ['key' => 'nickname', 'title' => '昵称'],
+            ['key' => 'email', 'title' => '邮箱'],
+            ['key' => 'phone', 'title' => '手机号'],
+            ['key' => 'roles', 'title' => '角色', 'width' => 150, 'slot' => [
+                \Lartrix\Schema\Components\NaiveUI\Space::make()
+                    ->props(['size' => 'small'])
+                    ->children([
+                        \Lartrix\Schema\Components\NaiveUI\Tag::make()
+                            ->for('role in slotData.row.roles', '{{ role.id }}')
+                            ->props(['type' => 'info', 'size' => 'small'])
+                            ->children(['{{ role.title || role.name }}']),
+                    ]),
+            ]],
+            ['key' => 'status', 'title' => '状态', 'width' => 80, 'slot' => [
+                \Lartrix\Schema\Components\NaiveUI\SwitchC::make()
+                    ->props(['value' => '{{ slotData.row.status }}'])
+                    ->on('update:value',
+                        \Lartrix\Schema\Actions\FetchAction::make('/users/{{ slotData.row.id }}')
+                            ->put()
+                            ->body(['action_type' => 'status', 'status' => '{{ $event }}'])
+                            ->then([
+                                \Lartrix\Schema\Actions\CallAction::make('$message.success', ['状态更新成功']),
+                                \Lartrix\Schema\Actions\CallAction::make('loadData'),
+                            ])
+                            ->catch([
+                                \Lartrix\Schema\Actions\CallAction::make('$message.error', ['{{ $error.message || "状态更新失败" }}']),
+                            ])
+                    ),
+            ]],
+            ['key' => 'created_at', 'title' => '创建时间', 'width' => 180],
+            ['key' => 'actions', 'title' => '操作', 'width' => 220, 'fixed' => 'right', 'slot' => [
+                \Lartrix\Schema\Components\NaiveUI\Space::make()->children([
+                    \Lartrix\Schema\Components\NaiveUI\Button::make()
+                        ->size('small')
+                        ->props(['type' => 'primary', 'text' => true])
+                        ->on('click', [
+                            \Lartrix\Schema\Actions\SetAction::make('editingId', '{{ slotData.row.id }}'),
+                            \Lartrix\Schema\Actions\SetAction::make('formData.username', '{{ slotData.row.username }}'),
+                            \Lartrix\Schema\Actions\SetAction::make('formData.nickname', '{{ slotData.row.nickname || "" }}'),
+                            \Lartrix\Schema\Actions\SetAction::make('formData.email', '{{ slotData.row.email || "" }}'),
+                            \Lartrix\Schema\Actions\SetAction::make('formData.phone', '{{ slotData.row.phone || "" }}'),
+                            \Lartrix\Schema\Actions\SetAction::make('formData.roles', '{{ (slotData.row.roles || []).map(r => r.name) }}'),
+                            \Lartrix\Schema\Actions\SetAction::make('formData.remark', '{{ slotData.row.remark || "" }}'),
+                            \Lartrix\Schema\Actions\SetAction::make('formData.status', '{{ slotData.row.status }}'),
+                            \Lartrix\Schema\Actions\SetAction::make('formVisible', true),
+                        ])
+                        ->text('编辑'),
+                    \Lartrix\Schema\Components\NaiveUI\Button::make()
+                        ->size('small')
+                        ->props(['type' => 'warning', 'text' => true])
+                        ->on('click', [
+                            \Lartrix\Schema\Actions\SetAction::make('resetPwdUserId', '{{ slotData.row.id }}'),
+                            \Lartrix\Schema\Actions\SetAction::make('resetPwdUserName', '{{ slotData.row.username }}'),
+                            \Lartrix\Schema\Actions\SetAction::make('newPassword', ''),
+                            \Lartrix\Schema\Actions\SetAction::make('resetPwdVisible', true),
+                        ])
+                        ->text('重置密码'),
+                    \Lartrix\Schema\Components\NaiveUI\Popconfirm::make()
+                        ->props([
+                            'positiveText' => '确定',
+                            'negativeText' => '取消',
+                        ])
+                        ->on('positive-click',
+                            \Lartrix\Schema\Actions\FetchAction::make('/users/{{ slotData.row.id }}')
+                                ->delete()
+                                ->then([
+                                    \Lartrix\Schema\Actions\CallAction::make('$message.success', ['删除成功']),
+                                    \Lartrix\Schema\Actions\CallAction::make('loadData'),
+                                ])
+                                ->catch([
+                                    \Lartrix\Schema\Actions\CallAction::make('$message.error', ['{{ $error.message || "删除失败" }}']),
+                                ])
+                        )
+                        ->slot('trigger', [
+                            \Lartrix\Schema\Components\NaiveUI\Button::make()
+                                ->size('small')
+                                ->props(['type' => 'error', 'text' => true])
+                                ->text('删除'),
+                        ])
+                        ->children(['确定要删除用户 {{ slotData.row.username }} 吗？']),
+                ]),
+            ]],
+        ];
+    }
+
+    /**
+     * 列表 UI（status 使用 boolean）
+     */
+    protected function listUi(): array
+    {
+        $userForm = \Lartrix\Schema\Components\Business\OptForm::make('formData')
+            ->fields([
+                ['用户名', 'username', \Lartrix\Schema\Components\NaiveUI\Input::make()->props(['placeholder' => '请输入用户名', 'disabled' => '{{ !!editingId }}'])],
+                ['昵称', 'nickname', \Lartrix\Schema\Components\NaiveUI\Input::make()->props(['placeholder' => '请输入昵称'])],
+                ['邮箱', 'email', \Lartrix\Schema\Components\NaiveUI\Input::make()->props(['placeholder' => '请输入邮箱'])],
+                ['手机号', 'phone', \Lartrix\Schema\Components\NaiveUI\Input::make()->props(['placeholder' => '请输入手机号'])],
+                ['密码', 'password', \Lartrix\Schema\Components\NaiveUI\Input::make()->props(['type' => 'password', 'showPasswordOn' => 'click', 'placeholder' => '请输入密码']), '', '!editingId'],
+                ['角色', 'roles', \Lartrix\Schema\Components\NaiveUI\Select::make()->props(['multiple' => true, 'placeholder' => '请选择角色', 'options' => '{{ roleOptions }}']), []],
+                ['备注', 'remark', \Lartrix\Schema\Components\NaiveUI\Input::make()->props(['type' => 'textarea', 'placeholder' => '请输入备注'])],
+                ['状态', 'status', \Lartrix\Schema\Components\NaiveUI\SwitchC::make(), true],
+            ])
+            ->buttons([
+                \Lartrix\Schema\Components\NaiveUI\Button::make()->on('click', \Lartrix\Schema\Actions\SetAction::make('formVisible', false))->text('取消'),
+                \Lartrix\Schema\Components\NaiveUI\Button::make()->type('primary')->props(['loading' => '{{ submitting }}'])->on('click', ['call' => 'handleSubmit'])->text('确定'),
+            ]);
+
+        $resetPwdForm = \Lartrix\Schema\Components\Business\OptForm::make()
+            ->fields([
+                ['新密码', 'newPassword', \Lartrix\Schema\Components\NaiveUI\Input::make()->props(['type' => 'password', 'showPasswordOn' => 'click', 'placeholder' => '请输入新密码（至少6位）'])],
+            ])
+            ->buttons([
+                \Lartrix\Schema\Components\NaiveUI\Button::make()->on('click', \Lartrix\Schema\Actions\SetAction::make('resetPwdVisible', false))->text('取消'),
+                \Lartrix\Schema\Components\NaiveUI\Button::make()->type('primary')->props(['loading' => '{{ resetPwdSubmitting }}'])->on('click', [
+                    \Lartrix\Schema\Actions\SetAction::make('resetPwdSubmitting', true),
+                    \Lartrix\Schema\Actions\FetchAction::make('/users/{{ resetPwdUserId }}')
+                        ->put()
+                        ->body(['action_type' => 'reset_password', 'password' => '{{ newPassword }}'])
+                        ->then([
+                            \Lartrix\Schema\Actions\CallAction::make('$message.success', ['密码重置成功']),
+                            \Lartrix\Schema\Actions\SetAction::make('resetPwdVisible', false),
+                        ])
+                        ->catch([
+                            \Lartrix\Schema\Actions\CallAction::make('$message.error', ['{{ $error.message || "密码重置失败" }}']),
+                        ])
+                        ->finally([
+                            \Lartrix\Schema\Actions\SetAction::make('resetPwdSubmitting', false),
+                        ]),
+                ])->text('确定'),
+            ]);
+
+        $schema = \Lartrix\Schema\Components\Business\CrudPage::make('管理员管理')
+            ->apiPrefix('/users')
+            ->columns($this->getTableColumns())
+            ->scrollX(1200)
+            ->defaultPageSize(15)
+            ->search([
+                ['关键词', 'keyword', \Lartrix\Schema\Components\NaiveUI\Input::make()->props(['placeholder' => '用户名/昵称/邮箱/手机号', 'clearable' => true])],
+                ['状态', 'status', \Lartrix\Schema\Components\NaiveUI\Select::make()->props([
+                    'placeholder' => '全部',
+                    'clearable' => true,
+                    'style' => ['width' => '120px'],
+                    'options' => [
+                        ['label' => '启用', 'value' => true],
+                        ['label' => '禁用', 'value' => false],
+                    ],
+                ])],
+            ])
+            ->toolbarLeft([
+                'columnSelector',
+                'batchDelete',
+                \Lartrix\Schema\Components\NaiveUI\Button::make()
+                    ->type('primary')
+                    ->on('click', [
+                        \Lartrix\Schema\Actions\SetAction::batch([
+                            'editingId' => null,
+                            'formData.username' => '',
+                            'formData.nickname' => '',
+                            'formData.email' => '',
+                            'formData.phone' => '',
+                            'formData.password' => '',
+                            'formData.roles' => [],
+                            'formData.remark' => '',
+                            'formData.status' => true,
+                            'formVisible' => true,
+                        ]),
+                    ])
+                    ->text('新增'),
+            ])
+            ->data([
+                'roleOptions' => $this->getRoleOptions(),
+                'formData' => $userForm->getDefaultData(),
+                'editingId' => null,
+                'submitting' => false,
+                'resetPwdUserId' => null,
+                'resetPwdUserName' => '',
+                'newPassword' => '',
+                'resetPwdSubmitting' => false,
+            ])
+            ->methods([
+                'handleSubmit' => [
+                    \Lartrix\Schema\Actions\SetAction::make('submitting', true),
+                    \Lartrix\Schema\Actions\IfAction::make('editingId')
+                        ->then(
+                            \Lartrix\Schema\Actions\FetchAction::make('{{ "/users/" + editingId }}')
+                                ->put()
+                                ->body('{{ formData }}')
+                                ->then([
+                                    \Lartrix\Schema\Actions\CallAction::make('$message.success', ['更新成功']),
+                                    \Lartrix\Schema\Actions\SetAction::make('formVisible', false),
+                                    \Lartrix\Schema\Actions\CallAction::make('loadData'),
+                                ])
+                                ->catch([
+                                    \Lartrix\Schema\Actions\CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                ])
+                                ->finally([
+                                    \Lartrix\Schema\Actions\SetAction::make('submitting', false),
+                                ])
+                        )
+                        ->else(
+                            \Lartrix\Schema\Actions\FetchAction::make('/users')
+                                ->post()
+                                ->body('{{ formData }}')
+                                ->then([
+                                    \Lartrix\Schema\Actions\CallAction::make('$message.success', ['创建成功']),
+                                    \Lartrix\Schema\Actions\SetAction::make('formVisible', false),
+                                    \Lartrix\Schema\Actions\CallAction::make('loadData'),
+                                ])
+                                ->catch([
+                                    \Lartrix\Schema\Actions\CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                ])
+                                ->finally([
+                                    \Lartrix\Schema\Actions\SetAction::make('submitting', false),
+                                ])
+                        ),
+                ],
+            ])
+            ->modal('form', '{{ editingId ? "编辑管理员" : "新增管理员" }}', $userForm, ['width' => '500px'])
+            ->modal('resetPwd', '重置密码 - {{ resetPwdUserName }}', $resetPwdForm, ['width' => '400px']);
+
+        return success($schema->build());
     }
 }

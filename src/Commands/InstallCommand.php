@@ -233,19 +233,15 @@ class InstallCommand extends Command
 
         $content = file_get_contents($authPath);
 
-        // 检查是否已配置 admin guard
-        if (str_contains($content, "'admin'") && str_contains($content, "'admins'")) {
+        // 检查是否已配置 admin guard 和 admins provider
+        if (str_contains($content, "'admin' =>") && str_contains($content, "'admins' =>")) {
             $this->line('   admin guard 已配置，跳过。');
             return;
         }
 
-        // 添加 admin guard
-        if (!str_contains($content, "'admin'")) {
-            $guardConfig = <<<'PHP'
-'web' => [
-            'driver' => 'session',
-            'provider' => 'users',
-        ],
+        // 添加 admin guard（检查 guards 区域中是否有 'admin' => 定义）
+        if (!str_contains($content, "'admin' =>")) {
+            $adminGuard = <<<'PHP'
 
         // Admin 后台管理 guard
         'admin' => [
@@ -253,21 +249,21 @@ class InstallCommand extends Command
             'provider' => 'admins',
         ],
 PHP;
-            $content = str_replace(
-                "'web' => [\n            'driver' => 'session',\n            'provider' => 'users',\n        ],",
-                $guardConfig,
-                $content
-            );
+            // 兼容有逗号和无逗号两种格式
+            $searchWithComma = "'web' => [\n            'driver' => 'session',\n            'provider' => 'users',\n        ],";
+            $searchWithoutComma = "'web' => [\n            'driver' => 'session',\n            'provider' => 'users',\n        ]";
+
+            if (str_contains($content, $searchWithComma)) {
+                $content = str_replace($searchWithComma, $searchWithComma . "\n" . $adminGuard, $content);
+            } elseif (str_contains($content, $searchWithoutComma)) {
+                $content = str_replace($searchWithoutComma, $searchWithoutComma . "," . "\n" . $adminGuard, $content);
+            }
             $this->line('   已添加 admin guard。');
         }
 
-        // 添加 admins provider
-        if (!str_contains($content, "'admins'")) {
-            $providerConfig = <<<'PHP'
-'users' => [
-            'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\User::class),
-        ],
+        // 添加 admins provider（检查 providers 区域中是否有 'admins' => 定义）
+        if (!str_contains($content, "'admins' =>")) {
+            $adminsProvider = <<<'PHP'
 
         // Admins provider 用于后台管理认证
         'admins' => [
@@ -275,11 +271,14 @@ PHP;
             'model' => \Lartrix\Models\AdminUser::class,
         ],
 PHP;
-            $content = str_replace(
-                "'users' => [\n            'driver' => 'eloquent',\n            'model' => env('AUTH_MODEL', App\Models\User::class),\n        ],",
-                $providerConfig,
-                $content
-            );
+            $searchWithComma = "'users' => [\n            'driver' => 'eloquent',\n            'model' => env('AUTH_MODEL', App\\Models\\User::class),\n        ],";
+            $searchWithoutComma = "'users' => [\n            'driver' => 'eloquent',\n            'model' => env('AUTH_MODEL', App\\Models\\User::class),\n        ]";
+
+            if (str_contains($content, $searchWithComma)) {
+                $content = str_replace($searchWithComma, $searchWithComma . "\n" . $adminsProvider, $content);
+            } elseif (str_contains($content, $searchWithoutComma)) {
+                $content = str_replace($searchWithoutComma, $searchWithoutComma . "," . "\n" . $adminsProvider, $content);
+            }
             $this->line('   已添加 admins provider。');
         }
 

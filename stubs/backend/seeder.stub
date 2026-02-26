@@ -27,7 +27,14 @@ class {{MODULE_NAME}}BackendSeeder extends Seeder
         // 创建超级管理员角色
         $role = Role::firstOrCreate(
             ['name' => 'super-admin', 'guard_name' => $guard],
-            ['name' => 'super-admin', 'guard_name' => $guard]
+            [
+                'name' => 'super-admin',
+                'title' => '超级管理员',
+                'description' => '拥有所有权限的超级管理员角色',
+                'guard_name' => $guard,
+                'is_system' => true,
+                'status' => true,
+            ]
         );
 
         // 创建默认管理员账号
@@ -60,56 +67,55 @@ class {{MODULE_NAME}}BackendSeeder extends Seeder
                 'title' => '首页',
                 'icon' => 'mdi:home',
                 'order' => 1,
+                'use_json_renderer' => true,
+                'schema_source' => '/dashboard',
             ],
             [
                 'guard_name' => $guard,
                 'name' => 'system',
                 'path' => '/system',
+                'redirect' => '/system/user',
                 'title' => '系统管理',
                 'icon' => 'mdi:cog',
-                'order' => 99,
+                'order' => 9999,
                 'children' => [
                     [
                         'guard_name' => $guard,
-                        'name' => 'system_menu',
-                        'path' => '/system/menu',
+                        'name' => 'system.menu',
+                        'path' => 'menu',
                         'title' => '菜单管理',
                         'icon' => 'mdi:menu',
                         'order' => 1,
-                        'component' => 'view.json-renderer',
                         'use_json_renderer' => true,
                         'schema_source' => '/menus?action_type=list_ui',
                     ],
                     [
                         'guard_name' => $guard,
-                        'name' => 'system_role',
-                        'path' => '/system/role',
+                        'name' => 'system.role',
+                        'path' => 'role',
                         'title' => '角色管理',
-                        'icon' => 'mdi:account-group',
+                        'icon' => 'mdi:account-key',
                         'order' => 2,
-                        'component' => 'view.json-renderer',
                         'use_json_renderer' => true,
                         'schema_source' => '/roles?action_type=list_ui',
                     ],
                     [
                         'guard_name' => $guard,
-                        'name' => 'system_permission',
-                        'path' => '/system/permission',
+                        'name' => 'system.permission',
+                        'path' => 'permission',
                         'title' => '权限管理',
                         'icon' => 'mdi:shield-key',
                         'order' => 3,
-                        'component' => 'view.json-renderer',
                         'use_json_renderer' => true,
                         'schema_source' => '/permissions?action_type=list_ui',
                     ],
                     [
                         'guard_name' => $guard,
-                        'name' => 'system_user',
-                        'path' => '/system/user',
+                        'name' => 'system.user',
+                        'path' => 'user',
                         'title' => '管理员管理',
-                        'icon' => 'mdi:account',
+                        'icon' => 'mdi:account-group',
                         'order' => 4,
-                        'component' => 'view.json-renderer',
                         'use_json_renderer' => true,
                         'schema_source' => '/users?action_type=list_ui',
                     ],
@@ -147,32 +153,70 @@ class {{MODULE_NAME}}BackendSeeder extends Seeder
      */
     protected function createPermissions(string $guard): void
     {
-        $permissions = [
-            // 菜单管理
-            'system.menu.list',
-            'system.menu.create',
-            'system.menu.update',
-            'system.menu.delete',
-            // 角色管理
-            'system.role.list',
-            'system.role.create',
-            'system.role.update',
-            'system.role.delete',
-            // 权限管理
-            'system.permission.list',
-            'system.permission.sync',
-            // 管理员管理
-            'system.user.list',
-            'system.user.create',
-            'system.user.update',
-            'system.user.delete',
+        $groups = [
+            [
+                'name' => 'system.menu', 'title' => '菜单管理', 'module' => 'system',
+                'children' => [
+                    ['name' => 'system.menu.list', 'title' => '菜单列表', 'module' => 'system'],
+                    ['name' => 'system.menu.create', 'title' => '创建菜单', 'module' => 'system'],
+                    ['name' => 'system.menu.update', 'title' => '编辑菜单', 'module' => 'system'],
+                    ['name' => 'system.menu.delete', 'title' => '删除菜单', 'module' => 'system'],
+                ],
+            ],
+            [
+                'name' => 'system.role', 'title' => '角色管理', 'module' => 'system',
+                'children' => [
+                    ['name' => 'system.role.list', 'title' => '角色列表', 'module' => 'system'],
+                    ['name' => 'system.role.create', 'title' => '创建角色', 'module' => 'system'],
+                    ['name' => 'system.role.update', 'title' => '编辑角色', 'module' => 'system'],
+                    ['name' => 'system.role.delete', 'title' => '删除角色', 'module' => 'system'],
+                ],
+            ],
+            [
+                'name' => 'system.permission', 'title' => '权限管理', 'module' => 'system',
+                'children' => [
+                    ['name' => 'system.permission.list', 'title' => '权限列表', 'module' => 'system'],
+                    ['name' => 'system.permission.sync', 'title' => '同步权限', 'module' => 'system'],
+                ],
+            ],
+            [
+                'name' => 'system.user', 'title' => '管理员管理', 'module' => 'system',
+                'children' => [
+                    ['name' => 'system.user.list', 'title' => '管理员列表', 'module' => 'system'],
+                    ['name' => 'system.user.create', 'title' => '创建管理员', 'module' => 'system'],
+                    ['name' => 'system.user.update', 'title' => '编辑管理员', 'module' => 'system'],
+                    ['name' => 'system.user.delete', 'title' => '删除管理员', 'module' => 'system'],
+                ],
+            ],
         ];
 
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate(
-                ['name' => $permission, 'guard_name' => $guard],
-                ['name' => $permission, 'guard_name' => $guard]
-            );
+        foreach ($groups as $group) {
+            $this->createPermission($guard, $group);
+        }
+    }
+
+    /**
+     * 递归创建权限
+     */
+    protected function createPermission(string $guard, array $data, ?int $parentId = null): void
+    {
+        $children = $data['children'] ?? [];
+        unset($data['children']);
+
+        $permission = Permission::firstOrCreate(
+            ['name' => $data['name'], 'guard_name' => $guard],
+            [
+                'name' => $data['name'],
+                'title' => $data['title'] ?? null,
+                'module' => $data['module'] ?? null,
+                'guard_name' => $guard,
+                'parent_id' => $parentId,
+                'sort' => 0,
+            ]
+        );
+
+        foreach ($children as $child) {
+            $this->createPermission($guard, $child, $permission->id);
         }
     }
 }

@@ -2,6 +2,8 @@
 
 namespace Modules\{{MODULE_NAME}}\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 use Lartrix\Controllers\PermissionController as BasePermissionController;
 
 class PermissionController extends BasePermissionController
@@ -12,11 +14,25 @@ class PermissionController extends BasePermissionController
     }
 
     /**
-     * 获取权限列表时按 guard 过滤
+     * 按 guard 过滤权限列表
      */
-    protected function buildIndexQuery(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    protected function applySearch(Builder $query, Request $request): void
     {
-        return $query->where('guard_name', $this->getGuard());
+        $query->where('guard_name', $this->getGuard());
+
+        if ($keyword = $request->input('keyword')) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', "%{$keyword}%")
+                    ->orWhere('title', 'like', "%{$keyword}%");
+            });
+        }
+    }
+
+    protected function applyFilters(Builder $query, Request $request): void
+    {
+        if ($module = $request->input('module')) {
+            $query->where('module', $module);
+        }
     }
 
     /**
@@ -24,7 +40,51 @@ class PermissionController extends BasePermissionController
      */
     protected function prepareStoreData(array $validated): array
     {
-        $validated['guard_name'] = $this->getGuard();
-        return $validated;
+        return [
+            'parent_id' => $validated['parent_id'] ?? null,
+            'name' => $validated['name'],
+            'title' => $validated['title'] ?? null,
+            'guard_name' => $this->getGuard(),
+            'module' => $validated['module'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'sort' => $validated['sort'] ?? 0,
+        ];
+    }
+
+    /**
+     * 所有权限（树状结构，按 guard 过滤）
+     */
+    protected function all(): array
+    {
+        $modelClass = $this->getModelClass();
+        $permissions = $modelClass::query()
+            ->where('guard_name', $this->getGuard())
+            ->whereNull('parent_id')
+            ->with('allChildren')
+            ->orderBy('sort')
+            ->get();
+
+        $result = $this->transformPermissionChildren($permissions->toArray());
+
+        return success($result);
+    }
+
+    /**
+     * 权限树（按 guard 过滤）
+     */
+    protected function tree(): array
+    {
+        $modelClass = $this->getModelClass();
+        $tree = $modelClass::query()
+            ->where('guard_name', $this->getGuard())
+            ->whereNull('parent_id')
+            ->with(['children' => fn($q) => $q->orderBy('sort')])
+            ->orderBy('module')
+            ->orderBy('sort')
+            ->get()
+            ->groupBy('module')
+            ->toArray();
+
+        return success($tree);
     }
 }

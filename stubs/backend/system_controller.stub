@@ -1,89 +1,30 @@
 <?php
 
-namespace Lartrix\Controllers;
+namespace Modules\{{MODULE_NAME}}\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Lartrix\Schema\Components\Custom\Html;
-use Lartrix\Schema\Components\NaiveUI\Card;
-use Lartrix\Schema\Components\NaiveUI\Flex;
-use Lartrix\Schema\Components\NaiveUI\Form;
-use Lartrix\Schema\Components\NaiveUI\FormItem;
-use Lartrix\Schema\Components\NaiveUI\Input;
-use Lartrix\Schema\Components\NaiveUI\InputGroup;
-use Lartrix\Schema\Components\NaiveUI\Button;
-use Lartrix\Schema\Components\NaiveUI\Checkbox;
-use Lartrix\Schema\Components\NaiveUI\Text;
-use Lartrix\Schema\Components\NaiveUI\Divider;
-use Lartrix\Schema\Components\Custom\Icon;
-use Lartrix\Schema\Components\Custom\SvgIcon;
-use Lartrix\Schema\Components\NaiveUI\Result;
-use Lartrix\Schema\Components\Common\GlobalSearch;
-use Lartrix\Schema\Components\Common\FullScreen;
-use Lartrix\Schema\Components\Common\LangSwitch;
-use Lartrix\Schema\Components\Common\ThemeSchemaSwitch;
-use Lartrix\Schema\Components\Common\ThemeButton;
-use Lartrix\Schema\Components\Common\UserAvatar;
+use Lartrix\Schema\Components\NaiveUI\{
+    Button, Card, Checkbox, Descriptions, DescriptionsItem, Flex, Form, FormItem,
+    Grid, GridItem, Input, InputGroup, Space, Statistic, Text, Timeline, TimelineItem
+};
+use Lartrix\Schema\Components\Custom\{Html, SvgIcon, Icon, VueECharts};
+use Lartrix\Schema\Components\Common\{
+    FullScreen, GlobalSearch, LangSwitch, ThemeButton, ThemeSchemaSwitch, UserAvatar
+};
+use Lartrix\Schema\Actions\CallAction;
 
-class SystemController extends Controller
+class SystemController
 {
     /**
-     * 前端入口
-     * 读取 index.html 并注入后台配置
-     */
-    public function entry(): Response
-    {
-        // 资源目录固定为 public/admin/，与路由路径配置解耦
-        $indexPath = public_path('admin/index.html');
-
-        if (!file_exists($indexPath)) {
-            abort(404, '前端资源未发布，请运行 php artisan vendor:publish --tag=lartrix-assets');
-        }
-
-        $html = file_get_contents($indexPath);
-
-        // 构建注入的配置
-        $config = $this->getEntryConfig();
-        $script = '<script>window.__LARTRIX_CONFIG__ = ' . json_encode($config, JSON_UNESCAPED_UNICODE) . ';</script>';
-
-        // 注入到 <head> 中
-        $html = str_replace('<head>', '<head>' . "\n    " . $script, $html);
-
-        return response($html)->header('Content-Type', 'text/html');
-    }
-
-    /**
-     * 获取前端入口配置
-     * 注意：只返回前端必需的公开信息，不暴露内部实现细节
-     */
-    protected function getEntryConfig(): array
-    {
-        return [
-            'apiPrefix' => '/' . ltrim(config('lartrix.api_prefix', 'api/admin'), '/'),
-            'appTitle' => config('lartrix.app_title', 'Lartrix Admin'),
-            'logo' => config('lartrix.logo'),
-        ];
-    }
-
-    /**
-     * 获取设置模型类
-     */
-    protected function getSettingModel(): string
-    {
-        return config('lartrix.models.setting', \Lartrix\Models\Setting::class);
-    }
-
-    /**
      * 登录页面 UI Schema
-     * 无需认证
      */
     public function loginPage(): array
     {
-        $appTitle = config('lartrix.app_title', 'Lartrix Admin');
-        $appSubtitle = 'JSON 驱动的后台管理系统';
-        $copyright = config('lartrix.copyright', 'Lartrix Admin');
+        $config = config('{{LOWER_NAME}}.backend', []);
+        $appTitle = $config['app_title'] ?? '{{APP_TITLE}}';
+        $appSubtitle = '{{APP_TITLE}}';
+        $copyright = $config['copyright'] ?? '© ' . date('Y') . ' {{APP_TITLE}}';
+        $logo = $config['logo'] ?? config('lartrix.logo');
 
-        // 构建登录页面 Schema
         $schema = Html::div()
             ->data($this->getLoginPageData())
             ->props([
@@ -99,17 +40,11 @@ class SystemController extends Controller
                 ],
             ])
             ->children([
-                // 动画 SVG 背景
                 $this->buildAnimatedSvgBackground(),
-                // 波浪动画样式
                 $this->buildWaveStyles(),
-                // 波浪容器
                 $this->buildWaveContainer(),
-                // 顶部渐变动画
                 $this->buildTopGradient(),
-                // 登录卡片
-                $this->buildLoginCard($appTitle, $appSubtitle),
-                // 版权信息
+                $this->buildLoginCard($appTitle, $appSubtitle, $logo),
                 Text::make()
                     ->props([
                         'style' => [
@@ -125,6 +60,120 @@ class SystemController extends Controller
         return success($schema->toArray());
     }
 
+    /**
+     * 获取主题配置
+     */
+    public function getThemeConfig(): array
+    {
+        $settingModel = config('lartrix.models.setting', \Lartrix\Models\Setting::class);
+        $config = config('{{LOWER_NAME}}.backend', []);
+
+        // 优先读取模块专属主题
+        $themeConfig = $settingModel::getGroup('theme.{{LOWER_NAME}}');
+
+        // 没有则使用默认主题
+        if (empty($themeConfig)) {
+            $themeConfig = $this->getDefaultThemeConfig();
+        }
+
+        return success($themeConfig);
+    }
+
+    /**
+     * 获取默认主题配置
+     */
+    protected function getDefaultThemeConfig(): array
+    {
+        $config = config('{{LOWER_NAME}}.backend', []);
+        $appTitle = $config['app_title'] ?? '{{APP_TITLE}}';
+        $logo = $config['logo'] ?? config('lartrix.logo', '/favicon.svg');
+
+        return [
+            'appTitle' => $appTitle,
+            'logo' => $logo,
+            'themeScheme' => 'light',
+            'grayscale' => false,
+            'colourWeakness' => false,
+            'recommendColor' => false,
+            'themeColor' => '#646cff',
+            'themeRadius' => 6,
+            'otherColor' => [
+                'info' => '#2080f0',
+                'success' => '#52c41a',
+                'warning' => '#faad14',
+                'error' => '#f5222d',
+            ],
+            'isInfoFollowPrimary' => true,
+            'layout' => [
+                'mode' => 'vertical',
+                'scrollMode' => 'content',
+            ],
+            'page' => [
+                'animate' => true,
+                'animateMode' => 'fade-slide',
+            ],
+            'header' => [
+                'height' => 56,
+                'inverted' => false,
+                'breadcrumb' => ['visible' => true, 'showIcon' => true],
+                'multilingual' => ['visible' => true],
+                'globalSearch' => ['visible' => true],
+            ],
+            'tab' => [
+                'visible' => true,
+                'cache' => true,
+                'height' => 44,
+                'mode' => 'chrome',
+                'closeTabByMiddleClick' => false,
+            ],
+            'fixedHeaderAndTab' => true,
+            'sider' => [
+                'inverted' => false,
+                'width' => 220,
+                'collapsedWidth' => 64,
+                'mixWidth' => 90,
+                'mixCollapsedWidth' => 64,
+                'mixChildMenuWidth' => 200,
+                'mixChildMenuBgColor' => '#ffffff',
+                'autoSelectFirstMenu' => false,
+            ],
+            'footer' => [
+                'visible' => true,
+                'fixed' => false,
+                'height' => 48,
+                'right' => true,
+            ],
+            'watermark' => [
+                'visible' => false,
+                'text' => $appTitle,
+                'enableUserName' => false,
+                'enableTime' => false,
+                'timeFormat' => 'YYYY-MM-DD HH:mm',
+            ],
+            'tokens' => [
+                'light' => [
+                    'colors' => [
+                        'container' => 'rgb(255, 255, 255)',
+                        'layout' => 'rgb(247, 250, 252)',
+                        'inverted' => 'rgb(0, 20, 40)',
+                        'base-text' => 'rgb(31, 31, 31)',
+                    ],
+                    'boxShadow' => [
+                        'header' => '0 1px 2px rgb(0, 21, 41, 0.08)',
+                        'sider' => '2px 0 8px 0 rgb(29, 35, 41, 0.05)',
+                        'tab' => '0 1px 2px rgb(0, 21, 41, 0.08)',
+                    ],
+                ],
+                'dark' => [
+                    'colors' => [
+                        'container' => 'rgb(28, 28, 28)',
+                        'layout' => 'rgb(18, 18, 18)',
+                        'base-text' => 'rgb(224, 224, 224)',
+                    ],
+                ],
+            ],
+        ];
+    }
 
     /**
      * 获取登录页面数据
@@ -200,7 +249,6 @@ class SystemController extends Controller
             ->css(['position' => 'absolute', 'inset' => '0', 'pointerEvents' => 'none']);
     }
 
-
     /**
      * 构建波浪动画样式
      */
@@ -256,11 +304,10 @@ class SystemController extends Controller
             ->css(['position' => 'absolute', 'inset' => '0', 'pointerEvents' => 'none']);
     }
 
-
     /**
      * 构建登录卡片
      */
-    protected function buildLoginCard(string $appTitle, string $appSubtitle): Card
+    protected function buildLoginCard(string $appTitle, string $appSubtitle, ?string $logo): Card
     {
         return Card::make()
             ->bordered(false)
@@ -277,11 +324,8 @@ class SystemController extends Controller
                 'contentStyle' => ['padding' => '40px'],
             ])
             ->children([
-                // Logo 和标题
-                $this->buildLogoHeader($appTitle, $appSubtitle),
-                // 登录表单
+                $this->buildLogoHeader($appTitle, $appSubtitle, $logo),
                 $this->buildLoginForm(),
-                // 重置密码表单
                 $this->buildResetPasswordForm(),
             ]);
     }
@@ -289,7 +333,7 @@ class SystemController extends Controller
     /**
      * 构建 Logo 头部
      */
-    protected function buildLogoHeader(string $appTitle, string $appSubtitle): Flex
+    protected function buildLogoHeader(string $appTitle, string $appSubtitle, ?string $logo): Flex
     {
         return Flex::make()
             ->align('center')
@@ -297,7 +341,7 @@ class SystemController extends Controller
             ->props(['style' => ['marginBottom' => '32px', 'gap' => '12px']])
             ->children([
                 Html::make('img')
-                    ->props(['src' => config('lartrix.logo'), 'style' => ['width' => '48px', 'height' => '48px']]),
+                    ->props(['src' => $logo, 'style' => ['width' => '48px', 'height' => '48px']]),
                 Flex::make()
                     ->vertical()
                     ->props(['style' => ['gap' => '2px']])
@@ -327,7 +371,6 @@ class SystemController extends Controller
                     ->rules('rules')
                     ->showLabel(false)
                     ->children([
-                        // 用户名
                         FormItem::make()
                             ->path('username')
                             ->children([
@@ -341,7 +384,6 @@ class SystemController extends Controller
                                             ->props(['style' => ['color' => '#999']]),
                                     ]),
                             ]),
-                        // 密码
                         FormItem::make()
                             ->path('password')
                             ->children([
@@ -357,7 +399,6 @@ class SystemController extends Controller
                                             ->props(['style' => ['color' => '#999']]),
                                     ]),
                             ]),
-                        // 记住我 & 忘记密码
                         Flex::make()
                             ->justify('space-between')
                             ->align('center')
@@ -371,7 +412,6 @@ class SystemController extends Controller
                                     ->on('click', ['set' => 'mode', 'value' => 'reset'])
                                     ->children(['忘记密码？']),
                             ]),
-                        // 登录按钮
                         Button::make()
                             ->type('primary')
                             ->props([
@@ -395,7 +435,6 @@ class SystemController extends Controller
         return Html::div()
             ->if("mode === 'reset'")
             ->children([
-                // 返回按钮和标题
                 Flex::make()
                     ->align('center')
                     ->props(['style' => ['marginBottom' => '24px']])
@@ -413,13 +452,11 @@ class SystemController extends Controller
                             ->props(['style' => ['fontSize' => '18px', 'marginLeft' => '12px']])
                             ->children(['重置密码']),
                     ]),
-                // 重置密码表单
                 Form::make()
                     ->model('resetForm')
                     ->rules('resetRules')
                     ->showLabel(false)
                     ->children([
-                        // 手机号
                         FormItem::make()
                             ->path('phone')
                             ->children([
@@ -434,7 +471,6 @@ class SystemController extends Controller
                                             ->props(['style' => ['color' => '#999']]),
                                     ]),
                             ]),
-                        // 验证码
                         FormItem::make()
                             ->path('code')
                             ->children([
@@ -464,7 +500,6 @@ class SystemController extends Controller
                                             ->children(["{{ countdown > 0 ? countdown + 's' : '获取验证码' }}"]),
                                     ]),
                             ]),
-                        // 新密码
                         FormItem::make()
                             ->path('newPassword')
                             ->children([
@@ -480,7 +515,6 @@ class SystemController extends Controller
                                             ->props(['style' => ['color' => '#999']]),
                                     ]),
                             ]),
-                        // 确认密码
                         FormItem::make()
                             ->path('confirmPassword')
                             ->children([
@@ -496,7 +530,6 @@ class SystemController extends Controller
                                             ->props(['style' => ['color' => '#999']]),
                                     ]),
                             ]),
-                        // 重置按钮
                         Button::make()
                             ->type('primary')
                             ->props([
@@ -523,109 +556,6 @@ class SystemController extends Controller
             ]);
     }
 
-
-    /**
-     * 403 无权限页面 UI Schema
-     */
-    public function forbidden(): array
-    {
-        $schema = Flex::make()
-            ->vertical()
-            ->justify('center')
-            ->align('center')
-            ->props(['class' => 'min-h-screen'])
-            ->children([
-                Result::make()
-                    ->status('403')
-                    ->title('403')
-                    ->description('抱歉，您没有权限访问此页面')
-                    ->slot('footer', [
-                        Flex::make()
-                            ->justify('center')
-                            ->props(['class' => 'gap-4'])
-                            ->children([
-                                Button::make()
-                                    ->type('primary')
-                                    ->on('click', ['call' => '$router.push', 'args' => ['/']])
-                                    ->text('返回首页'),
-                                Button::make()
-                                    ->on('click', ['call' => '$router.back'])
-                                    ->text('返回上一页'),
-                            ]),
-                    ]),
-            ]);
-
-        return success($schema->toArray());
-    }
-
-    /**
-     * 404 页面不存在 UI Schema
-     */
-    public function notFound(): array
-    {
-        $schema = Flex::make()
-            ->vertical()
-            ->justify('center')
-            ->align('center')
-            ->props(['class' => 'min-h-screen'])
-            ->children([
-                Result::make()
-                    ->status('404')
-                    ->title('404')
-                    ->description('抱歉，您访问的页面不存在')
-                    ->slot('footer', [
-                        Flex::make()
-                            ->justify('center')
-                            ->props(['class' => 'gap-4'])
-                            ->children([
-                                Button::make()
-                                    ->type('primary')
-                                    ->on('click', ['call' => '$router.push', 'args' => ['/']])
-                                    ->text('返回首页'),
-                                Button::make()
-                                    ->on('click', ['call' => '$router.back'])
-                                    ->text('返回上一页'),
-                            ]),
-                    ]),
-            ]);
-
-        return success($schema->toArray());
-    }
-
-    /**
-     * 500 服务器错误页面 UI Schema
-     */
-    public function serverError(): array
-    {
-        $schema = Flex::make()
-            ->vertical()
-            ->justify('center')
-            ->align('center')
-            ->props(['class' => 'min-h-screen'])
-            ->children([
-                Result::make()
-                    ->status('500')
-                    ->title('500')
-                    ->description('抱歉，服务器出现错误，请稍后再试')
-                    ->slot('footer', [
-                        Flex::make()
-                            ->justify('center')
-                            ->props(['class' => 'gap-4'])
-                            ->children([
-                                Button::make()
-                                    ->type('primary')
-                                    ->on('click', ['call' => '$router.push', 'args' => ['/']])
-                                    ->text('返回首页'),
-                                Button::make()
-                                    ->on('click', ['call' => 'location.reload'])
-                                    ->text('刷新页面'),
-                            ]),
-                    ]),
-            ]);
-
-        return success($schema->toArray());
-    }
-
     /**
      * 布局头部右侧组件 UI Schema
      */
@@ -634,29 +564,8 @@ class SystemController extends Controller
         $schema = Html::div()
             ->props(['class' => 'h-full flex-y-center gap-4px'])
             ->children([
-                // 全局搜索
                 GlobalSearch::make(),
-                // 通知中心
-                // HeaderNotification::make()
-                //     ->props([
-                //         'badgeMode' => 'count',
-                //         'pageSize' => 10,
-                //         'enableWs' => false,
-                //         'enableNotification' => true,
-                //         'notificationDuration' => 4500,
-                //         'fetchApi' => '/notifications',
-                //         'readApi' => '/notifications/read',
-                //         'readAllApi' => '/notifications/read-all',
-                //         'tabs' => [
-                //             ['key' => 'all', 'label' => '全部', 'icon' => 'ph:bell'],
-                //             ['key' => 'system', 'label' => '系统', 'icon' => 'ph:gear', 'types' => ['system']],
-                //             ['key' => 'order', 'label' => '订单', 'icon' => 'ph:shopping-cart', 'types' => ['order']],
-                //             ['key' => 'message', 'label' => '消息', 'icon' => 'ph:chat-circle', 'types' => ['message']],
-                //         ],
-                //     ]),
-                // 全屏切换
                 FullScreen::make(),
-                // 语言切换
                 LangSwitch::make()
                     ->props([
                         'langOptions' => [
@@ -666,11 +575,8 @@ class SystemController extends Controller
                         'defaultLang' => 'zh-CN',
                         'submitUrl' => '',
                     ]),
-                // 主题模式切换
                 ThemeSchemaSwitch::make(),
-                // 主题设置按钮
                 ThemeButton::make(),
-                // 用户头像菜单
                 UserAvatar::make()
                     ->props([
                         'menuItems' => [
@@ -727,151 +633,221 @@ class SystemController extends Controller
     }
 
     /**
-     * 获取主题配置
-     * 无需认证
+     * 首页仪表盘 UI Schema
      */
-    public function getThemeConfig(): array
+    public function dashboard(): array
     {
-        $settingModel = $this->getSettingModel();
-        $themeConfig = $settingModel::getGroup('theme');
+        $config = config('{{LOWER_NAME}}.backend', []);
+        $appTitle = $config['app_title'] ?? '{{APP_TITLE}}';
+        $modelClass = $config['model'] ?? \Modules\{{MODULE_NAME}}\Models\{{MODEL_NAME}}::class;
 
-        // 如果没有配置，返回默认主题
-        if (empty($themeConfig)) {
-            $themeConfig = $this->getDefaultThemeConfig();
-        }
+        $stats = [
+            'totalUsers' => $modelClass::count(),
+            'activeUsers' => $modelClass::where('status', true)->count(),
+            'totalOrders' => 0,
+            'revenue' => 0,
+        ];
 
-        return success($themeConfig);
+        $activities = [
+            ['type' => 'success', 'title' => '系统启动', 'time' => now()->subMinutes(5)->format('Y-m-d H:i'), 'content' => '系统已成功启动'],
+            ['type' => 'info', 'title' => '用户登录', 'time' => now()->subMinutes(10)->format('Y-m-d H:i'), 'content' => '管理员登录系统'],
+        ];
+
+        $schema = Space::make()
+            ->props(['vertical' => true, 'size' => 'large'])
+            ->data([
+                'stats' => $stats,
+                'recentActivities' => $activities,
+            ])
+            ->children([
+                $this->buildStatsGrid(),
+                $this->buildChartsGrid(),
+                $this->buildRecentActivities(),
+                $this->buildQuickActionsGrid($appTitle),
+            ]);
+
+        return success($schema->toArray());
     }
 
     /**
-     * 保存主题配置
-     * 需要认证
+     * 构建统计卡片网格
      */
-    public function saveThemeConfig(Request $request): array
+    protected function buildStatsGrid()
     {
-        $settingModel = $this->getSettingModel();
+        return Grid::make()
+            ->props([
+                'cols' => '1 s:2 m:4',
+                'xGap' => 16,
+                'yGap' => 16,
+                'responsive' => 'screen',
+            ])
+            ->children([
+                $this->buildStatCard('总用户数', '{{ stats.totalUsers }}', 'carbon:user-multiple', 'text-primary'),
+                $this->buildStatCard('活跃用户', '{{ stats.activeUsers }}', 'carbon:activity', 'text-success'),
+                $this->buildStatCard('总订单数', '{{ stats.totalOrders }}', 'carbon:shopping-cart', 'text-warning'),
+                $this->buildStatCard('总收入', '{{ stats.revenue }}', 'carbon:currency-dollar', 'text-error'),
+            ]);
+    }
 
-        $validated = $request->validate([
-            'themeScheme' => 'nullable|string|in:light,dark,auto',
-            'themeColor' => 'nullable|string|max:20',
-            'otherColor' => 'nullable|array',
-            'isInfoFollowPrimary' => 'nullable|boolean',
-            'layout' => 'nullable|array',
-            'page' => 'nullable|array',
-            'header' => 'nullable|array',
-            'tab' => 'nullable|array',
-            'fixedHeaderAndTab' => 'nullable|boolean',
-            'sider' => 'nullable|array',
-            'footer' => 'nullable|array',
-            'watermark' => 'nullable|array',
+    /**
+     * 构建单个统计卡片
+     */
+    protected function buildStatCard(string $label, string $value, string $icon, string $colorClass)
+    {
+        return GridItem::make()->children([
+            Card::make()->props(['class' => 'h-full'])->children([
+                Statistic::make()
+                    ->props(['label' => $label, 'value' => $value])
+                    ->slot('prefix', [
+                        SvgIcon::make($icon)->props(['class' => "{$colorClass} text-2xl mr-2"]),
+                    ]),
+            ]),
         ]);
-
-        foreach ($validated as $key => $value) {
-            if ($value !== null) {
-                $settingModel::set("theme.{$key}", $value);
-            }
-        }
-
-        return success('主题配置保存成功');
     }
 
     /**
-     * 获取默认主题配置
-     * 与 trix 前端的 themeSettings 保持一致
+     * 构建图表网格
      */
-    protected function getDefaultThemeConfig(): array
+    protected function buildChartsGrid()
+    {
+        return Grid::make()
+            ->props([
+                'cols' => '1 m:2',
+                'xGap' => 16,
+                'yGap' => 16,
+                'responsive' => 'screen',
+            ])
+            ->children([
+                GridItem::make()->children([
+                    Card::make()
+                        ->props(['title' => '访问趋势', 'class' => 'h-400px'])
+                        ->children([
+                            VueECharts::make()
+                                ->props(['option' => $this->getVisitTrendChartOption(), 'style' => ['height' => '100%']]),
+                        ]),
+                ]),
+                GridItem::make()->children([
+                    Card::make()
+                        ->props(['title' => '销售统计', 'class' => 'h-400px'])
+                        ->children([
+                            VueECharts::make()
+                                ->props(['option' => $this->getSalesChartOption(), 'style' => ['height' => '100%']]),
+                        ]),
+                ]),
+            ]);
+    }
+
+    /**
+     * 获取访问趋势图表配置
+     */
+    protected function getVisitTrendChartOption(): array
     {
         return [
-            'appTitle' => config('lartrix.app_title', 'Lartrix Admin'),
-            'logo' => config('lartrix.logo', '/favicon.svg'),
-            'themeScheme' => 'light',
-            'grayscale' => false,
-            'colourWeakness' => false,
-            'recommendColor' => false,
-            'themeColor' => '#646cff',
-            'themeRadius' => 6,
-            'otherColor' => [
-                'info' => '#2080f0',
-                'success' => '#52c41a',
-                'warning' => '#faad14',
-                'error' => '#f5222d',
-            ],
-            'isInfoFollowPrimary' => true,
-            'layout' => [
-                'mode' => 'vertical',
-                'scrollMode' => 'content',
-            ],
-            'page' => [
-                'animate' => true,
-                'animateMode' => 'fade-slide',
-            ],
-            'header' => [
-                'height' => 56,
-                'inverted' => false,
-                'breadcrumb' => [
-                    'visible' => true,
-                    'showIcon' => true,
-                ],
-                'multilingual' => [
-                    'visible' => true,
-                ],
-                'globalSearch' => [
-                    'visible' => true,
-                ],
-            ],
-            'tab' => [
-                'visible' => true,
-                'cache' => true,
-                'height' => 44,
-                'mode' => 'chrome',
-                'closeTabByMiddleClick' => false,
-            ],
-            'fixedHeaderAndTab' => true,
-            'sider' => [
-                'inverted' => false,
-                'width' => 220,
-                'collapsedWidth' => 64,
-                'mixWidth' => 90,
-                'mixCollapsedWidth' => 64,
-                'mixChildMenuWidth' => 200,
-                'mixChildMenuBgColor' => '#ffffff',
-                'autoSelectFirstMenu' => false,
-            ],
-            'footer' => [
-                'visible' => true,
-                'fixed' => false,
-                'height' => 48,
-                'right' => true,
-            ],
-            'watermark' => [
-                'visible' => false,
-                'text' => config('lartrix.app_title', 'Lartrix Admin'),
-                'enableUserName' => false,
-                'enableTime' => false,
-                'timeFormat' => 'YYYY-MM-DD HH:mm',
-            ],
-            'tokens' => [
-                'light' => [
-                    'colors' => [
-                        'container' => 'rgb(255, 255, 255)',
-                        'layout' => 'rgb(247, 250, 252)',
-                        'inverted' => 'rgb(0, 20, 40)',
-                        'base-text' => 'rgb(31, 31, 31)',
-                    ],
-                    'boxShadow' => [
-                        'header' => '0 1px 2px rgb(0, 21, 41, 0.08)',
-                        'sider' => '2px 0 8px 0 rgb(29, 35, 41, 0.05)',
-                        'tab' => '0 1px 2px rgb(0, 21, 41, 0.08)',
-                    ],
-                ],
-                'dark' => [
-                    'colors' => [
-                        'container' => 'rgb(28, 28, 28)',
-                        'layout' => 'rgb(18, 18, 18)',
-                        'base-text' => 'rgb(224, 224, 224)',
-                    ],
-                ],
+            'tooltip' => ['trigger' => 'axis'],
+            'legend' => ['data' => ['访问量', '独立用户'], 'top' => 0],
+            'grid' => ['left' => '3%', 'right' => '4%', 'top' => '15%', 'bottom' => '3%', 'containLabel' => true],
+            'xAxis' => ['type' => 'category', 'boundaryGap' => false, 'data' => ['周一', '周二', '周三', '周四', '周五', '周六', '周日']],
+            'yAxis' => ['type' => 'value'],
+            'series' => [
+                ['name' => '访问量', 'type' => 'line', 'smooth' => true, 'areaStyle' => ['opacity' => 0.3], 'data' => [820, 932, 901, 1234, 1290, 1330, 1520]],
+                ['name' => '独立用户', 'type' => 'line', 'smooth' => true, 'areaStyle' => ['opacity' => 0.3], 'data' => [320, 432, 401, 634, 690, 730, 820]],
             ],
         ];
+    }
+
+    /**
+     * 获取销售统计图表配置
+     */
+    protected function getSalesChartOption(): array
+    {
+        return [
+            'tooltip' => ['trigger' => 'axis', 'axisPointer' => ['type' => 'shadow']],
+            'legend' => ['data' => ['销售额', '订单量'], 'top' => 0],
+            'grid' => ['left' => '3%', 'right' => '4%', 'top' => '15%', 'bottom' => '3%', 'containLabel' => true],
+            'xAxis' => ['type' => 'category', 'data' => ['1月', '2月', '3月', '4月', '5月', '6月']],
+            'yAxis' => [
+                ['type' => 'value', 'name' => '销售额', 'axisLabel' => ['formatter' => '¥{value}']],
+                ['type' => 'value', 'name' => '订单量', 'position' => 'right'],
+            ],
+            'series' => [
+                ['name' => '销售额', 'type' => 'bar', 'data' => [12000, 15000, 18000, 22000, 28000, 35000], 'itemStyle' => ['borderRadius' => [4, 4, 0, 0]]],
+                ['name' => '订单量', 'type' => 'line', 'yAxisIndex' => 1, 'smooth' => true, 'data' => [120, 150, 180, 220, 280, 350]],
+            ],
+        ];
+    }
+
+    /**
+     * 构建最近活动
+     */
+    protected function buildRecentActivities()
+    {
+        return Card::make()
+            ->props(['title' => '最近活动'])
+            ->children([
+                Timeline::make()->children([
+                    TimelineItem::make()
+                        ->for('item in recentActivities')
+                        ->props([
+                            'type' => "{{ item.type || 'default' }}",
+                            'title' => '{{ item.title }}',
+                            'time' => '{{ item.time }}',
+                        ])
+                        ->children(['{{ item.content }}']),
+                ]),
+            ]);
+    }
+
+    /**
+     * 构建快捷操作网格
+     */
+    protected function buildQuickActionsGrid(string $appTitle)
+    {
+        return Grid::make()
+            ->props([
+                'cols' => '1 m:3',
+                'xGap' => 16,
+                'yGap' => 16,
+                'responsive' => 'screen',
+            ])
+            ->children([
+                GridItem::make()->children([
+                    Card::make()->props(['title' => '快捷操作'])->children([
+                        Space::make()->props(['wrap' => true])->children([
+                            $this->buildQuickButton('用户管理', 'primary', '/system/user'),
+                            $this->buildQuickButton('角色管理', 'info', '/system/role'),
+                            $this->buildQuickButton('菜单管理', 'success', '/system/menu'),
+                        ]),
+                    ]),
+                ]),
+                GridItem::make()->children([
+                    Card::make()->props(['title' => '系统信息'])->children([
+                        Descriptions::make()->props(['column' => 1, 'labelPlacement' => 'left'])->children([
+                            DescriptionsItem::make()->props(['label' => '系统版本'])->children(['1.0.0']),
+                            DescriptionsItem::make()->props(['label' => 'Laravel'])->children([app()->version()]),
+                            DescriptionsItem::make()->props(['label' => 'PHP'])->children([PHP_VERSION]),
+                        ]),
+                    ]),
+                ]),
+                GridItem::make()->children([
+                    Card::make()->props(['title' => '项目信息'])->children([
+                        Descriptions::make()->props(['column' => 1, 'labelPlacement' => 'left'])->children([
+                            DescriptionsItem::make()->props(['label' => '项目名称'])->children([$appTitle]),
+                            DescriptionsItem::make()->props(['label' => '技术栈'])->children(['Laravel + Vue 3']),
+                            DescriptionsItem::make()->props(['label' => '渲染引擎'])->children(['vschema-ui']),
+                        ]),
+                    ]),
+                ]),
+            ]);
+    }
+
+    /**
+     * 构建快捷按钮
+     */
+    protected function buildQuickButton(string $label, string $type, string $route)
+    {
+        return Button::make()
+            ->props(['type' => $type, 'secondary' => true])
+            ->on('click', CallAction::make('$methods.$nav.push', [$route]))
+            ->text($label);
     }
 }

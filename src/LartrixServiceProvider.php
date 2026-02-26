@@ -53,6 +53,7 @@ class LartrixServiceProvider extends ServiceProvider
                 Commands\PublishAssetsCommand::class,
                 Commands\UninstallCommand::class,
                 Commands\MakeBackendCommand::class,
+                Commands\RemoveBackendCommand::class,
             ]);
         }
     }

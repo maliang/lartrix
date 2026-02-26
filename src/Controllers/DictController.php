@@ -14,7 +14,10 @@ use Lartrix\Schema\Components\NaiveUI\Popconfirm;
 use Lartrix\Schema\Components\NaiveUI\SwitchC;
 use Lartrix\Schema\Components\Business\CrudPage;
 use Lartrix\Schema\Components\Business\OptForm;
+use Lartrix\Schema\Actions\SetAction;
+use Lartrix\Schema\Actions\CallAction;
 use Lartrix\Schema\Actions\FetchAction;
+use Lartrix\Schema\Actions\IfAction;
 
 class DictController extends Controller
 {
@@ -65,264 +68,325 @@ class DictController extends Controller
      */
     protected function groupsListUi(): array
     {
-        $schema = CrudPage::make()
-            ->title('字典管理')
-            ->api('/dicts/groups')
-            ->rowKey('id')
-            ->searchForm([
-                Input::make()
-                    ->model('keyword')
-                    ->placeholder('搜索编码/名称')
-                    ->clearable(true)
-                    ->props(['style' => 'width: 200px']),
+        // 分组表单
+        $groupForm = OptForm::make('formData')
+            ->fields([
+                ['编码', 'code', Input::make()->props(['placeholder' => '请输入编码，如 order_status', 'disabled' => '{{ !!editingId && editingSystem }}'])],
+                ['名称', 'name', Input::make()->props(['placeholder' => '请输入名称'])],
+                ['描述', 'description', Input::make()->props(['type' => 'textarea', 'placeholder' => '请输入描述'])],
             ])
-            ->toolbarActions([
-                Button::make()
-                    ->type('primary')
-                    ->children(['新增分组'])
-                    ->on('click', [
-                        'action' => 'openDialog',
-                        'title' => '新增字典分组',
-                        'schema' => $this->groupFormSchema(),
-                    ]),
+            ->buttons([
+                Button::make()->on('click', SetAction::make('formVisible', false))->text('取消'),
+                Button::make()->type('primary')->props(['loading' => '{{ submitting }}'])->on('click', ['call' => 'handleSubmit'])->text('确定'),
+            ]);
+
+        // 字典项表单
+        $itemForm = OptForm::make('itemFormData')
+            ->fields([
+                ['编码', 'code', Input::make()->props(['placeholder' => '请输入编码'])],
+                ['显示文本', 'label', Input::make()->props(['placeholder' => '请输入显示文本'])],
+                ['存储值', 'value', Input::make()->props(['placeholder' => '请输入存储值'])],
+                ['排序', 'sort', Input::make()->props(['type' => 'number', 'placeholder' => '数字越小越靠前']), 0],
+                ['启用状态', 'is_enabled', SwitchC::make(), true],
             ])
+            ->buttons([
+                Button::make()->on('click', SetAction::make('itemFormVisible', false))->text('取消'),
+                Button::make()->type('primary')->props(['loading' => '{{ itemSubmitting }}'])->on('click', ['call' => 'handleItemSubmit'])->text('确定'),
+            ]);
+
+        $schema = CrudPage::make('字典管理')
+            ->apiPrefix('/dicts/groups')
             ->columns([
                 ['key' => 'id', 'title' => 'ID', 'width' => 80],
                 ['key' => 'code', 'title' => '编码', 'width' => 150],
                 ['key' => 'name', 'title' => '名称', 'width' => 150],
                 ['key' => 'description', 'title' => '描述'],
-                [
-                    'key' => 'items_count',
-                    'title' => '字典项数',
-                    'width' => 100,
-                    'render' => Tag::make()
-                        ->type('info')
-                        ->children(['{{ row.items_count }}'])
-                        ->toArray(),
-                ],
-                [
-                    'key' => 'is_system',
-                    'title' => '系统内置',
-                    'width' => 100,
-                    'render' => Tag::make()
-                        ->type('{{ row.is_system ? "warning" : "default" }}')
-                        ->children(['{{ row.is_system ? "是" : "否" }}'])
-                        ->toArray(),
-                ],
+                ['key' => 'items_count', 'title' => '字典项数', 'width' => 100, 'slot' => [
+                    Tag::make()
+                        ->props(['type' => 'info', 'size' => 'small'])
+                        ->children(['{{ slotData.row.items_count }}']),
+                ]],
+                ['key' => 'is_system', 'title' => '系统内置', 'width' => 100, 'slot' => [
+                    Tag::make()
+                        ->props([
+                            'type' => "{{ slotData.row.is_system ? 'warning' : 'default' }}",
+                            'size' => 'small',
+                        ])
+                        ->children(["{{ slotData.row.is_system ? '是' : '否' }}"]),
+                ]],
                 ['key' => 'created_at', 'title' => '创建时间', 'width' => 180],
-            ])
-            ->rowActions([
-                Button::make()
-                    ->text(true)
-                    ->type('primary')
-                    ->children(['字典项'])
-                    ->on('click', [
-                        'action' => 'openDialog',
-                        'title' => '{{ row.name }} - 字典项管理',
-                        'width' => '800px',
-                        'schema' => $this->itemsListSchema(),
-                    ]),
-                Button::make()
-                    ->text(true)
-                    ->type('info')
-                    ->children(['编辑'])
-                    ->on('click', [
-                        'action' => 'openDialog',
-                        'title' => '编辑字典分组',
-                        'schema' => $this->groupFormSchema(true),
-                    ]),
-                Popconfirm::make()
-                    ->content('确定要删除该字典分组吗？删除后其下所有字典项也将被删除。')
-                    ->onPositiveClick(
-                        FetchAction::make()
-                            ->url('/dicts/groups/{{ row.id }}')
-                            ->method('DELETE')
-                            ->successMessage('删除成功')
-                            ->then(['action' => 'refreshTable'])
-                    )
-                    ->children([
+                ['key' => 'actions', 'title' => '操作', 'width' => 200, 'fixed' => 'right', 'slot' => [
+                    Space::make()->children([
                         Button::make()
-                            ->text(true)
-                            ->type('error')
-                            ->disabled('{{ row.is_system }}')
-                            ->children(['删除']),
-                    ]),
-            ])
-            ->toArray();
-
-        return success($schema);
-    }
-
-    /**
-     * 字典分组表单 Schema
-     */
-    protected function groupFormSchema(bool $isEdit = false): array
-    {
-        $form = OptForm::make()
-            ->api($isEdit ? '/dicts/groups/{{ row.id }}' : '/dicts/groups')
-            ->method($isEdit ? 'PUT' : 'POST')
-            ->successMessage($isEdit ? '更新成功' : '创建成功')
-            ->afterSuccess(['action' => 'refreshTable', 'closeDialog' => true])
-            ->fields([
-                [
-                    'key' => 'code',
-                    'label' => '编码',
-                    'required' => true,
-                    'component' => Input::make()
-                        ->model('formData.code')
-                        ->placeholder('请输入编码，如 order_status')
-                        ->disabled($isEdit ? '{{ row.is_system }}' : false),
-                ],
-                [
-                    'key' => 'name',
-                    'label' => '名称',
-                    'required' => true,
-                    'component' => Input::make()
-                        ->model('formData.name')
-                        ->placeholder('请输入名称'),
-                ],
-                [
-                    'key' => 'description',
-                    'label' => '描述',
-                    'component' => Input::make()
-                        ->type('textarea')
-                        ->model('formData.description')
-                        ->placeholder('请输入描述'),
-                ],
-            ]);
-
-        if ($isEdit) {
-            $form->initApi('/dicts/groups/{{ row.id }}');
-        }
-
-        return $form->toArray();
-    }
-
-    /**
-     * 字典项列表 Schema（弹窗内）
-     */
-    protected function itemsListSchema(): array
-    {
-        return CrudPage::make()
-            ->api('/dicts/groups/{{ row.id }}/items')
-            ->rowKey('id')
-            ->pagination(false)
-            ->toolbarActions([
-                Button::make()
-                    ->type('primary')
-                    ->size('small')
-                    ->children(['新增字典项'])
-                    ->on('click', [
-                        'action' => 'openDialog',
-                        'title' => '新增字典项',
-                        'schema' => $this->itemFormSchema(),
-                    ]),
-            ])
-            ->columns([
-                ['key' => 'sort', 'title' => '排序', 'width' => 60],
-                ['key' => 'code', 'title' => '编码', 'width' => 120],
-                ['key' => 'label', 'title' => '显示文本', 'width' => 120],
-                ['key' => 'value', 'title' => '存储值', 'width' => 100],
-                [
-                    'key' => 'is_enabled',
-                    'title' => '状态',
-                    'width' => 80,
-                    'render' => Tag::make()
-                        ->type('{{ row.is_enabled ? "success" : "default" }}')
-                        ->children(['{{ row.is_enabled ? "启用" : "禁用" }}'])
-                        ->toArray(),
-                ],
-            ])
-            ->rowActions([
-                Button::make()
-                    ->text(true)
-                    ->type('info')
-                    ->size('small')
-                    ->children(['编辑'])
-                    ->on('click', [
-                        'action' => 'openDialog',
-                        'title' => '编辑字典项',
-                        'schema' => $this->itemFormSchema(true),
-                    ]),
-                Popconfirm::make()
-                    ->content('确定要删除该字典项吗？')
-                    ->onPositiveClick(
-                        FetchAction::make()
-                            ->url('/dicts/groups/{{ $parent.row.id }}/items/{{ row.id }}')
-                            ->method('DELETE')
-                            ->successMessage('删除成功')
-                            ->then(['action' => 'refreshTable'])
-                    )
-                    ->children([
-                        Button::make()
-                            ->text(true)
-                            ->type('error')
                             ->size('small')
-                            ->children(['删除']),
+                            ->props(['type' => 'primary', 'text' => true])
+                            ->on('click', [
+                                SetAction::make('currentGroupId', '{{ slotData.row.id }}'),
+                                SetAction::make('currentGroupName', '{{ slotData.row.name }}'),
+                                SetAction::make('itemsVisible', true),
+                                CallAction::make('loadItems'),
+                            ])
+                            ->text('字典项'),
+                        Button::make()
+                            ->size('small')
+                            ->props(['type' => 'info', 'text' => true])
+                            ->on('click', [
+                                SetAction::make('editingId', '{{ slotData.row.id }}'),
+                                SetAction::make('editingSystem', '{{ slotData.row.is_system }}'),
+                                SetAction::make('formData.code', '{{ slotData.row.code }}'),
+                                SetAction::make('formData.name', '{{ slotData.row.name }}'),
+                                SetAction::make('formData.description', '{{ slotData.row.description || "" }}'),
+                                SetAction::make('formVisible', true),
+                            ])
+                            ->text('编辑'),
+                        Popconfirm::make()
+                            ->if('!slotData.row.is_system')
+                            ->props(['positiveText' => '确定', 'negativeText' => '取消'])
+                            ->on('positive-click',
+                                FetchAction::make('/dicts/groups/{{ slotData.row.id }}')
+                                    ->delete()
+                                    ->then([
+                                        CallAction::make('$message.success', ['删除成功']),
+                                        CallAction::make('loadData'),
+                                    ])
+                                    ->catch([
+                                        CallAction::make('$message.error', ['{{ $error.message || "删除失败" }}']),
+                                    ])
+                            )
+                            ->slot('trigger', [
+                                Button::make()
+                                    ->size('small')
+                                    ->props(['type' => 'error', 'text' => true])
+                                    ->text('删除'),
+                            ])
+                            ->children(['确定要删除该字典分组吗？删除后其下所有字典项也将被删除。']),
                     ]),
+                ]],
             ])
-            ->toArray();
+            ->scrollX(1100)
+            ->search([
+                ['关键词', 'keyword', Input::make()->props(['placeholder' => '搜索编码/名称', 'clearable' => true])],
+            ])
+            ->toolbarLeft([
+                Button::make()
+                    ->type('primary')
+                    ->on('click', [
+                        SetAction::batch([
+                            'editingId' => null,
+                            'editingSystem' => false,
+                            'formData.code' => '',
+                            'formData.name' => '',
+                            'formData.description' => '',
+                            'formVisible' => true,
+                        ]),
+                    ])
+                    ->text('新增分组'),
+            ])
+            ->data([
+                'formData' => $groupForm->getDefaultData(),
+                'editingId' => null,
+                'editingSystem' => false,
+                'submitting' => false,
+                // 字典项相关
+                'currentGroupId' => null,
+                'currentGroupName' => '',
+                'itemsData' => [],
+                'itemsLoading' => false,
+                'itemFormData' => $itemForm->getDefaultData(),
+                'editingItemId' => null,
+                'itemSubmitting' => false,
+                'itemFormVisible' => false,
+            ])
+            ->methods([
+                'handleSubmit' => [
+                    SetAction::make('submitting', true),
+                    IfAction::make('editingId')
+                        ->then(
+                            FetchAction::make('{{ "/dicts/groups/" + editingId }}')
+                                ->put()
+                                ->body('{{ formData }}')
+                                ->then([
+                                    CallAction::make('$message.success', ['更新成功']),
+                                    SetAction::make('formVisible', false),
+                                    CallAction::make('loadData'),
+                                ])
+                                ->catch([
+                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                ])
+                                ->finally([
+                                    SetAction::make('submitting', false),
+                                ])
+                        )
+                        ->else(
+                            FetchAction::make('/dicts/groups')
+                                ->post()
+                                ->body('{{ formData }}')
+                                ->then([
+                                    CallAction::make('$message.success', ['创建成功']),
+                                    SetAction::make('formVisible', false),
+                                    CallAction::make('loadData'),
+                                ])
+                                ->catch([
+                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                ])
+                                ->finally([
+                                    SetAction::make('submitting', false),
+                                ])
+                        ),
+                ],
+                'loadItems' => [
+                    SetAction::make('itemsLoading', true),
+                    FetchAction::make('{{ "/dicts/groups/" + currentGroupId + "/items" }}')
+                        ->then([
+                            SetAction::make('itemsData', '{{ $response.data.list || [] }}'),
+                        ])
+                        ->catch([
+                            CallAction::make('$message.error', ['{{ $error.message || "加载字典项失败" }}']),
+                        ])
+                        ->finally([
+                            SetAction::make('itemsLoading', false),
+                        ]),
+                ],
+                'handleItemSubmit' => [
+                    SetAction::make('itemSubmitting', true),
+                    IfAction::make('editingItemId')
+                        ->then(
+                            FetchAction::make('{{ "/dicts/groups/" + currentGroupId + "/items/" + editingItemId }}')
+                                ->put()
+                                ->body('{{ itemFormData }}')
+                                ->then([
+                                    CallAction::make('$message.success', ['更新成功']),
+                                    SetAction::make('itemFormVisible', false),
+                                    CallAction::make('loadItems'),
+                                ])
+                                ->catch([
+                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                ])
+                                ->finally([
+                                    SetAction::make('itemSubmitting', false),
+                                ])
+                        )
+                        ->else(
+                            FetchAction::make('{{ "/dicts/groups/" + currentGroupId + "/items" }}')
+                                ->post()
+                                ->body('{{ itemFormData }}')
+                                ->then([
+                                    CallAction::make('$message.success', ['创建成功']),
+                                    SetAction::make('itemFormVisible', false),
+                                    CallAction::make('loadItems'),
+                                ])
+                                ->catch([
+                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                ])
+                                ->finally([
+                                    SetAction::make('itemSubmitting', false),
+                                ])
+                        ),
+                ],
+            ])
+            ->modal('form', '{{ editingId ? "编辑字典分组" : "新增字典分组" }}', $groupForm)
+            ->drawer('items', '{{ currentGroupName + " - 字典项管理" }}', $this->buildItemsDrawerContent($itemForm), ['width' => 800]);
+
+        return success($schema->build());
     }
 
     /**
-     * 字典项表单 Schema
+     * 构建字典项抽屉内容
      */
-    protected function itemFormSchema(bool $isEdit = false): array
+    protected function buildItemsDrawerContent(OptForm $itemForm): array
     {
-        $form = OptForm::make()
-            ->api($isEdit 
-                ? '/dicts/groups/{{ $parent.row.id }}/items/{{ row.id }}' 
-                : '/dicts/groups/{{ $parent.row.id }}/items')
-            ->method($isEdit ? 'PUT' : 'POST')
-            ->successMessage($isEdit ? '更新成功' : '创建成功')
-            ->afterSuccess(['action' => 'refreshTable', 'closeDialog' => true])
-            ->fields([
-                [
-                    'key' => 'code',
-                    'label' => '编码',
-                    'required' => true,
-                    'component' => Input::make()
-                        ->model('formData.code')
-                        ->placeholder('请输入编码'),
+        $itemsTable = \Lartrix\Schema\Components\Business\DataTable::make()
+            ->props([
+                'loading' => '{{ itemsLoading }}',
+                'data' => '{{ itemsData }}',
+                'columns' => [
+                    ['key' => 'sort', 'title' => '排序', 'width' => 60],
+                    ['key' => 'code', 'title' => '编码', 'width' => 120],
+                    ['key' => 'label', 'title' => '显示文本', 'width' => 120],
+                    ['key' => 'value', 'title' => '存储值', 'width' => 100],
+                    ['key' => 'is_enabled', 'title' => '状态', 'width' => 80],
+                    ['key' => 'actions', 'title' => '操作', 'width' => 120, 'fixed' => 'right'],
                 ],
-                [
-                    'key' => 'label',
-                    'label' => '显示文本',
-                    'required' => true,
-                    'component' => Input::make()
-                        ->model('formData.label')
-                        ->placeholder('请输入显示文本'),
-                ],
-                [
-                    'key' => 'value',
-                    'label' => '存储值',
-                    'required' => true,
-                    'component' => Input::make()
-                        ->model('formData.value')
-                        ->placeholder('请输入存储值'),
-                ],
-                [
-                    'key' => 'sort',
-                    'label' => '排序',
-                    'component' => Input::make()
-                        ->type('number')
-                        ->model('formData.sort')
-                        ->placeholder('数字越小越靠前'),
-                ],
-                [
-                    'key' => 'is_enabled',
-                    'label' => '启用状态',
-                    'component' => SwitchC::make()
-                        ->model('formData.is_enabled')
-                        ->defaultValue(true),
-                ],
-            ]);
+                'rowKey' => '{{ row => row.id }}',
+                'scrollX' => 700,
+            ])
+            ->slot('is_enabled', [
+                Tag::make()
+                    ->props([
+                        'type' => "{{ slotData.row.is_enabled ? 'success' : 'default' }}",
+                        'size' => 'small',
+                    ])
+                    ->children(["{{ slotData.row.is_enabled ? '启用' : '禁用' }}"]),
+            ], 'slotData')
+            ->slot('actions', [
+                Space::make()->children([
+                    Button::make()
+                        ->size('small')
+                        ->props(['type' => 'info', 'text' => true])
+                        ->on('click', [
+                            SetAction::make('editingItemId', '{{ slotData.row.id }}'),
+                            SetAction::make('itemFormData.code', '{{ slotData.row.code }}'),
+                            SetAction::make('itemFormData.label', '{{ slotData.row.label }}'),
+                            SetAction::make('itemFormData.value', '{{ slotData.row.value }}'),
+                            SetAction::make('itemFormData.sort', '{{ slotData.row.sort }}'),
+                            SetAction::make('itemFormData.is_enabled', '{{ slotData.row.is_enabled }}'),
+                            SetAction::make('itemFormVisible', true),
+                        ])
+                        ->text('编辑'),
+                    Popconfirm::make()
+                        ->props(['positiveText' => '确定', 'negativeText' => '取消'])
+                        ->on('positive-click',
+                            FetchAction::make('{{ "/dicts/groups/" + currentGroupId + "/items/" + slotData.row.id }}')
+                                ->delete()
+                                ->then([
+                                    CallAction::make('$message.success', ['删除成功']),
+                                    CallAction::make('loadItems'),
+                                ])
+                                ->catch([
+                                    CallAction::make('$message.error', ['{{ $error.message || "删除失败" }}']),
+                                ])
+                        )
+                        ->slot('trigger', [
+                            Button::make()
+                                ->size('small')
+                                ->props(['type' => 'error', 'text' => true])
+                                ->text('删除'),
+                        ])
+                        ->children(['确定要删除该字典项吗？']),
+                ]),
+            ], 'slotData');
 
-        if ($isEdit) {
-            $form->initApi('/dicts/groups/{{ $parent.row.id }}/items/{{ row.id }}');
-        }
-
-        return $form->toArray();
+        return [
+            Space::make()
+                ->props(['vertical' => true, 'size' => 'large', 'wrapItem' => false])
+                ->children([
+                    Button::make()
+                        ->type('primary')
+                        ->size('small')
+                        ->on('click', [
+                            SetAction::batch([
+                                'editingItemId' => null,
+                                'itemFormData.code' => '',
+                                'itemFormData.label' => '',
+                                'itemFormData.value' => '',
+                                'itemFormData.sort' => 0,
+                                'itemFormData.is_enabled' => true,
+                                'itemFormVisible' => true,
+                            ]),
+                        ])
+                        ->text('新增字典项'),
+                    $itemsTable,
+                ]),
+            \Lartrix\Schema\Components\NaiveUI\Modal::make()
+                ->props([
+                    'show' => '{{ itemFormVisible }}',
+                    'title' => '{{ editingItemId ? "编辑字典项" : "新增字典项" }}',
+                    'style' => ['width' => '500px'],
+                    'preset' => 'card',
+                ])
+                ->on('update:show', [SetAction::make('itemFormVisible', false)])
+                ->children([$itemForm->toArray()]),
+        ];
     }
 
     /**
