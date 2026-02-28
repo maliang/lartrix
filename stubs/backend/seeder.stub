@@ -24,6 +24,9 @@ class {{MODULE_NAME}}BackendSeeder extends Seeder
         // 创建默认权限
         $this->createPermissions($guard);
 
+        // 创建默认通知分类
+        $this->createNotificationCategories($guard);
+
         // 创建超级管理员角色
         $role = Role::firstOrCreate(
             ['name' => 'super-admin', 'guard_name' => $guard],
@@ -218,5 +221,33 @@ class {{MODULE_NAME}}BackendSeeder extends Seeder
         foreach ($children as $child) {
             $this->createPermission($guard, $child, $permission->id);
         }
+    }
+
+    /**
+     * 创建默认通知分类
+     */
+    protected function createNotificationCategories(string $guard): void
+    {
+        $categoryModel = config('lartrix.notification.category_model', \Lartrix\Models\NotificationCategory::class);
+        $defaultCategories = config('lartrix.notification.default_categories', []);
+
+        foreach ($defaultCategories as $category) {
+            $categoryModel::firstOrCreate(
+                [
+                    'key' => $category['key'],
+                    'guard_name' => $guard,
+                ],
+                [
+                    'name' => $category['name'],
+                    'icon' => $category['icon'] ?? null,
+                    'color' => $category['color'] ?? null,
+                    'message_types' => $category['message_types'] ?? [],
+                    'sort' => $category['sort'] ?? 0,
+                    'enabled' => true,
+                ]
+            );
+        }
+
+        $this->command->info("   已创建默认通知分类。");
     }
 }

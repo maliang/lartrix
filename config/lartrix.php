@@ -113,4 +113,61 @@ return [
         // 缓存时间（秒）
         'cache_ttl' => env('LARTRIX_MODULE_MARKET_CACHE_TTL', 3600),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | 通知配置
+    |--------------------------------------------------------------------------
+    */
+    'notification' => [
+        // 通知分类模型
+        'category_model' => \Lartrix\Models\NotificationCategory::class,
+
+        // 通知消息模型
+        'message_model' => \Lartrix\Models\NotificationMessage::class,
+
+        // 默认分类（用于二级后台初始化）
+        'default_categories' => [
+            [
+                'key' => 'all',
+                'name' => '全部',
+                'icon' => 'ph:bell',
+                'color' => '',
+                'message_types' => [],
+                'sort' => 0,
+            ],
+            [
+                'key' => 'system',
+                'name' => '系统',
+                'icon' => 'ph:gear',
+                'color' => '',
+                'message_types' => ['system'],
+                'sort' => 1,
+            ],
+            [
+                'key' => 'notice',
+                'name' => '通知',
+                'icon' => 'ph:chat',
+                'color' => '',
+                'message_types' => ['notice'],
+                'sort' => 2,
+            ],
+            [
+                'key' => 'message',
+                'name' => '消息',
+                'icon' => 'ph:chat-circle',
+                'color' => '',
+                'message_types' => ['message'],
+                'sort' => 3,
+            ],
+            [
+                'key' => 'todo',
+                'name' => '待办',
+                'icon' => 'ph:check-square',
+                'color' => '',
+                'message_types' => ['todo'],
+                'sort' => 4,
+            ],
+        ],
+    ],
 ];

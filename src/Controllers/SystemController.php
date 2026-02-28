@@ -24,6 +24,7 @@ use Lartrix\Schema\Components\Common\LangSwitch;
 use Lartrix\Schema\Components\Common\ThemeSchemaSwitch;
 use Lartrix\Schema\Components\Common\ThemeButton;
 use Lartrix\Schema\Components\Common\UserAvatar;
+use Lartrix\Schema\Components\Common\HeaderNotification;
 
 class SystemController extends Controller
 {
@@ -637,23 +638,16 @@ class SystemController extends Controller
                 // 全局搜索
                 GlobalSearch::make(),
                 // 通知中心
-                // HeaderNotification::make()
-                //     ->props([
-                //         'badgeMode' => 'count',
-                //         'pageSize' => 10,
-                //         'enableWs' => false,
-                //         'enableNotification' => true,
-                //         'notificationDuration' => 4500,
-                //         'fetchApi' => '/notifications',
-                //         'readApi' => '/notifications/read',
-                //         'readAllApi' => '/notifications/read-all',
-                //         'tabs' => [
-                //             ['key' => 'all', 'label' => '全部', 'icon' => 'ph:bell'],
-                //             ['key' => 'system', 'label' => '系统', 'icon' => 'ph:gear', 'types' => ['system']],
-                //             ['key' => 'order', 'label' => '订单', 'icon' => 'ph:shopping-cart', 'types' => ['order']],
-                //             ['key' => 'message', 'label' => '消息', 'icon' => 'ph:chat-circle', 'types' => ['message']],
-                //         ],
-                //     ]),
+                HeaderNotification::make()
+                    ->fetchApi('/notifications')
+                    ->readApi('/notifications/{id}/mark-read')
+                    ->readAllApi('/notifications/mark-all-read')
+                    ->badgeMode('count')
+                    ->pageSize(10)
+                    ->enableWs(false)
+                    ->enableNotification(true)
+                    ->notificationDuration(4500)
+                    ->enableDetail(true),
                 // 全屏切换
                 FullScreen::make(),
                 // 语言切换

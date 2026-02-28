@@ -269,11 +269,8 @@ class MakeBackendCommand extends Command
             File::put($targetPath, $content);
         }
 
-        // 删除 module:make 生成的默认 composer.json（后台模块不需要）
-        $composerJson = $this->getModulePath('composer.json');
-        if (File::exists($composerJson)) {
-            File::delete($composerJson);
-        }
+        // 保留 module:make 生成的 composer.json，用于 PSR-4 自动加载
+        // 注意：composer.json 中的 providers 配置会被 laravel-modules 忽略，以 module.json 为准
     }
 
     /**

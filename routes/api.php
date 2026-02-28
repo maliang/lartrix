@@ -17,6 +17,9 @@ $settingController = config('lartrix.controllers.setting', \Lartrix\Controllers\
 $systemController = config('lartrix.controllers.system', \Lartrix\Controllers\SystemController::class);
 $homeController = config('lartrix.controllers.home', \Lartrix\Controllers\HomeController::class);
 $dictController = config('lartrix.controllers.dict', \Lartrix\Controllers\DictController::class);
+$notificationCategoryController = \Lartrix\Controllers\NotificationCategoryController::class;
+$notificationController = \Lartrix\Controllers\NotificationController::class;
+$adminNotificationController = \Lartrix\Controllers\AdminNotificationController::class;
 
 // 前端入口路由（处理 SPA 路由）
 Route::get($path . '/{any?}', [$systemController, 'entry'])->where('any', '.*');
@@ -32,7 +35,10 @@ Route::prefix($prefix)->group(function () use (
     $settingController,
     $systemController,
     $homeController,
-    $dictController
+    $dictController,
+    $notificationCategoryController,
+    $notificationController,
+    $adminNotificationController
 ) {
     // 公开路由（无需认证）
     Route::post('auth/login', [$authController, 'login']);
@@ -52,7 +58,10 @@ Route::prefix($prefix)->group(function () use (
         $settingController,
         $systemController,
         $homeController,
-        $dictController
+        $dictController,
+        $notificationCategoryController,
+        $notificationController,
+        $adminNotificationController
     ) {
         // 认证相关
         Route::prefix('auth')->group(function () use ($authController) {
@@ -122,6 +131,51 @@ Route::prefix($prefix)->group(function () use (
             Route::put('groups/{groupId}/items/{id}', [$dictController, 'updateItem'])->where(['groupId' => '[0-9]+', 'id' => '[0-9]+']);
             Route::delete('groups/{groupId}/items/{id}', [$dictController, 'deleteItem'])->where(['groupId' => '[0-9]+', 'id' => '[0-9]+']);
             Route::post('groups/{groupId}/items/sort', [$dictController, 'sortItems'])->where('groupId', '[0-9]+');
+        });
+
+        // 通知分类管理
+        Route::resource('notification-categories', $notificationCategoryController)
+            ->parameters(['notification-categories' => 'id'])
+            ->except(['create', 'edit']);
+
+        // 通知消息管理
+        Route::resource('notifications', $notificationController)
+            ->parameters(['notifications' => 'id'])
+            ->except(['create', 'edit']);
+
+        // 通知操作
+        Route::post('notifications/{id}/mark-read', [$notificationController, 'markAsRead']);
+        Route::post('notifications/mark-all-read', [$notificationController, 'markAllAsRead']);
+
+        // 主后台发送通知给二级后台
+        Route::prefix('admin')->group(function () use ($adminNotificationController) {
+            Route::post('notifications/send-to-backend', [$adminNotificationController, 'sendToBackend']);
+            Route::get('notifications/sent', [$adminNotificationController, 'sentNotifications']);
+            Route::get('notifications/available-guards', [$adminNotificationController, 'availableGuards']);
+            Route::get('notifications/categories', [$adminNotificationController, 'categories']);
+        });
+
+        // 获取当前用户的通知分类配置（前端 HeaderNotification 使用）
+        Route::get('notification/tabs', function () {
+            $guard = config('lartrix.guard', 'admin');
+            $categories = \Lartrix\Models\NotificationCategory::query()
+                ->where('guard_name', $guard)
+                ->where('enabled', true)
+                ->orderBy('sort')
+                ->get()
+                ->map(fn($c) => [
+                    'key' => $c->key,
+                    'label' => $c->name,
+                    'icon' => $c->icon,
+                    'color' => $c->color,
+                    'types' => $c->message_types ?? [],
+                ]);
+
+            // 添加"全部"选项
+            $allTab = ['key' => 'all', 'label' => '全部', 'icon' => 'ph:bell', 'color' => null, 'types' => []];
+            $categories->prepend($allTab);
+
+            return success($categories->toArray());
         });
     });
 });
