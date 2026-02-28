@@ -67,6 +67,20 @@ class SystemController extends Controller
     }
 
     /**
+     * 获取通知中心 tabs 配置
+     */
+    protected function getNotificationTabs(): array
+    {
+        return [
+            ['key' => 'all', 'label' => '全部', 'icon' => 'ph:bell', 'types' => []],
+            ['key' => 'system', 'label' => '系统', 'icon' => 'ph:gear', 'types' => ['system']],
+            ['key' => 'notice', 'label' => '通知', 'icon' => 'ph:bell', 'types' => ['notice']],
+            ['key' => 'message', 'label' => '消息', 'icon' => 'ph:chat-circle', 'types' => ['message']],
+            ['key' => 'todo', 'label' => '待办', 'icon' => 'ph:check-square', 'types' => ['todo']],
+        ];
+    }
+
+    /**
      * 获取设置模型类
      */
     protected function getSettingModel(): string
@@ -647,7 +661,8 @@ class SystemController extends Controller
                     ->enableWs(false)
                     ->enableNotification(true)
                     ->notificationDuration(4500)
-                    ->enableDetail(true),
+                    ->enableDetail(true)
+                    ->tabs($this->getNotificationTabs()),
                 // 全屏切换
                 FullScreen::make(),
                 // 语言切换

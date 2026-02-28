@@ -114,10 +114,12 @@ class NotificationController extends CrudController
         $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         return success([
-            'items' => collect($paginator->items())->map(function($item) {
+            'list' => collect($paginator->items())->map(function($item) {
                 return $item->toArray();
             })->values()->all(),
             'total' => $paginator->total(),
+            'page' => $paginator->currentPage(),
+            'page_size' => $paginator->perPage(),
         ]);
     }
 
@@ -153,6 +155,18 @@ class NotificationController extends CrudController
      */
     protected function listUi(): array
     {
+        // 获取分类选项
+        $categoryOptions = array_merge(
+            [['label' => '全部', 'value' => '']],
+            \Lartrix\Models\NotificationCategory::query()
+                ->where('guard_name', 'admin')
+                ->where('enabled', true)
+                ->orderBy('sort')
+                ->get()
+                ->map(fn($c) => ['label' => $c->name, 'value' => $c->key])
+                ->toArray()
+        );
+
         $form = OptForm::make('formData')
             ->labelWidth(80)
             ->fields([
@@ -166,10 +180,10 @@ class NotificationController extends CrudController
                         ['label' => '消息', 'value' => 'message'],
                         ['label' => '待办', 'value' => 'todo'],
                     ],
-                ])],
+                ]), 'system'],
                 ['所属分类', 'category_key', Select::make()->props([
                     'placeholder' => '请选择分类',
-                    'options' => [],
+                    'options' => $categoryOptions,
                 ])],
                 ['接收用户', 'user_id', Select::make()->props([
                     'placeholder' => '指定用户（为空表示发送给所有人）',
@@ -187,30 +201,22 @@ class NotificationController extends CrudController
                 ['key' => 'id', 'title' => 'ID', 'width' => 80],
                 ['key' => 'title', 'title' => '标题'],
                 ['key' => 'content', 'title' => '内容', 'width' => 300, 'ellipsis' => true],
-                ['key' => 'type', 'title' => '类型', 'slot' => [
-                    Tag::make()->props(['type' => '{{ row.type === "system" ? "info" : (row.type === "notice" ? "warning" : (row.type === "todo" ? "error" : "success")) }}'])
-                        ->children('{{ row.type }}'),
+                ['key' => 'category', 'title' => '分类', 'slot' => [
+                    Tag::make()->props(['style' => '{{ "background-color:" + (slotData.row.category?.color || "#ccc") + ";color:#fff" }}'])->children('{{ slotData.row.category?.name || slotData.row.categoryKey || "-" }}'),
                 ]],
-                ['key' => 'category_key', 'title' => '分类'],
                 ['key' => 'is_read', 'title' => '状态', 'slot' => [
                     Tag::make()->props([
-                        'type' => "{{ row.is_read ? 'default' : 'warning' }}",
-                    ])->children("{{ row.is_read ? '已读' : '未读' }}"),
+                        'type' => "{{ slotData.row.isRead ? 'default' : 'warning' }}",
+                    ])->children("{{ slotData.row.isRead ? '已读' : '未读' }}"),
                 ]],
                 ['key' => 'created_at', 'title' => '创建时间', 'width' => 180],
             ])
             ->search([
                 ['关键词', 'keyword', Input::make()->props(['placeholder' => '搜索标题或内容', 'clearable' => true])],
-                ['类型', 'type', Select::make()->props([
-                    'placeholder' => '请选择类型',
+                ['分类', 'category_key', Select::make()->props([
+                    'placeholder' => '请选择分类',
                     'clearable' => true,
-                    'options' => [
-                        ['label' => '全部', 'value' => ''],
-                        ['label' => '系统', 'value' => 'system'],
-                        ['label' => '通知', 'value' => 'notice'],
-                        ['label' => '消息', 'value' => 'message'],
-                        ['label' => '待办', 'value' => 'todo'],
-                    ],
+                    'options' => $categoryOptions,
                     'style' => ['min-width' => '150px'],
                 ])],
                 ['已读状态', 'is_read', Select::make()->props([

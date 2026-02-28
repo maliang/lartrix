@@ -55,6 +55,15 @@ class NotificationMessage extends Model
         $array['userId'] = $array['user_id'];
         $array['guardName'] = $array['guard_name'];
 
+        // 添加分类信息
+        if ($this->relationLoaded('category') && $this->category) {
+            $array['category'] = [
+                'name' => $this->category->name,
+                'color' => $this->category->color,
+                'icon' => $this->category->icon,
+            ];
+        }
+
         return $array;
     }
 

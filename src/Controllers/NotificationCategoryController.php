@@ -5,9 +5,10 @@ namespace Lartrix\Controllers;
 use Lartrix\Models\NotificationCategory;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
-use Lartrix\Schema\Components\NaiveUI\{Input, SwitchC, Button, Space, Select};
+use Lartrix\Schema\Components\NaiveUI\{Input, SwitchC, Button, Space, Select, Tag, Popconfirm};
 use Lartrix\Schema\Components\Business\{CrudPage, OptForm};
 use Lartrix\Schema\Components\Custom\SvgIcon;
+use Lartrix\Schema\Components\Custom\Icon;
 use Lartrix\Schema\Actions\{SetAction, CallAction, FetchAction};
 
 /**
@@ -116,17 +117,26 @@ class NotificationCategoryController extends CrudController
                 ['分类名称', 'name', Input::make()->props(['placeholder' => '请输入分类名称', 'clearable' => true])],
                 ['分类标识', 'key', Input::make()->props(['placeholder' => '请输入分类标识 (如：system)', 'clearable' => true])],
                 ['图标', 'icon', Input::make()->props(['placeholder' => '请输入图标 (如：ph:bell)', 'clearable' => true])],
-                ['颜色', 'color', Input::make()->props(['placeholder' => '请输入颜色 (如：#18a058)', 'clearable' => true, 'type' => 'color'])],
+                ['颜色', 'color', Input::make()->props(['placeholder' => '请输入颜色 (如：#18a058)', 'type' => 'color']), '#18a058'],
+                ['消息类型', 'message_types', Select::make()->props([
+                    'placeholder' => '请选择消息类型',
+                    'multiple' => true,
+                    'options' => [
+                        ['label' => '系统', 'value' => 'system'],
+                        ['label' => '通知', 'value' => 'notice'],
+                        ['label' => '消息', 'value' => 'message'],
+                        ['label' => '待办', 'value' => 'todo'],
+                    ],
+                ]), ['system']],
                 ['所属后台', 'guard_name', Select::make()->props([
                     'placeholder' => '请选择所属后台',
-                    'clearable' => true,
                     'options' => [
                         ['label' => '主后台', 'value' => 'admin'],
                         ['label' => '商户后台', 'value' => 'merchant'],
                         ['label' => '供应商后台', 'value' => 'vendor'],
                         ['label' => '代理商后台', 'value' => 'agent'],
                     ],
-                ])],
+                ]), 'admin'],
                 ['排序', 'sort', Input::make()->props(['placeholder' => '请输入排序', 'type' => 'number']), 0],
                 ['是否启用', 'enabled', SwitchC::make(), true],
             ])
@@ -141,21 +151,60 @@ class NotificationCategoryController extends CrudController
                 ['key' => 'id', 'title' => 'ID', 'width' => 80],
                 ['key' => 'name', 'title' => '分类名称'],
                 ['key' => 'key', 'title' => '标识'],
-                ['key' => 'icon', 'title' => '图标', 'slot' => [
-                    SvgIcon::make('{{ row.icon }}')->show('!!row.icon'),
+                ['key' => 'icon', 'title' => '图标', 'width' => 100, 'slot' => [
+                    Icon::make('{{ slotData.row.icon }}')->size(20),
+                ]],
+                ['key' => 'color', 'title' => '颜色', 'width' => 100, 'slot' => [
+                    Tag::make()->props(['style' => 'background-color: {{ slotData.row.color }};color:#fff'])->children('{{ slotData.row.color }}'),
                 ]],
                 ['key' => 'guard_name', 'title' => '所属后台'],
                 ['key' => 'enabled', 'title' => '状态', 'slot' => [
                     SwitchC::make()
-                        ->props(['value' => '{{ row.enabled }}'])
+                        ->props(['value' => '{{ slotData.row.enabled }}'])
                         ->on('update:value',
-                            FetchAction::make('/notification-categories/{{ row.id }}')
+                            FetchAction::make('/notification-categories/{{ slotData.row.id }}')
                                 ->put()
                                 ->body(['action_type' => 'status', 'enabled' => '{{ $event }}'])
                                 ->then([CallAction::make('$message.success', ['更新成功'])])
                         ),
                 ]],
                 ['key' => 'sort', 'title' => '排序', 'width' => 100],
+                ['key' => 'actions', 'title' => '操作', 'width' => 150, 'fixed' => 'right', 'slot' => [
+                    Space::make()->children([
+                        Button::make()
+                            ->size('small')
+                            ->props(['type' => 'primary', 'text' => true])
+                            ->on('click', [
+                                SetAction::make('formData', '{{ slotData.row }}'),
+                                SetAction::make('editingId', '{{ slotData.row.id }}'),
+                                SetAction::make('formVisible', true),
+                            ])
+                            ->text('编辑'),
+                        Popconfirm::make()
+                            ->props([
+                                'positiveText' => '确定',
+                                'negativeText' => '取消',
+                            ])
+                            ->on('positive-click',
+                                FetchAction::make('/notification-categories/{{ slotData.row.id }}')
+                                    ->delete()
+                                    ->then([
+                                        CallAction::make('$message.success', ['删除成功']),
+                                        CallAction::make('loadData'),
+                                    ])
+                                    ->catch([
+                                        CallAction::make('$message.error', ['{{ $error.message || "删除失败" }}']),
+                                    ])
+                            )
+                            ->slot('trigger', [
+                                Button::make()
+                                    ->size('small')
+                                    ->props(['type' => 'error', 'text' => true])
+                                    ->text('删除'),
+                            ])
+                            ->children('确定要删除此分类吗？'),
+                    ]),
+                ]],
             ])
             ->search([
                 ['关键词', 'keyword', Input::make()->props(['placeholder' => '搜索分类名称或标识', 'clearable' => true])],
