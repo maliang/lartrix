@@ -100,4 +100,12 @@ class HeaderNotification extends Component
     {
         return $this->props(['wsUrl' => $url]);
     }
+
+    /**
+     * 标题前缀字段，用于显示标题前的分类信息
+     */
+    public function titlePrefixField(string $field): static
+    {
+        return $this->props(['titlePrefixField' => $field]);
+    }
 }

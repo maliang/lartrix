@@ -662,7 +662,8 @@ class SystemController extends Controller
                     ->enableNotification(true)
                     ->notificationDuration(4500)
                     ->enableDetail(true)
-                    ->tabs($this->getNotificationTabs()),
+                    ->tabs($this->getNotificationTabs())
+                    ->titlePrefixField('categoryLabel'),
                 // 全屏切换
                 FullScreen::make(),
                 // 语言切换

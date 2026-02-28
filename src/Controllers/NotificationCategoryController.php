@@ -150,6 +150,9 @@ class NotificationCategoryController extends CrudController
             ->columns([
                 ['key' => 'id', 'title' => 'ID', 'width' => 80],
                 ['key' => 'name', 'title' => '分类名称'],
+                ['key' => 'message_types', 'title' => '消息类型', 'slot' => [
+                    Tag::make()->props(['size' => 'small'])->children('{{ (slotData.row.messageTypes || []).join(", ") }}'),
+                ]],
                 ['key' => 'key', 'title' => '标识'],
                 ['key' => 'icon', 'title' => '图标', 'width' => 100, 'slot' => [
                     Icon::make('{{ slotData.row.icon }}')->size(20),

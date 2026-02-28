@@ -62,6 +62,8 @@ class NotificationMessage extends Model
                 'color' => $this->category->color,
                 'icon' => $this->category->icon,
             ];
+            // 添加分类标签
+            $array['categoryLabel'] = '[' . $this->category->name . ']';
         }
 
         return $array;
