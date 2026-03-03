@@ -467,7 +467,16 @@ class CrudPage
         $data = [];
         foreach ($this->searchItems as $item) {
             $name = $item[1];
-            $default = $item[3] ?? '';
+            // 如果 $item[3] 存在（即使是 null），使用它；否则默认为空字符串
+            if (array_key_exists(3, $item)) {
+                $default = $item[3];
+                // 如果是字符串 'null'，转换为真正的 null
+                if ($default === 'null') {
+                    $default = null;
+                }
+            } else {
+                $default = '';
+            }
             $data[$name] = $default;
         }
         return $data;
