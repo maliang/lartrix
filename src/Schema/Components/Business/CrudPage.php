@@ -19,6 +19,7 @@ use Lartrix\Schema\Components\Common\TableColumnSetting;
 use Lartrix\Schema\Actions\SetAction;
 use Lartrix\Schema\Actions\CallAction;
 use Lartrix\Schema\Actions\FetchAction;
+use Lartrix\Schema\Actions\IfAction;
 
 /**
  * CrudPage - 简化版 CRUD 页面组件
@@ -28,6 +29,11 @@ use Lartrix\Schema\Actions\FetchAction;
  * - 数据表格（支持分页、列插槽、树形结构）
  * - 工具栏
  * - 弹窗/抽屉
+ * 
+ * 数据格式要求：
+ * - 分页模式 (pagination(true)): 接口应返回 { data: { list: [], total: number } }
+ * - 非分页模式 (pagination(false)): 接口应返回 { data: [] }
+ * - 格式错误时会在前端显示友好的错误提示
  */
 class CrudPage
 {
@@ -623,16 +629,50 @@ class CrudPage
             $params['page_size'] = '{{ pagination.pageSize }}';
         }
 
-        // 树形模式直接获取全部数据，分页模式获取列表
-        $thenActions = [
-            SetAction::make('tableData', $this->paginated 
-                ? '{{ $response.data.list || [] }}' 
-                : '{{ $response.data || [] }}'
-            ),
-        ];
-
+        // 构建数据验证和赋值逻辑
         if ($this->paginated) {
-            $thenActions[] = SetAction::make('pagination.total', '{{ $response.data.total || 0 }}');
+            // 分页模式：期望 { list: [], total: number } 格式
+            $thenActions = [
+                // 验证数据格式
+                IfAction::make('!$response.data || typeof $response.data !== "object"')
+                    ->then([
+                        CallAction::make('$message.error', ['数据格式错误：分页模式下接口应返回 { list: [], total: number } 格式']),
+                        CallAction::make('console.error', ['期望格式: { data: { list: [], total: number } }, 实际返回:', '{{ $response }}']),
+                    ])
+                    ->else([
+                        IfAction::make('!Array.isArray($response.data.list)')
+                            ->then([
+                                CallAction::make('$message.error', ['数据格式错误：data.list 应为数组']),
+                                CallAction::make('console.error', ['期望 data.list 为数组, 实际返回:', '{{ $response.data }}']),
+                                SetAction::make('tableData', []),
+                            ])
+                            ->else([
+                                SetAction::make('tableData', '{{ $response.data.list }}'),
+                            ]),
+                        IfAction::make('typeof $response.data.total !== "number"')
+                            ->then([
+                                CallAction::make('$message.warning', ['数据格式警告：data.total 应为数字，已自动转换']),
+                                CallAction::make('console.warn', ['期望 data.total 为数字, 实际返回:', '{{ $response.data.total }}']),
+                                SetAction::make('pagination.total', '{{ parseInt($response.data.total) || 0 }}'),
+                            ])
+                            ->else([
+                                SetAction::make('pagination.total', '{{ $response.data.total }}'),
+                            ]),
+                    ]),
+            ];
+        } else {
+            // 非分页模式：期望直接返回数组
+            $thenActions = [
+                IfAction::make('!Array.isArray($response.data)')
+                    ->then([
+                        CallAction::make('$message.error', ['数据格式错误：非分页模式下接口应直接返回数组']),
+                        CallAction::make('console.error', ['期望格式: { data: [] }, 实际返回:', '{{ $response }}']),
+                        SetAction::make('tableData', []),
+                    ])
+                    ->else([
+                        SetAction::make('tableData', '{{ $response.data }}'),
+                    ]),
+            ];
         }
 
         return [
