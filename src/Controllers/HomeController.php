@@ -12,6 +12,7 @@ use Lartrix\Schema\Components\NaiveUI\TimelineItem;
 use Lartrix\Schema\Components\NaiveUI\Button;
 use Lartrix\Schema\Components\NaiveUI\Descriptions;
 use Lartrix\Schema\Components\NaiveUI\DescriptionsItem;
+use Lartrix\Schema\Components\NaiveUI\Input;
 use Lartrix\Schema\Components\Custom\SvgIcon;
 use Lartrix\Schema\Components\Custom\VueECharts;
 use Lartrix\Schema\Actions\CallAction;
@@ -54,6 +55,7 @@ class HomeController extends Controller
             'activeUsers' => $userModel::where('status', true)->count(),
             'totalOrders' => 0,
             'revenue' => 0,
+            'testApiKey' => 'sk_test_1234567890abcdefghijklmnopqrstuvwxyz',
         ];
     }
 
@@ -220,6 +222,11 @@ class HomeController extends Controller
                     ]),
                 ]),
                 GridItem::make()->children([
+                    Card::make()->props(['title' => 'CopyAction 测试'])->children([
+                        $this->buildCopyActionTest(),
+                    ]),
+                ]),
+                GridItem::make()->children([
                     Card::make()->props(['title' => '系统信息'])->children([
                         Descriptions::make()->props(['column' => 1, 'labelPlacement' => 'left'])->children([
                             DescriptionsItem::make()->props(['label' => '系统版本'])->children(['1.0.0']),
@@ -249,5 +256,59 @@ class HomeController extends Controller
             ->props(['type' => $type, 'secondary' => true])
             ->on('click', CallAction::make('$methods.$nav.push', [$route]))
             ->text($label);
+    }
+
+    /**
+     * 构建 CopyAction 测试
+     */
+    protected function buildCopyActionTest()
+    {
+        return Space::make()
+            ->props(['vertical' => true, 'size' => 'small'])
+            ->children([
+                Input::make()->props([
+                    'value' => '{{ stats.testApiKey }}',
+                    'readonly' => true,
+                    'size' => 'small',
+                ]),
+                Space::make()->props(['size' => 'small'])->children([
+                    Button::make()
+                        ->props(['type' => 'primary', 'size' => 'small'])
+                        ->text('复制 API Key')
+                        ->on('click', [
+                            [
+                                'script' => 'console.log("API Key:", state.stats.testApiKey);',
+                            ],
+                            [
+                                'copy' => '{{ stats.testApiKey }}',
+                                'then' => [
+                                    ['call' => '$methods.$message.success', 'args' => ['API Key 已复制到剪贴板']],
+                                ],
+                                'catch' => [
+                                    ['call' => '$methods.$message.error', 'args' => ['复制失败：{{ $error.message }}']],
+                                ],
+                            ],
+                        ]),
+                    Button::make()
+                        ->props(['size' => 'small'])
+                        ->text('带验证的复制')
+                        ->on('click', [
+                            [
+                                'if' => 'stats && stats.testApiKey',
+                                'then' => [
+                                    [
+                                        'copy' => '{{ stats.testApiKey }}',
+                                        'then' => [
+                                            ['call' => '$methods.$message.success', 'args' => ['复制成功']],
+                                        ],
+                                    ],
+                                ],
+                                'else' => [
+                                    ['call' => '$methods.$message.error', 'args' => ['没有可复制的内容']],
+                                ],
+                            ],
+                        ]),
+                ]),
+            ]);
     }
 }
