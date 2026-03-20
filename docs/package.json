@@ -1,0 +1,16 @@
+{
+  "name": "lartrix-docs",
+  "version": "1.0.0",
+  "description": "Lartrix Documentation",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "keywords": ["lartrix", "laravel", "admin", "documentation"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "vitepress": "^1.6.0"
+  }
+}
