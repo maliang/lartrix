@@ -5,6 +5,10 @@ export default defineConfig({
   title: "Lartrix",
   description: "Laravel 后台管理包 - PHP Schema Builder",
   lastUpdated: true,
+  base: '/lartrix/',
+  head: [
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }]
+  ],
 
   locales: {
     root: {
