@@ -50,7 +50,7 @@ Default credentials:
 php artisan serve
 ```
 
-Visit: http://localhost:8000/admin
+Visit: `http://localhost:8000/admin`
 
 ## Next Steps
 

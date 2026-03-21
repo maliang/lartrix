@@ -50,7 +50,7 @@ php artisan db:seed --class=Lartrix\\Database\\Seeders\\AdminUserSeeder
 php artisan serve
 ```
 
-访问：http://localhost:8000/admin
+访问：`http://localhost:8000/admin`
 
 ## 下一步
 
