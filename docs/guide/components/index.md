@@ -32,9 +32,9 @@ PHP 类名无 N 前缀，输出保留 N 前缀：
 ## 基础用法
 
 ```php
-use Lartrix\\Schema\\Components\\NaiveUI\\Button;
+use Lartrix\Schema\Components\NaiveUI\Button;
 
-\$button = Button::make('点击我')
+$button = Button::make('点击我')
     ->type('primary')
     ->props(['size' => 'large'])
     ->on('click', SetAction::make('visible', true));

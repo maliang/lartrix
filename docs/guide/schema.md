@@ -117,17 +117,6 @@ FetchAction::make('/users/{id}')
     ]);
 ```
 
-## 表达式
-
-Schema 支持模板表达式：
-
-| 表达式 | 说明 |
-|--------|------|
-| `{{ variable }}` | 变量插值 |
-| `{{ $event }}` | 事件参数 |
-| `{{ slotData.row.field }}` | 表格行数据 |
-| `{{ condition ? a : b }}` | 三元表达式 |
-
 ## 响应式数据
 
 在 CrudPage 等组件中定义响应式数据：

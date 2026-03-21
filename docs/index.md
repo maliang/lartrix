@@ -5,6 +5,8 @@ hero:
   name: "Lartrix"
   text: "Laravel 后台管理包"
   tagline: 使用 PHP Schema Builder 快速构建现代化管理后台
+  image:
+    src: /logo.svg
   actions:
     - theme: brand
       text: 快速开始

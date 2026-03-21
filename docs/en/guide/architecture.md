@@ -1,13 +1,13 @@
-# 架构概览
+# Architecture Overview
 
-Lartrix 采用分层架构设计，将业务逻辑、数据访问和界面表现清晰分离。
+Lartrix adopts a layered architecture separating frontend and backend.
 
-## 系统架构图
+## System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      Frontend (Trix)                       │
-│                   Vue 3 + NaiveUI + vschema-ui             │
+│                      Frontend (Trix)                        │
+│                   Vue 3 + NaiveUI + vschema-ui              │
 └─────────────────────────────────────────────────────────────┘
                             ▲
                             │ HTTP / JSON Schema
@@ -37,19 +37,19 @@ Lartrix 采用分层架构设计，将业务逻辑、数据访问和界面表现
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## 核心组件
+## Core Components
 
-### 1. Schema 系统
+### 1. Schema Builder
 
-Schema 系统是 Lartrix 的核心，它将 PHP 代码转换为前端可渲染的 JSON Schema。
+The Schema system is the core of Lartrix, converting PHP code into JSON Schema for frontend rendering:
 
 ```php
-// PHP 代码
-Button::make('点击我')
+// PHP code
+Button::make('Click Me')
     ->type('primary')
     ->on('click', SetAction::make('visible', true));
 
-// 转换为 JSON
+// Converts to JSON
 {
     "com": "NButton",
     "props": {
@@ -63,91 +63,81 @@ Button::make('点击我')
 
 ### 2. CrudController
 
-提供完整的 CRUD 基础实现，你只需配置模型和界面：
+Base controller providing standard CRUD operations:
+- Automatic list/create/update/delete
+- Built-in pagination and search
+- Permission checks
+- UI Schema generation
 
-```php
-class PostController extends CrudController
-{
-    protected function getModelClass(): string
-    {
-        return Post::class;
-    }
-    
-    // 自动生成 list/create/update/delete 接口
-}
-```
+### 3. Action System
 
-### 3. Action 系统
+Actions are abstractions for frontend interactions, supporting method chaining:
 
-Action 是前端交互的抽象，支持链式调用：
+- **SetAction**: Set state
+- **CallAction**: Call a method
+- **FetchAction**: HTTP request
+- **IfAction**: Conditional logic
 
-- **SetAction**: 设置状态
-- **CallAction**: 调用方法
-- **FetchAction**: HTTP 请求
-- **IfAction**: 条件判断
+### 4. Permission System
 
-### 4. 权限系统
+RBAC based on Spatie Laravel Permission:
+- User ←→ Role ←→ Permission
+- Guard isolation
+- Menu permission binding
 
-基于 Spatie Laravel Permission 的 RBAC 实现：
+### 5. Module System
 
-- 多 Guard 支持
-- 动态权限分配
-- 菜单级权限控制
+Modular development based on nwidart/laravel-modules:
+- Independent namespaces
+- Independent routes
+- Independent migrations
+- Hot-swappable modules
 
-### 5. 模块系统
+## Request Flow
 
-基于 nwidart/laravel-modules 的模块化开发：
-
-- 独立命名空间
-- 独立路由
-- 独立迁移
-- 热插拔模块
-
-## 数据流
-
-### 列表请求
+### List Request
 
 ```
-1. 前端：GET /api/posts?action_type=list_ui
-2. 后端：PostController@index
-3. 检查：权限验证
-4. 执行：listUi() 方法
-5. 返回：JSON Schema
-6. 前端：根据 Schema 渲染界面
+1. Frontend: GET /api/posts?action_type=list_ui
+2. Backend: PostController@index
+3. Check: Permission check
+4. Execute: listUi() method
+5. Return: JSON Schema
+6. Frontend: Render UI based on Schema
 ```
 
-### 数据请求
+### Data Request
 
 ```
-1. 前端：GET /api/posts?page=1
-2. 后端：PostController@index
-3. 检查：权限验证
-4. 查询：应用搜索/过滤条件
-5. 返回：分页数据
-6. 前端：在表格中渲染数据
+1. Frontend: GET /api/posts?page=1
+2. Backend: PostController@index
+3. Check: Permission check
+4. Query: Apply search/filters
+5. Return: Paginated data
+6. Frontend: Render data in table
 ```
 
-## 目录结构
+## Directory Structure
 
 ```
 lartrix/
 ├── src/
-│   ├── Controllers/      # 基础控制器
-│   ├── Models/          # 基础模型
-│   ├── Schema/          # Schema 组件
-│   │   ├── Components/  # UI 组件
-│   │   └── Actions/     # Action 类型
-│   ├── Services/        # 业务服务
-│   └── Traits/          # 可复用 Traits
-├── config/              # 配置文件
-├── database/            # 迁移与 Seeders
-└── routes/              # 路由
+│   ├── Controllers/      # Base controllers
+│   ├── Models/          # Base models
+│   ├── Schema/          # Schema components
+│   │   ├── Components/  # UI components
+│   │   └── Actions/     # Action types
+│   ├── Services/        # Business services
+│   └── Traits/          # Reusable traits
+├── config/              # Configuration
+├── database/            # Migrations & seeders
+└── routes/              # Routes
 ```
 
-## 扩展点
+## Extension Points
 
-1. **自定义控制器**：继承 CrudController
-2. **自定义组件**：继承 Component 基类
-3. **自定义 Actions**：实现 Action 接口
-4. **自定义模块**：创建独立模块
-5. **自定义 Guard**：添加二级后台系统
+1. **Custom Controllers**: Extend CrudController
+2. **Custom Components**: Extend Component base class
+3. **Custom Actions**: Implement Action interface
+4. **Custom Modules**: Create independent modules
+5. **Custom Guards**: Add sub-admin systems

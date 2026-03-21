@@ -3,6 +3,7 @@ node_modules/
 
 # Build output
 dist/
+.vitepress/cache/
 
 # IDE
 .vscode/
@@ -10,6 +11,9 @@ dist/
 *.swp
 *.swo
 .github
+.omc
+.claude
+docs/.omc
 
 # OS
 .DS_Store

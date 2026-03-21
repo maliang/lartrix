@@ -70,3 +70,25 @@ const props = defineProps({
 ```
 
 注册到 vschema-ui 组件库中。
+
+## 组件输出
+
+```php
+$component->toArray();
+// 输出：
+// {
+//   "com": "MyComponent",
+//   "props": {
+//     "customProp": "value",
+//     "size": "large"
+//   }
+// }
+```
+
+## 最佳实践
+
+1. 继承 `Component` 基类
+2. 定义 `$com` 属性
+3. 实现 `make()` 静态方法
+4. 使用链式调用
+5. 在前端注册组件

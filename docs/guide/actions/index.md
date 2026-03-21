@@ -45,21 +45,10 @@ Button::make('保存')
 FetchAction::make('/api/users/{id}')
     ->put()                           // HTTP 方法
     ->body(['status' => true])       // 请求体
-    $table->headers(['X-Custom' => 'value']) // 请求头
+    ->headers(['X-Custom' => 'value']) // 请求头
     ->then([...])                     // 成功回调
     ->catch([...]);                   // 失败回调
 ```
-
-## 表达式
-
-Action 支持模板表达式：
-
-| 表达式 | 说明 |
-|--------|------|
-| `{{ variable }}` | 访问响应式数据 |
-| `{{ $event }}` | 事件参数 |
-| `{{ slotData.row.id }}` | 表格行数据 |
-| `{{ form.name }}` | 嵌套属性 |
 
 ## 查看详细文档
 

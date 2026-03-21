@@ -4,11 +4,140 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "Lartrix",
   description: "Laravel 后台管理包 - PHP Schema Builder",
-  lang: 'zh-CN',
   lastUpdated: true,
+
+  locales: {
+    root: {
+      label: '简体中文',
+      lang: 'zh-CN'
+    },
+    en: {
+      label: 'English',
+      lang: 'en-US',
+      link: '/en/',
+      themeConfig: {
+        nav: [
+          { text: 'Home', link: '/en/' },
+          { text: 'Guide', link: '/en/guide/' },
+          { text: 'API Reference', link: '/en/api/' },
+          { text: 'Examples', link: '/en/examples/' },
+        ],
+        sidebar: {
+          '/en/guide/': [
+            {
+              text: 'Getting Started',
+              items: [
+                { text: 'Introduction', link: '/en/guide/' },
+                { text: 'Installation', link: '/en/guide/installation' },
+                { text: 'Quick Start', link: '/en/guide/quickstart' },
+                { text: 'Configuration', link: '/en/guide/configuration' },
+              ]
+            },
+            {
+              text: 'Core Concepts',
+              items: [
+                { text: 'Architecture Overview', link: '/en/guide/architecture' },
+                { text: 'Schema System', link: '/en/guide/schema' },
+                { text: 'CrudController', link: '/en/guide/crud-controller' },
+                { text: 'Permission System', link: '/en/guide/permissions' },
+              ]
+            },
+            {
+              text: 'Schema Components',
+              items: [
+                { text: 'Component Overview', link: '/en/guide/components/' },
+                { text: 'Basic Components', link: '/en/guide/components/basic' },
+                { text: 'Form Components', link: '/en/guide/components/form' },
+                { text: 'Data Display', link: '/en/guide/components/data' },
+                { text: 'Layout Components', link: '/en/guide/components/layout' },
+                { text: 'Feedback Components', link: '/en/guide/components/feedback' },
+                { text: 'Business Components', link: '/en/guide/components/business' },
+              ]
+            },
+            {
+              text: 'Actions',
+              items: [
+                { text: 'Action Overview', link: '/en/guide/actions/' },
+                { text: 'SetAction', link: '/en/guide/actions/set' },
+                { text: 'CallAction', link: '/en/guide/actions/call' },
+                { text: 'FetchAction', link: '/en/guide/actions/fetch' },
+                { text: 'IfAction', link: '/en/guide/actions/if' },
+                { text: 'Other Actions', link: '/en/guide/actions/others' },
+              ]
+            },
+            {
+              text: 'Advanced',
+              items: [
+                { text: 'Modular Development', link: '/en/guide/modules' },
+                { text: 'Sub-Admin Systems', link: '/en/guide/sub-admin' },
+                { text: 'Data Dictionary', link: '/en/guide/dict' },
+                { text: 'Notification System', link: '/en/guide/notifications' },
+                { text: 'Custom Components', link: '/en/guide/custom-components' },
+              ]
+            }
+          ],
+          '/en/api/': [
+            {
+              text: 'API Reference',
+              items: [
+                { text: 'Overview', link: '/en/api/' },
+                { text: 'Authentication API', link: '/en/api/auth' },
+                { text: 'User Management', link: '/en/api/users' },
+                { text: 'Role Management', link: '/en/api/roles' },
+                { text: 'Permission Management', link: '/en/api/permissions' },
+                { text: 'Menu Management', link: '/en/api/menus' },
+                { text: 'Module Management', link: '/en/api/modules' },
+                { text: 'System Settings', link: '/en/api/settings' },
+                { text: 'Data Dictionary', link: '/en/api/dict' },
+                { text: 'Notification Management', link: '/en/api/notifications' },
+              ]
+            },
+            {
+              text: 'PHP Class Reference',
+              items: [
+                { text: 'Controllers', link: '/en/api/php/controllers' },
+                { text: 'Schema Components', link: '/en/api/php/schema-components' },
+                { text: 'Actions', link: '/en/api/php/actions' },
+                { text: 'Services', link: '/en/api/php/services' },
+                { text: 'Models', link: '/en/api/php/models' },
+              ]
+            }
+          ],
+          '/en/examples/': [
+            {
+              text: 'Examples',
+              items: [
+                { text: 'Overview', link: '/en/examples/' },
+                { text: 'User Management', link: '/en/examples/users' },
+                { text: 'Post Management', link: '/en/examples/posts' },
+                { text: 'Product Management', link: '/en/examples/products' },
+                { text: 'Category Management', link: '/en/examples/categories' },
+                { text: 'Full Module Example', link: '/en/examples/full-module' },
+              ]
+            }
+          ]
+        },
+        editLink: {
+          pattern: 'https://github.com/your-org/lartrix/edit/main/docs/:path',
+          text: 'Edit this page on GitHub'
+        },
+        docFooter: {
+          prev: 'Previous',
+          next: 'Next'
+        },
+        outline: {
+          label: 'On this page'
+        },
+        lastUpdated: {
+          text: 'Last updated'
+        }
+      }
+    }
+  },
 
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
+    logo: '/logo.svg',
     nav: [
       { text: '首页', link: '/' },
       { text: '指南', link: '/guide/' },
