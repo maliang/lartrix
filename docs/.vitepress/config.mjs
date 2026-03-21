@@ -7,7 +7,7 @@ export default defineConfig({
   lastUpdated: true,
   base: '/lartrix/',
   head: [
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }]
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/lartrix/logo.svg' }]
   ],
 
   locales: {
