@@ -663,7 +663,7 @@ PHP;
                 'autoSelectFirstMenu' => false,
             ],
             'footer' => [
-                'visible' => true,
+                'visible' => false,
                 'fixed' => false,
                 'height' => 48,
                 'right' => true,
