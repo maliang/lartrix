@@ -7,6 +7,7 @@ use Lartrix\Services\AuthService;
 use Lartrix\Services\DataDictService;
 use Lartrix\Services\ModuleService;
 use Lartrix\Services\PermissionService;
+use Lartrix\Services\RealtimeService;
 
 class LartrixServiceProvider extends ServiceProvider
 {
@@ -23,6 +24,7 @@ class LartrixServiceProvider extends ServiceProvider
         $this->app->singleton(DataDictService::class);
         $this->app->singleton(ModuleService::class);
         $this->app->singleton(PermissionService::class);
+        $this->app->singleton(RealtimeService::class);
     }
 
     /**

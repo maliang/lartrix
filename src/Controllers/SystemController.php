@@ -25,6 +25,7 @@ use Lartrix\Schema\Components\Common\ThemeSchemaSwitch;
 use Lartrix\Schema\Components\Common\ThemeButton;
 use Lartrix\Schema\Components\Common\UserAvatar;
 use Lartrix\Schema\Components\Common\HeaderNotification;
+use Lartrix\Schema\Components\Common\HeaderCustomItem;
 
 class SystemController extends Controller
 {
@@ -646,47 +647,88 @@ class SystemController extends Controller
      */
     public function headerRight(): array
     {
-        $schema = Html::div()
-            ->props(['class' => 'h-full flex-y-center gap-4px'])
-            ->children([
-                // 全局搜索
-                GlobalSearch::make(),
-                // 通知中心
-                HeaderNotification::make()
-                    ->fetchApi('/notifications')
-                    ->readApi('/notifications/{id}/mark-read')
-                    ->readAllApi('/notifications/mark-all-read')
-                    ->badgeMode('count')
-                    ->pageSize(10)
-                    ->enableWs(false)
-                    ->enableNotification(true)
-                    ->notificationDuration(4500)
-                    ->enableDetail(true)
-                    ->tabs($this->getNotificationTabs())
-                    ->titlePrefixField('categoryLabel'),
-                // 全屏切换
-                FullScreen::make(),
-                // 语言切换
-                LangSwitch::make()
-                    ->props([
-                        'langOptions' => [
-                            ['label' => '中文', 'value' => 'zh-CN'],
-                            ['label' => 'English', 'value' => 'en-US'],
-                        ],
-                        'defaultLang' => 'zh-CN',
-                        'submitUrl' => '',
-                    ]),
-                // 主题模式切换
-                ThemeSchemaSwitch::make(),
-                // 主题设置按钮
-                ThemeButton::make(),
-                // 用户头像菜单
-                UserAvatar::make()
-                    ->props([
-                        'menuItems' => [
-                            [
-                                'key' => 'profile',
-                                'label' => '个人中心',
+        $children = [];
+
+        // 全局搜索
+        $children[] = GlobalSearch::make();
+
+        // 通知中心
+        $notification = HeaderNotification::make()
+            ->fetchApi('/notifications')
+            ->readApi('/notifications/{id}/mark-read')
+            ->readAllApi('/notifications/mark-all-read')
+            ->badgeMode('count')
+            ->pageSize(10)
+            ->enableNotification(true)
+            ->notificationDuration(4500)
+            ->enableDetail(true)
+            ->tabs($this->getNotificationTabs())
+            ->titlePrefixField('categoryLabel');
+
+        // 实时消息配置
+        if (config('lartrix.realtime.enabled', true)) {
+            $driver = config('lartrix.realtime.driver', 'polling');
+            if ($driver === 'polling') {
+                $notification->enablePolling(true)
+                    ->pollingInterval((int) config('lartrix.realtime.polling.interval', 15000))
+                    ->pollingApi(config('lartrix.realtime.polling.api', '/notifications/poll'));
+            } elseif ($driver === 'ws') {
+                $wsUrl = config('lartrix.realtime.websocket.url', '');
+                if ($wsUrl) {
+                    $notification->enableWs(true)->wsUrl($wsUrl);
+                }
+            }
+        }
+        $children[] = $notification;
+
+        // 自定义导航项（从配置读取）
+        foreach (config('lartrix.header.custom_items', []) as $item) {
+            $custom = HeaderCustomItem::make()
+                ->icon($item['icon'] ?? 'carbon:dot-mark')
+                ->tooltip($item['tooltip'] ?? '')
+                ->badgeColor($item['badge_color'] ?? '');
+            if (!empty($item['badge_api'])) {
+                $custom->badgeApi($item['badge_api']);
+            }
+            if (!empty($item['click'])) {
+                $custom->click($item['click']);
+            }
+            if (!empty($item['click_target'])) {
+                $custom->clickTarget($item['click_target']);
+            }
+            if (!empty($item['schema_api'])) {
+                $custom->schemaApi($item['schema_api']);
+            }
+            $children[] = $custom;
+        }
+
+        // 全屏切换
+        $children[] = FullScreen::make();
+
+        // 语言切换
+        $children[] = LangSwitch::make()
+            ->props([
+                'langOptions' => [
+                    ['label' => '中文', 'value' => 'zh-CN'],
+                    ['label' => 'English', 'value' => 'en-US'],
+                ],
+                'defaultLang' => 'zh-CN',
+                'submitUrl' => '',
+            ]);
+
+        // 主题模式切换
+        $children[] = ThemeSchemaSwitch::make();
+
+        // 主题设置按钮
+        $children[] = ThemeButton::make();
+
+        // 用户头像菜单
+        $children[] = UserAvatar::make()
+            ->props([
+                'menuItems' => [
+                    [
+                        'key' => 'profile',
+                        'label' => '个人中心',
                                 'icon' => 'ph:user',
                                 'action' => 'modal',
                                 'modal' => [
@@ -732,6 +774,10 @@ class SystemController extends Controller
                         ],
                     ]),
             ]);
+
+        $schema = Html::div()
+            ->props(['class' => 'h-full flex-y-center gap-4px'])
+            ->children($children);
 
         return success($schema->toArray());
     }
@@ -791,97 +837,6 @@ class SystemController extends Controller
      */
     protected function getDefaultThemeConfig(): array
     {
-        return [
-            'appTitle' => config('lartrix.app_title', 'Lartrix Admin'),
-            'logo' => config('lartrix.logo', '/favicon.svg'),
-            'themeScheme' => 'light',
-            'grayscale' => false,
-            'colourWeakness' => false,
-            'recommendColor' => false,
-            'themeColor' => '#646cff',
-            'themeRadius' => 6,
-            'otherColor' => [
-                'info' => '#2080f0',
-                'success' => '#52c41a',
-                'warning' => '#faad14',
-                'error' => '#f5222d',
-            ],
-            'isInfoFollowPrimary' => true,
-            'layout' => [
-                'mode' => 'vertical',
-                'scrollMode' => 'content',
-            ],
-            'page' => [
-                'animate' => true,
-                'animateMode' => 'fade-slide',
-            ],
-            'header' => [
-                'height' => 56,
-                'inverted' => false,
-                'breadcrumb' => [
-                    'visible' => true,
-                    'showIcon' => true,
-                ],
-                'multilingual' => [
-                    'visible' => true,
-                ],
-                'globalSearch' => [
-                    'visible' => true,
-                ],
-            ],
-            'tab' => [
-                'visible' => true,
-                'cache' => true,
-                'height' => 44,
-                'mode' => 'chrome',
-                'closeTabByMiddleClick' => false,
-            ],
-            'fixedHeaderAndTab' => true,
-            'sider' => [
-                'inverted' => false,
-                'width' => 220,
-                'collapsedWidth' => 64,
-                'mixWidth' => 90,
-                'mixCollapsedWidth' => 64,
-                'mixChildMenuWidth' => 200,
-                'mixChildMenuBgColor' => '#ffffff',
-                'autoSelectFirstMenu' => false,
-            ],
-            'footer' => [
-                'visible' => true,
-                'fixed' => false,
-                'height' => 48,
-                'right' => true,
-            ],
-            'watermark' => [
-                'visible' => false,
-                'text' => config('lartrix.app_title', 'Lartrix Admin'),
-                'enableUserName' => false,
-                'enableTime' => false,
-                'timeFormat' => 'YYYY-MM-DD HH:mm',
-            ],
-            'tokens' => [
-                'light' => [
-                    'colors' => [
-                        'container' => 'rgb(255, 255, 255)',
-                        'layout' => 'rgb(247, 250, 252)',
-                        'inverted' => 'rgb(0, 20, 40)',
-                        'base-text' => 'rgb(31, 31, 31)',
-                    ],
-                    'boxShadow' => [
-                        'header' => '0 1px 2px rgb(0, 21, 41, 0.08)',
-                        'sider' => '2px 0 8px 0 rgb(29, 35, 41, 0.05)',
-                        'tab' => '0 1px 2px rgb(0, 21, 41, 0.08)',
-                    ],
-                ],
-                'dark' => [
-                    'colors' => [
-                        'container' => 'rgb(28, 28, 28)',
-                        'layout' => 'rgb(18, 18, 18)',
-                        'base-text' => 'rgb(224, 224, 224)',
-                    ],
-                ],
-            ],
-        ];
+        return config('lartrix.theme', []);
     }
 }

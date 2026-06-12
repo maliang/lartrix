@@ -13,6 +13,8 @@ use Lartrix\Schema\Actions\{SetAction, CallAction, FetchAction, IfAction};
 /**
  * 通知消息控制器
  */
+use Lartrix\Services\RealtimeService;
+
 class NotificationController extends CrudController
 {
     /**
@@ -316,5 +318,22 @@ class NotificationController extends CrudController
         if ($model->from_user_id !== $user->id && $user->guard_name !== 'admin') {
             throw new \Lartrix\Exceptions\ApiException('无权删除此通知', 403);
         }
+    }
+
+    /**
+     * 消息轮询接口
+     * GET /notifications/poll?since_id=0&type=all
+     */
+    public function poll(Request $request): array
+    {
+        $user = $request->user();
+        $guard = config('lartrix.guard', 'admin');
+        $sinceId = (int) $request->input('since_id', 0);
+        $type = $request->input('type', 'all');
+
+        $realtime = app(RealtimeService::class);
+        $data = $realtime->buildPollResponse($user->id, $guard, $sinceId, $type);
+
+        return success($data);
     }
 }

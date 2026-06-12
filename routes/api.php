@@ -146,6 +146,7 @@ Route::prefix($prefix)->group(function () use (
         // 通知操作
         Route::post('notifications/{id}/mark-read', [$notificationController, 'markAsRead']);
         Route::post('notifications/mark-all-read', [$notificationController, 'markAllAsRead']);
+        Route::get('notifications/poll', [$notificationController, 'poll']);
 
         // 主后台发送通知给二级后台
         Route::prefix('admin')->group(function () use ($adminNotificationController) {
