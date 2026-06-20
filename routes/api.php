@@ -102,6 +102,8 @@ Route::prefix($prefix)->group(function () use (
             Route::get('/', [$moduleController, 'index']);
             Route::put('{name}/enable', [$moduleController, 'enable']);
             Route::put('{name}/disable', [$moduleController, 'disable']);
+            Route::put('{name}/install', [$moduleController, 'install']);
+            Route::put('{name}/uninstall', [$moduleController, 'uninstall']);
         });
 
         // 设置管理

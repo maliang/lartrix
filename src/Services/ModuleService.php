@@ -120,4 +120,91 @@ class ModuleService extends BaseService
         $module = Module::where('name', $name)->first();
         return $module && $module->isEnabled();
     }
+
+    /**
+     * 安装模块：迁移 + 填充 + 注册菜单权限
+     */
+    public function install(string $name): bool
+    {
+        /** @var Module|null $module */
+        $module = Module::where('name', $name)->first();
+        if (!$module) { return false; }
+        if ($module->enabled) { return true; }
+
+        // 读取 module.json 注册菜单和权限
+        $laravelModule = \Nwidart\Modules\Facades\Module::find($name);
+        if ($laravelModule) {
+            $moduleJson = $laravelModule->json()->getAttributes();
+            $this->registerMenus($moduleJson, $name);
+            $this->registerPermissions($moduleJson, $name);
+
+            // 执行模块迁移
+            $laravelModule->enable();
+            \Artisan::call('module:migrate', ['module' => $name]);
+            \Artisan::call('module:seed', ['module' => $name]);
+        }
+
+        // 更新数据库状态
+        $module->enable();
+        Event::dispatch('lartrix.module.installed', [$module]);
+        return true;
+    }
+
+    /**
+     * 卸载模块：删除菜单权限 + 回滚迁移
+     */
+    public function uninstall(string $name): bool
+    {
+        /** @var Module|null $module */
+        $module = Module::where('name', $name)->first();
+        if (!$module) { return false; }
+        if (!$module->enabled) { return true; }
+
+        // 删除模块菜单
+        $menuModel = config('lartrix.models.menu', \Lartrix\Models\Menu::class);
+        $menuModel::where('module', $name)->delete();
+
+        // 删除模块权限
+        $permissionModel = config('lartrix.models.permission', \Lartrix\Models\Permission::class);
+        $permissionModel::where('module', $name)->delete();
+
+        // 回滚迁移并禁用
+        $laravelModule = \Nwidart\Modules\Facades\Module::find($name);
+        if ($laravelModule) {
+            \Artisan::call('module:migrate-rollback', ['module' => $name]);
+            $laravelModule->disable();
+        }
+
+        $module->disable();
+        Event::dispatch('lartrix.module.uninstalled', [$module]);
+        return true;
+    }
+
+    protected function registerMenus(array $moduleJson, string $moduleName): void
+    {
+        $menus = $moduleJson['menus'] ?? [];
+        if (empty($menus)) { return; }
+        $menuModel = config('lartrix.models.menu', \Lartrix\Models\Menu::class);
+        $guard = config('lartrix.guard', 'admin');
+        foreach ($menus as $menu) {
+            $menu['guard_name'] = $guard;
+            $menu['module'] = $moduleName;
+            $exists = $menuModel::where('name', $menu['name'])->where('guard_name', $guard)->first();
+            if (!$exists) { $menuModel::create($menu); }
+        }
+    }
+
+    protected function registerPermissions(array $moduleJson, string $moduleName): void
+    {
+        $permissions = $moduleJson['permissions'] ?? [];
+        if (empty($permissions)) { return; }
+        $permissionModel = config('lartrix.models.permission', \Lartrix\Models\Permission::class);
+        $guard = config('lartrix.guard', 'admin');
+        foreach ($permissions as $perm) {
+            $perm['guard_name'] = $guard;
+            $perm['module'] = $moduleName;
+            $exists = $permissionModel::where('name', $perm['name'])->where('guard_name', $guard)->first();
+            if (!$exists) { $permissionModel::create($perm); }
+        }
+    }
 }

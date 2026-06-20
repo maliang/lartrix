@@ -86,6 +86,42 @@ class ModuleController extends Controller
     }
 
     /**
+     * 安装模块
+     */
+    public function install(string $name): array
+    {
+        if (!$this->moduleService->exists($name)) {
+            error('模块不存在', null, 40102);
+        }
+
+        $result = $this->moduleService->install($name);
+
+        if (!$result) {
+            error('安装失败', null, 40000);
+        }
+
+        return success('安装成功');
+    }
+
+    /**
+     * 卸载模块
+     */
+    public function uninstall(string $name): array
+    {
+        if (!$this->moduleService->exists($name)) {
+            error('模块不存在', null, 40102);
+        }
+
+        $result = $this->moduleService->uninstall($name);
+
+        if (!$result) {
+            error('卸载失败', null, 40000);
+        }
+
+        return success('卸载成功');
+    }
+
+    /**
      * 获取模块 Logo
      */
     public function logo(string $name)
@@ -203,6 +239,28 @@ class ModuleController extends Controller
                             CallAction::make('$message.error', ['{{ $error.message || "禁用失败" }}']),
                         ]),
                 ],
+                'handleInstall' => [
+                    FetchAction::make('/modules/{{ $event }}/install')
+                        ->put()
+                        ->then([
+                            CallAction::make('$message.success', ['安装成功']),
+                            CallAction::make('loadData'),
+                        ])
+                        ->catch([
+                            CallAction::make('$message.error', ['{{ $error.message || "安装失败" }}']),
+                        ]),
+                ],
+                'handleUninstall' => [
+                    FetchAction::make('/modules/{{ $event }}/uninstall')
+                        ->put()
+                        ->then([
+                            CallAction::make('$message.success', ['卸载成功']),
+                            CallAction::make('loadData'),
+                        ])
+                        ->catch([
+                            CallAction::make('$message.error', ['{{ $error.message || "卸载失败" }}']),
+                        ]),
+                ],
             ])
             ->onMounted(CallAction::make('loadData'))
             ->children([
@@ -238,24 +296,31 @@ class ModuleController extends Controller
                                 ])
                                 ->children(["{{ slotData.row.enabled ? '已启用' : '已禁用' }}"]),
                         ]],
-                        ['key' => 'actions', 'title' => '操作', 'width' => 120, 'slot' => [
+                        ['key' => 'actions', 'title' => '操作', 'width' => 160, 'slot' => [
                             Space::make()->children([
                                 Button::make()
                                     ->if('!slotData.row.enabled')
                                     ->size('small')
                                     ->type('primary')
                                     ->props(['text' => true])
-                                    ->on('click', ['call' => 'handleEnable', 'args' => ['{{ slotData.row.name }}']])
-                                    ->text('启用'),
+                                    ->on('click', ['call' => 'handleInstall', 'args' => ['{{ slotData.row.name }}']])
+                                    ->text('安装'),
+                                Button::make()
+                                    ->if('slotData.row.enabled')
+                                    ->size('small')
+                                    ->type('warning')
+                                    ->props(['text' => true])
+                                    ->on('click', ['call' => 'handleDisable', 'args' => ['{{ slotData.row.name }}']])
+                                    ->text('禁用'),
                                 Popconfirm::make()
                                     ->if('slotData.row.enabled')
-                                    ->on('positive-click', ['call' => 'handleDisable', 'args' => ['{{ slotData.row.name }}']])
+                                    ->on('positive-click', ['call' => 'handleUninstall', 'args' => ['{{ slotData.row.name }}']])
                                     ->slot('trigger', [
                                         Button::make()
                                             ->size('small')
-                                            ->type('warning')
+                                            ->type('error')
                                             ->props(['text' => true])
-                                            ->text('禁用'),
+                                            ->text('卸载'),
                                     ])
                                     ->children(['确定禁用该模块？']),
                             ]),

@@ -56,6 +56,8 @@ class LartrixServiceProvider extends ServiceProvider
                 Commands\UninstallCommand::class,
                 Commands\MakeBackendCommand::class,
                 Commands\RemoveBackendCommand::class,
+                Commands\ModuleInstallCommand::class,
+                Commands\ModuleUninstallCommand::class,
             ]);
         }
     }
