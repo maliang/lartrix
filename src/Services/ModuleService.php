@@ -155,14 +155,19 @@ class ModuleService extends BaseService
             $this->registerMenus($moduleJson, $name);
             $this->registerPermissions($moduleJson, $name);
 
-            // 执行模块迁移
+            // 先启用（Artisan 子进程依赖启用状态）
             $laravelModule->enable();
+            $module->enable();
+            $module->save();
+
+            // 使用独立进程执行迁移和填充（避免类名冲突）
             \Artisan::call('module:migrate', ['module' => $name]);
             \Artisan::call('module:seed', ['module' => $name]);
+        } else {
+            $module->enable();
+            $module->save();
         }
 
-        // 更新数据库状态
-        $module->enable();
         Event::dispatch('lartrix.module.installed', [$module]);
         return true;
     }
