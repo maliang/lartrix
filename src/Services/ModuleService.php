@@ -128,7 +128,24 @@ class ModuleService extends BaseService
     {
         /** @var Module|null $module */
         $module = Module::where('name', $name)->first();
-        if (!$module) { return false; }
+
+        // 数据库无记录时，从 nwidart 模块系统发现
+        if (!$module) {
+            $laravelModule = \Nwidart\Modules\Facades\Module::find($name);
+            if (!$laravelModule) { return false; }
+            $moduleJson = $laravelModule->json()->getAttributes();
+            $module = Module::create([
+                'name' => $name,
+                'enabled' => false,
+                'title' => $moduleJson['title'] ?? $name,
+                'description' => $moduleJson['description'] ?? '',
+                'version' => $moduleJson['version'] ?? '1.0.0',
+                'author' => $moduleJson['author'] ?? '',
+                'website' => $moduleJson['website'] ?? $moduleJson['url'] ?? '',
+                'logo' => $moduleJson['logo'] ?? '',
+                'config' => $moduleJson,
+            ]);
+        }
         if ($module->enabled) { return true; }
 
         // 读取 module.json 注册菜单和权限
