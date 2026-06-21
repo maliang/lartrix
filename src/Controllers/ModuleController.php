@@ -55,16 +55,16 @@ class ModuleController extends Controller
     public function enable(string $name): array
     {
         if (!$this->moduleService->exists($name)) {
-            error('模块不存在', null, 40102);
+            error(__t('module.not_found'), null, 40102);
         }
 
         $result = $this->moduleService->enable($name);
 
         if (!$result) {
-            error('启用失败', null, 40000);
+            error(__t('module.enable_failed'), null, 40000);
         }
 
-        return success('启用成功');
+        return success(__t('module.enabled'));
     }
 
     /**
@@ -73,16 +73,16 @@ class ModuleController extends Controller
     public function disable(string $name): array
     {
         if (!$this->moduleService->exists($name)) {
-            error('模块不存在', null, 40102);
+            error(__t('module.not_found'), null, 40102);
         }
 
         $result = $this->moduleService->disable($name);
 
         if (!$result) {
-            error('禁用失败', null, 40000);
+            error(__t('module.disable_failed'), null, 40000);
         }
 
-        return success('禁用成功');
+        return success(__t('module.disabled'));
     }
 
     /**
@@ -91,16 +91,16 @@ class ModuleController extends Controller
     public function install(string $name): array
     {
         if (!$this->moduleService->exists($name)) {
-            error('模块不存在', null, 40102);
+            error(__t('module.not_found'), null, 40102);
         }
 
         $result = $this->moduleService->install($name);
 
         if (!$result) {
-            error('安装失败', null, 40000);
+            error(__t('module.install_failed'), null, 40000);
         }
 
-        return success('安装成功');
+        return success(__t('module.installed'));
     }
 
     /**
@@ -109,16 +109,16 @@ class ModuleController extends Controller
     public function uninstall(string $name): array
     {
         if (!$this->moduleService->exists($name)) {
-            error('模块不存在', null, 40102);
+            error(__t('module.not_found'), null, 40102);
         }
 
         $result = $this->moduleService->uninstall($name);
 
         if (!$result) {
-            error('卸载失败', null, 40000);
+            error(__t('module.uninstall_failed'), null, 40000);
         }
 
-        return success('卸载成功');
+        return success(__t('module.uninstalled'));
     }
 
     /**
@@ -129,7 +129,7 @@ class ModuleController extends Controller
         $module = ModuleFacade::find($name);
 
         if (!$module) {
-            abort(404, '模块不存在');
+            abort(404, __t('module.not_found'));
         }
 
         $moduleJson = $module->json();
@@ -172,13 +172,13 @@ class ModuleController extends Controller
     protected function marketUi(): array
     {
         $schema = Card::make()
-            ->props(['title' => '模块市场'])
+            ->props(['title' => __t('title.module_market')])
             ->children([
                 Result::make()
                     ->props([
                         'status' => 'info',
-                        'title' => '敬请期待',
-                        'description' => '模块市场正在开发中，即将上线...',
+                        'title' => __t('title.coming_soon'),
+                        'description' => __t('title.coming_soon_desc'),
                     ])
                     ->slot('icon', [
                         SvgIcon::make('carbon:store')->props(['class' => 'text-6xl text-primary']),
@@ -196,7 +196,7 @@ class ModuleController extends Controller
         $routePrefix = '/' . config('lartrix.route_prefix', 'api/admin');
 
         $schema = Card::make()
-            ->props(['title' => '已安装模块'])
+            ->props(['title' => __t('title.installed_modules')])
             ->data([
                 'modules' => [],
                 'loading' => false,
@@ -221,7 +221,7 @@ class ModuleController extends Controller
                     FetchAction::make('/modules/{{ $event }}/enable')
                         ->put()
                         ->then([
-                            CallAction::make('$message.success', ['启用成功']),
+                            CallAction::make('$message.success', [__t('module.enabled')]),
                             CallAction::make('loadData'),
                         ])
                         ->catch([
@@ -232,7 +232,7 @@ class ModuleController extends Controller
                     FetchAction::make('/modules/{{ $event }}/disable')
                         ->put()
                         ->then([
-                            CallAction::make('$message.success', ['禁用成功']),
+                            CallAction::make('$message.success', [__t('module.disabled')]),
                             CallAction::make('loadData'),
                         ])
                         ->catch([
@@ -243,7 +243,7 @@ class ModuleController extends Controller
                     FetchAction::make('/modules/{{ $event }}/install')
                         ->put()
                         ->then([
-                            CallAction::make('$message.success', ['安装成功']),
+                            CallAction::make('$message.success', [__t('module.installed')]),
                             CallAction::make('loadData'),
                         ])
                         ->catch([
@@ -254,7 +254,7 @@ class ModuleController extends Controller
                     FetchAction::make('/modules/{{ $event }}/uninstall')
                         ->put()
                         ->then([
-                            CallAction::make('$message.success', ['卸载成功']),
+                            CallAction::make('$message.success', [__t('module.uninstalled')]),
                             CallAction::make('loadData'),
                         ])
                         ->catch([
@@ -269,7 +269,7 @@ class ModuleController extends Controller
                     ->loading('loading')
                     ->rowKey('name')
                     ->columns([
-                        ['key' => 'logo', 'title' => 'Logo', 'width' => 60, 'slot' => [
+                        ['key' => 'logo', 'title' => __t('column.logo'), 'width' => 60, 'slot' => [
                             Avatar::make()
                                 ->if('slotData.row.logo')
                                 ->props(['src' => '{{ routePrefix + "/modules/" + slotData.row.name + "/logo" }}', 'size' => 32, 'objectFit' => 'contain']),
@@ -277,26 +277,26 @@ class ModuleController extends Controller
                                 ->if('!slotData.row.logo')
                                 ->props(['class' => 'text-2xl text-primary']),
                         ]],
-                        ['key' => 'name', 'title' => '模块名称', 'width' => 150],
-                        ['key' => 'version', 'title' => '版本', 'width' => 80],
-                        ['key' => 'description', 'title' => '描述', 'ellipsis' => true],
-                        ['key' => 'author', 'title' => '作者', 'width' => 100],
-                        ['key' => 'website', 'title' => '网址', 'width' => 120, 'ellipsis' => true, 'slot' => [
+                        ['key' => 'name', 'title' => __t('column.name'), 'width' => 150],
+                        ['key' => 'version', 'title' => __t('column.version'), 'width' => 80],
+                        ['key' => 'description', 'title' => __t('column.description'), 'ellipsis' => true],
+                        ['key' => 'author', 'title' => __t('column.author'), 'width' => 100],
+                        ['key' => 'website', 'title' => __t('column.website'), 'width' => 120, 'ellipsis' => true, 'slot' => [
                             Button::make()
                                 ->if('slotData.row.website')
                                 ->size('small')
                                 ->props(['text' => true, 'type' => 'primary', 'tag' => 'a', 'href' => '{{ slotData.row.website }}', 'target' => '_blank'])
-                                ->children(['访问']),
+                                ->children([__t('button.visit')]),
                         ]],
-                        ['key' => 'enabled', 'title' => '状态', 'width' => 80, 'slot' => [
+                        ['key' => 'enabled', 'title' => __t('column.status'), 'width' => 80, 'slot' => [
                             Tag::make()
                                 ->props([
                                     'type' => "{{ slotData.row.enabled ? 'success' : 'default' }}",
                                     'size' => 'small',
                                 ])
-                                ->children(["{{ slotData.row.enabled ? '已启用' : '已禁用' }}"]),
+                                ->children(["{{ slotData.row.enabled ? __t('tag.installed') : __t('tag.not_installed') }}"]),
                         ]],
-                        ['key' => 'actions', 'title' => '操作', 'width' => 160, 'slot' => [
+                        ['key' => 'actions', 'title' => __t('column.actions'), 'width' => 160, 'slot' => [
                             Space::make()->children([
                                 Button::make()
                                     ->if('!slotData.row.enabled')
@@ -304,14 +304,14 @@ class ModuleController extends Controller
                                     ->type('primary')
                                     ->props(['text' => true])
                                     ->on('click', ['call' => 'handleInstall', 'args' => ['{{ slotData.row.name }}']])
-                                    ->text('安装'),
+                                    ->text(__t('button.install')),
                                 Button::make()
                                     ->if('slotData.row.enabled')
                                     ->size('small')
                                     ->type('warning')
                                     ->props(['text' => true])
                                     ->on('click', ['call' => 'handleDisable', 'args' => ['{{ slotData.row.name }}']])
-                                    ->text('禁用'),
+                                    ->text(__t('tag.disabled')),
                                 Popconfirm::make()
                                     ->if('slotData.row.enabled')
                                     ->on('positive-click', ['call' => 'handleUninstall', 'args' => ['{{ slotData.row.name }}']])
@@ -320,9 +320,9 @@ class ModuleController extends Controller
                                             ->size('small')
                                             ->type('error')
                                             ->props(['text' => true])
-                                            ->text('卸载'),
+                                            ->text(__t('button.uninstall')),
                                     ])
-                                    ->children(['确定禁用该模块？']),
+                                    ->children([__t('confirm.disable')]),
                             ]),
                         ]],
                     ]),

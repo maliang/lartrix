@@ -33,7 +33,7 @@ class PermissionController extends CrudController
 
     protected function getResourceName(): string
     {
-        return '权限';
+        return __t('column.permissions');
     }
 
     protected function getTable(): string
@@ -127,7 +127,7 @@ class PermissionController extends CrudController
 
         // 防止设置自己为父级
         if (isset($validated['parent_id']) && $validated['parent_id'] == $id) {
-            throw new \Lartrix\Exceptions\ApiException('不能将自己设为父级权限', 40022);
+            throw new \Lartrix\Exceptions\ApiException(__t('permission.cannot_parent_self'), 40022);
         }
 
         return $validated;
@@ -136,7 +136,7 @@ class PermissionController extends CrudController
     protected function beforeDelete(mixed $model): void
     {
         if ($model->children()->exists()) {
-            throw new \Lartrix\Exceptions\ApiException('请先删除子权限', 40022);
+            throw new \Lartrix\Exceptions\ApiException(__t('permission.delete_children_first'), 40022);
         }
     }
 
@@ -189,7 +189,7 @@ class PermissionController extends CrudController
         // 权限表单
         $permissionForm = OptForm::make('formData')
             ->fields([
-                ['父级权限', 'parent_id', TreeSelect::make()->props([
+                [__t('form.parent_id'), 'parent_id', TreeSelect::make()->props([
                     'placeholder' => '无（顶级权限）',
                     'clearable' => true,
                     'options' => '{{ permissionTreeOptions }}',
@@ -197,18 +197,18 @@ class PermissionController extends CrudController
                     'labelField' => 'title',
                     'childrenField' => 'children',
                 ])],
-                ['权限标识', 'name', Input::make()->props(['placeholder' => '如：user.create'])],
-                ['权限名称', 'title', Input::make()->props(['placeholder' => '请输入权限名称'])],
-                ['所属模块', 'module', Input::make()->props(['placeholder' => '请输入模块名称'])],
-                ['描述', 'description', Input::make()->props(['type' => 'textarea', 'placeholder' => '请输入权限描述'])],
-                ['排序', 'sort', InputNumber::make()->props(['min' => 0]), 0],
+                ['权限标识', 'name', Input::make()->props(['placeholder' => __t('placeholder.perm_name')])],
+                ['权限名称', 'title', Input::make()->props(['placeholder' => __t('placeholder.perm_title')])],
+                [__t('column.module'), 'module', Input::make()->props(['placeholder' => __t('placeholder.module')])],
+                [__t('column.description'), 'description', Input::make()->props(['type' => 'textarea', 'placeholder' => '请输入权限描述'])],
+                [__t('column.sort'), 'sort', InputNumber::make()->props(['min' => 0]), 0],
             ])
             ->buttons([
-                Button::make()->on('click', SetAction::make('formVisible', false))->text('取消'),
-                Button::make()->type('primary')->props(['loading' => '{{ submitting }}'])->on('click', ['call' => 'handleSubmit'])->text('确定'),
+                Button::make()->on('click', SetAction::make('formVisible', false))->text(__t('button.cancel')),
+                Button::make()->type('primary')->props(['loading' => '{{ submitting }}'])->on('click', ['call' => 'handleSubmit'])->text(__t('button.confirm')),
             ]);
 
-        $schema = CrudPage::make('权限管理')
+        $schema = CrudPage::make(__t('title.permission_manage'))
             ->apiPrefix('/permissions')
             ->apiParams(['action_type' => 'all'])
             ->columns($this->getTableColumns())
@@ -231,7 +231,7 @@ class PermissionController extends CrudController
                         ]),
                         CallAction::make('loadPermissionTree'),
                     ])
-                    ->text('新增'),
+                    ->text(__t('button.create')),
                 'expandAll',
                 'collapseAll',
             ])
@@ -257,7 +257,7 @@ class PermissionController extends CrudController
                                 ->put()
                                 ->body('{{ formData }}')
                                 ->then([
-                                    CallAction::make('$message.success', ['更新成功']),
+                                    CallAction::make('$message.success', [__t('crud.updated')]),
                                     SetAction::make('formVisible', false),
                                     CallAction::make('loadData'),
                                 ])
@@ -273,7 +273,7 @@ class PermissionController extends CrudController
                                 ->post()
                                 ->body('{{ formData }}')
                                 ->then([
-                                    CallAction::make('$message.success', ['创建成功']),
+                                    CallAction::make('$message.success', [__t('crud.created')]),
                                     SetAction::make('formVisible', false),
                                     CallAction::make('loadData'),
                                 ])
@@ -319,10 +319,10 @@ class PermissionController extends CrudController
             ['key' => 'id', 'title' => 'ID', 'width' => 80],
             ['key' => 'name', 'title' => '权限标识'],
             ['key' => 'title', 'title' => '权限名称'],
-            ['key' => 'module', 'title' => '所属模块'],
-            ['key' => 'description', 'title' => '描述'],
-            ['key' => 'sort', 'title' => '排序', 'width' => 80],
-            ['key' => 'actions', 'title' => '操作', 'width' => 200, 'fixed' => 'right', 'slot' => [
+            ['key' => 'module', 'title' => __t('column.module')],
+            ['key' => 'description', 'title' => __t('column.description')],
+            ['key' => 'sort', 'title' => __t('column.sort'), 'width' => 80],
+            ['key' => 'actions', 'title' => __t('column.actions'), 'width' => 200, 'fixed' => 'right', 'slot' => [
                 Space::make()->children([
                     Button::make()
                         ->size('small')
@@ -338,22 +338,22 @@ class PermissionController extends CrudController
                             SetAction::make('formVisible', true),
                             CallAction::make('loadPermissionTree'),
                         ])
-                        ->text('编辑'),
+                        ->text(__t('button.edit')),
                     Button::make()
                         ->size('small')
                         ->props(['type' => 'success', 'text' => true])
                         ->on('click', ['call' => 'handleAddChild', 'args' => ['{{ slotData.row }}']])
-                        ->text('添加子权限'),
+                        ->text(__t('button.add_child_perm')),
                     Popconfirm::make()
                         ->props([
-                            'positiveText' => '确定',
-                            'negativeText' => '取消',
+                            'positiveText' => __t('button.confirm'),
+                            'negativeText' => __t('button.cancel'),
                         ])
                         ->on('positive-click',
                             FetchAction::make('/permissions/{{ slotData.row.id }}')
                                 ->delete()
                                 ->then([
-                                    CallAction::make('$message.success', ['删除成功']),
+                                    CallAction::make('$message.success', [__t('crud.deleted')]),
                                     CallAction::make('loadData'),
                                 ])
                                 ->catch([
@@ -364,9 +364,9 @@ class PermissionController extends CrudController
                             Button::make()
                                 ->size('small')
                                 ->props(['type' => 'error', 'text' => true])
-                                ->text('删除'),
+                                ->text(__t('button.delete')),
                         ])
-                        ->children(['确定要删除该权限吗？']),
+                        ->children([__t('confirm.delete_permission')]),
                 ]),
             ]],
         ];

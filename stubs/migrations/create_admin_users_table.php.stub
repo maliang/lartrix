@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('remark')->nullable()->comment('备注');
             $table->string('last_login_ip', 20)->nullable()->comment('最后登录IP');
             $table->timestamp('last_login_time')->nullable()->comment('最后登录时间');
+            $table->string('locale', 10)->default('zh-CN')->comment('语言偏好');
             $table->timestamps();
             $table->softDeletes();
         });

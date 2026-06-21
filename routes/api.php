@@ -75,6 +75,8 @@ Route::prefix($prefix)->group(function () use (
         // 系统配置
         Route::prefix('system')->group(function () use ($systemController) {
             Route::post('theme-config', [$systemController, 'saveThemeConfig']);
+            Route::get('translations', [$systemController, 'translations']);
+            Route::post('locale', [$systemController, 'setLocale']);
         });
 
         // 布局相关

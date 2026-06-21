@@ -71,51 +71,51 @@ class DictController extends Controller
         // 分组表单
         $groupForm = OptForm::make('formData')
             ->fields([
-                ['编码', 'code', Input::make()->props(['placeholder' => '请输入编码，如 order_status', 'disabled' => '{{ !!editingId && editingSystem }}'])],
-                ['名称', 'name', Input::make()->props(['placeholder' => '请输入名称'])],
-                ['描述', 'description', Input::make()->props(['type' => 'textarea', 'placeholder' => '请输入描述'])],
+                [__t('ui.dict_code'), 'code', Input::make()->props(['placeholder' => __t('ui.placeholder_input') . __t('ui.dict_code') . '，如 order_status', 'disabled' => '{{ !!editingId && editingSystem }}'])],
+                [__t('ui.dict_name'), 'name', Input::make()->props(['placeholder' => __t('ui.placeholder_input') . __t('ui.dict_name')])],
+                [__t('ui.dict_description'), 'description', Input::make()->props(['type' => 'textarea', 'placeholder' => __t('ui.placeholder_input') . __t('ui.dict_description')])],
             ])
             ->buttons([
-                Button::make()->on('click', SetAction::make('formVisible', false))->text('取消'),
-                Button::make()->type('primary')->props(['loading' => '{{ submitting }}'])->on('click', ['call' => 'handleSubmit'])->text('确定'),
+                Button::make()->on('click', SetAction::make('formVisible', false))->text(__t('ui.cancel')),
+                Button::make()->type('primary')->props(['loading' => '{{ submitting }}'])->on('click', ['call' => 'handleSubmit'])->text(__t('ui.confirm')),
             ]);
 
         // 字典项表单
         $itemForm = OptForm::make('itemFormData')
             ->fields([
-                ['编码', 'code', Input::make()->props(['placeholder' => '请输入编码'])],
-                ['显示文本', 'label', Input::make()->props(['placeholder' => '请输入显示文本'])],
-                ['存储值', 'value', Input::make()->props(['placeholder' => '请输入存储值'])],
-                ['排序', 'sort', Input::make()->props(['type' => 'number', 'placeholder' => '数字越小越靠前']), 0],
-                ['启用状态', 'is_enabled', SwitchC::make(), true],
+                [__t('ui.code'), 'code', Input::make()->props(['placeholder' => __t('ui.placeholder_input') . __t('ui.code')])],
+                [__t('ui.dict_label'), 'label', Input::make()->props(['placeholder' => __t('ui.placeholder_input') . __t('ui.dict_label')])],
+                [__t('ui.dict_value'), 'value', Input::make()->props(['placeholder' => __t('ui.placeholder_input') . __t('ui.dict_value')])],
+                [__t('ui.sort'), 'sort', Input::make()->props(['type' => 'number', 'placeholder' => __t('placeholder.sort')]), 0],
+                [__t('ui.dict_is_enabled'), 'is_enabled', SwitchC::make(), true],
             ])
             ->buttons([
-                Button::make()->on('click', SetAction::make('itemFormVisible', false))->text('取消'),
-                Button::make()->type('primary')->props(['loading' => '{{ itemSubmitting }}'])->on('click', ['call' => 'handleItemSubmit'])->text('确定'),
+                Button::make()->on('click', SetAction::make('itemFormVisible', false))->text(__t('ui.cancel')),
+                Button::make()->type('primary')->props(['loading' => '{{ itemSubmitting }}'])->on('click', ['call' => 'handleItemSubmit'])->text(__t('ui.confirm')),
             ]);
 
-        $schema = CrudPage::make('字典管理')
+        $schema = CrudPage::make(__t('title.dict_manage'))
             ->apiPrefix('/dicts/groups')
             ->columns([
-                ['key' => 'id', 'title' => 'ID', 'width' => 80],
-                ['key' => 'code', 'title' => '编码', 'width' => 150],
-                ['key' => 'name', 'title' => '名称', 'width' => 150],
-                ['key' => 'description', 'title' => '描述'],
-                ['key' => 'items_count', 'title' => '字典项数', 'width' => 100, 'slot' => [
+                ['key' => 'id', 'title' => __t('ui.id'), 'width' => 80],
+                ['key' => 'code', 'title' => __t('ui.dict_code'), 'width' => 150],
+                ['key' => 'name', 'title' => __t('ui.dict_name'), 'width' => 150],
+                ['key' => 'description', 'title' => __t('ui.dict_description')],
+                ['key' => 'items_count', 'title' => __t('column.items_count'), 'width' => 100, 'slot' => [
                     Tag::make()
                         ->props(['type' => 'info', 'size' => 'small'])
                         ->children(['{{ slotData.row.items_count }}']),
                 ]],
-                ['key' => 'is_system', 'title' => '系统内置', 'width' => 100, 'slot' => [
+                ['key' => 'is_system', 'title' => __t('column.is_system'), 'width' => 100, 'slot' => [
                     Tag::make()
                         ->props([
                             'type' => "{{ slotData.row.is_system ? 'warning' : 'default' }}",
                             'size' => 'small',
                         ])
-                        ->children(["{{ slotData.row.is_system ? '是' : '否' }}"]),
+                        ->children(["{{ slotData.row.is_system ? __t('tag.yes') : __t('tag.no') }}"]),
                 ]],
-                ['key' => 'created_at', 'title' => '创建时间', 'width' => 180],
-                ['key' => 'actions', 'title' => '操作', 'width' => 200, 'fixed' => 'right', 'slot' => [
+                ['key' => 'created_at', 'title' => __t('ui.created_at'), 'width' => 180],
+                ['key' => 'actions', 'title' => __t('ui.actions'), 'width' => 200, 'fixed' => 'right', 'slot' => [
                     Space::make()->children([
                         Button::make()
                             ->size('small')
@@ -126,7 +126,7 @@ class DictController extends Controller
                                 SetAction::make('itemsVisible', true),
                                 CallAction::make('loadItems'),
                             ])
-                            ->text('字典项'),
+                            ->text(__t('button.dict_items')),
                         Button::make()
                             ->size('small')
                             ->props(['type' => 'info', 'text' => true])
@@ -138,26 +138,26 @@ class DictController extends Controller
                                 SetAction::make('formData.description', '{{ slotData.row.description || "" }}'),
                                 SetAction::make('formVisible', true),
                             ])
-                            ->text('编辑'),
+                            ->text(__t('ui.edit')),
                         Popconfirm::make()
                             ->if('!slotData.row.is_system')
-                            ->props(['positiveText' => '确定', 'negativeText' => '取消'])
+                            ->props(['positiveText' => __t('ui.confirm'), 'negativeText' => __t('ui.cancel')])
                             ->on('positive-click',
                                 FetchAction::make('/dicts/groups/{{ slotData.row.id }}')
                                     ->delete()
                                     ->then([
-                                        CallAction::make('$message.success', ['删除成功']),
+                                        CallAction::make('$message.success', [__t('crud.deleted')]),
                                         CallAction::make('loadData'),
                                     ])
                                     ->catch([
-                                        CallAction::make('$message.error', ['{{ $error.message || "删除失败" }}']),
+                                        CallAction::make('$message.error', ['{{ $error.message || "' . __t('common.failed') . '" }}']),
                                     ])
                             )
                             ->slot('trigger', [
                                 Button::make()
                                     ->size('small')
                                     ->props(['type' => 'error', 'text' => true])
-                                    ->text('删除'),
+                                    ->text(__t('ui.delete')),
                             ])
                             ->children(['确定要删除该字典分组吗？删除后其下所有字典项也将被删除。']),
                     ]),
@@ -165,7 +165,7 @@ class DictController extends Controller
             ])
             ->scrollX(1100)
             ->search([
-                ['关键词', 'keyword', Input::make()->props(['placeholder' => '搜索编码/名称', 'clearable' => true])],
+                ['关键词', 'keyword', Input::make()->props(['placeholder' => __t('ui.placeholder_search') . __t('ui.dict_code') . '/' . __t('ui.dict_name'), 'clearable' => true])],
             ])
             ->toolbarLeft([
                 Button::make()
@@ -180,7 +180,7 @@ class DictController extends Controller
                             'formVisible' => true,
                         ]),
                     ])
-                    ->text('新增分组'),
+                    ->text(__t('button.add_group')),
             ])
             ->data([
                 'formData' => $groupForm->getDefaultData(),
@@ -206,12 +206,12 @@ class DictController extends Controller
                                 ->put()
                                 ->body('{{ formData }}')
                                 ->then([
-                                    CallAction::make('$message.success', ['更新成功']),
+                                    CallAction::make('$message.success', [__t('crud.updated')]),
                                     SetAction::make('formVisible', false),
                                     CallAction::make('loadData'),
                                 ])
                                 ->catch([
-                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('common.failed') . '" }}']),
                                 ])
                                 ->finally([
                                     SetAction::make('submitting', false),
@@ -222,12 +222,12 @@ class DictController extends Controller
                                 ->post()
                                 ->body('{{ formData }}')
                                 ->then([
-                                    CallAction::make('$message.success', ['创建成功']),
+                                    CallAction::make('$message.success', [__t('crud.created')]),
                                     SetAction::make('formVisible', false),
                                     CallAction::make('loadData'),
                                 ])
                                 ->catch([
-                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('common.failed') . '" }}']),
                                 ])
                                 ->finally([
                                     SetAction::make('submitting', false),
@@ -255,12 +255,12 @@ class DictController extends Controller
                                 ->put()
                                 ->body('{{ itemFormData }}')
                                 ->then([
-                                    CallAction::make('$message.success', ['更新成功']),
+                                    CallAction::make('$message.success', [__t('crud.updated')]),
                                     SetAction::make('itemFormVisible', false),
                                     CallAction::make('loadItems'),
                                 ])
                                 ->catch([
-                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('common.failed') . '" }}']),
                                 ])
                                 ->finally([
                                     SetAction::make('itemSubmitting', false),
@@ -271,12 +271,12 @@ class DictController extends Controller
                                 ->post()
                                 ->body('{{ itemFormData }}')
                                 ->then([
-                                    CallAction::make('$message.success', ['创建成功']),
+                                    CallAction::make('$message.success', [__t('crud.created')]),
                                     SetAction::make('itemFormVisible', false),
                                     CallAction::make('loadItems'),
                                 ])
                                 ->catch([
-                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('common.failed') . '" }}']),
                                 ])
                                 ->finally([
                                     SetAction::make('itemSubmitting', false),
@@ -300,12 +300,12 @@ class DictController extends Controller
                 'loading' => '{{ itemsLoading }}',
                 'data' => '{{ itemsData }}',
                 'columns' => [
-                    ['key' => 'sort', 'title' => '排序', 'width' => 60],
-                    ['key' => 'code', 'title' => '编码', 'width' => 120],
-                    ['key' => 'label', 'title' => '显示文本', 'width' => 120],
-                    ['key' => 'value', 'title' => '存储值', 'width' => 100],
-                    ['key' => 'is_enabled', 'title' => '状态', 'width' => 80],
-                    ['key' => 'actions', 'title' => '操作', 'width' => 120, 'fixed' => 'right'],
+                    ['key' => 'sort', 'title' => __t('column.sort'), 'width' => 60],
+                    ['key' => 'code', 'title' => __t('column.code'), 'width' => 120],
+                    ['key' => 'label', 'title' => __t('column.label'), 'width' => 120],
+                    ['key' => 'value', 'title' => __t('column.value'), 'width' => 100],
+                    ['key' => 'is_enabled', 'title' => __t('column.status'), 'width' => 80],
+                    ['key' => 'actions', 'title' => __t('column.actions'), 'width' => 120, 'fixed' => 'right'],
                 ],
                 'rowKey' => '{{ row => row.id }}',
                 'scrollX' => 700,
@@ -316,7 +316,7 @@ class DictController extends Controller
                         'type' => "{{ slotData.row.is_enabled ? 'success' : 'default' }}",
                         'size' => 'small',
                     ])
-                    ->children(["{{ slotData.row.is_enabled ? '启用' : '禁用' }}"]),
+                    ->children(["{{ slotData.row.is_enabled ? __t('tag.enabled') : __t('tag.disabled') }}"]),
             ], 'slotData')
             ->slot('actions', [
                 Space::make()->children([
@@ -332,25 +332,25 @@ class DictController extends Controller
                             SetAction::make('itemFormData.is_enabled', '{{ slotData.row.is_enabled }}'),
                             SetAction::make('itemFormVisible', true),
                         ])
-                        ->text('编辑'),
+                        ->text(__t('ui.edit')),
                     Popconfirm::make()
-                        ->props(['positiveText' => '确定', 'negativeText' => '取消'])
+                        ->props(['positiveText' => __t('ui.confirm'), 'negativeText' => __t('ui.cancel')])
                         ->on('positive-click',
                             FetchAction::make('{{ "/dicts/groups/" + currentGroupId + "/items/" + slotData.row.id }}')
                                 ->delete()
                                 ->then([
-                                    CallAction::make('$message.success', ['删除成功']),
+                                    CallAction::make('$message.success', [__t('crud.deleted')]),
                                     CallAction::make('loadItems'),
                                 ])
                                 ->catch([
-                                    CallAction::make('$message.error', ['{{ $error.message || "删除失败" }}']),
+                                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('common.failed') . '" }}']),
                                 ])
                         )
                         ->slot('trigger', [
                             Button::make()
                                 ->size('small')
                                 ->props(['type' => 'error', 'text' => true])
-                                ->text('删除'),
+                                ->text(__t('ui.delete')),
                         ])
                         ->children(['确定要删除该字典项吗？']),
                 ]),
@@ -374,7 +374,7 @@ class DictController extends Controller
                                 'itemFormVisible' => true,
                             ]),
                         ])
-                        ->text('新增字典项'),
+                        ->text(__t('button.add_item')),
                     $itemsTable,
                 ]),
             \Lartrix\Schema\Components\NaiveUI\Modal::make()
@@ -402,7 +402,7 @@ class DictController extends Controller
 
         $group = DictGroup::create($validated);
 
-        return success($group, '创建成功');
+        return success($group, __t('crud.created'));
     }
 
     /**
@@ -438,7 +438,7 @@ class DictController extends Controller
         // 清除缓存
         $this->dictService->clearCache($group->code);
 
-        return success($group, '更新成功');
+        return success($group, __t('crud.updated'));
     }
 
     /**
@@ -449,7 +449,7 @@ class DictController extends Controller
         $group = DictGroup::findOrFail($id);
 
         if ($group->is_system) {
-            return error('系统内置分组不允许删除');
+            return error(__t('permission.system_group_protected'));
         }
 
         // 清除缓存
@@ -457,7 +457,7 @@ class DictController extends Controller
 
         $group->delete();
 
-        return success(null, '删除成功');
+        return success(null, __t('crud.deleted'));
     }
 
     /**
@@ -513,7 +513,7 @@ class DictController extends Controller
         // 清除缓存
         $this->dictService->clearCache($group->code);
 
-        return success($item, '创建成功');
+        return success($item, __t('crud.created'));
     }
 
     /**
@@ -538,7 +538,7 @@ class DictController extends Controller
         // 清除缓存
         $this->dictService->clearCache($group->code);
 
-        return success($item, '更新成功');
+        return success($item, __t('crud.updated'));
     }
 
     /**
@@ -554,7 +554,7 @@ class DictController extends Controller
         // 清除缓存
         $this->dictService->clearCache($group->code);
 
-        return success(null, '删除成功');
+        return success(null, __t('crud.deleted'));
     }
 
     /**
@@ -579,7 +579,7 @@ class DictController extends Controller
         // 清除缓存
         $this->dictService->clearCache($group->code);
 
-        return success(null, '排序更新成功');
+        return success(null, __t('crud.order_updated'));
     }
 
     /**

@@ -30,7 +30,7 @@ class NotificationController extends CrudController
      */
     protected function getResourceName(): string
     {
-        return '通知消息';
+        return __t('notification.resource_name');
     }
 
     /**
@@ -159,7 +159,7 @@ class NotificationController extends CrudController
     {
         // 获取分类选项
         $categoryOptions = array_merge(
-            [['label' => '全部', 'value' => '']],
+            [['label' => __t('role.filter_all'), 'value' => '']],
             \Lartrix\Models\NotificationCategory::query()
                 ->where('guard_name', 'admin')
                 ->where('enabled', true)
@@ -172,9 +172,9 @@ class NotificationController extends CrudController
         $form = OptForm::make('formData')
             ->labelWidth(80)
             ->fields([
-                ['标题', 'title', Input::make()->props(['placeholder' => '请输入通知标题', 'clearable' => true])],
-                ['内容', 'content', Input::make()->props(['placeholder' => '请输入通知内容', 'clearable' => true, 'type' => 'textarea', 'rows' => 4])],
-                ['消息类型', 'type', Select::make()->props([
+                [__t('column.title'), 'title', Input::make()->props(['placeholder' => '请输入通知标题', 'clearable' => true])],
+                [__t('column.content'), 'content', Input::make()->props(['placeholder' => '请输入通知内容', 'clearable' => true, 'type' => 'textarea', 'rows' => 4])],
+                [__t('column.type'), 'type', Select::make()->props([
                     'placeholder' => '请选择消息类型',
                     'options' => [
                         ['label' => '系统', 'value' => 'system'],
@@ -187,35 +187,35 @@ class NotificationController extends CrudController
                     'placeholder' => '请选择分类',
                     'options' => $categoryOptions,
                 ])],
-                ['接收用户', 'user_id', Select::make()->props([
+                [__t('column.target_users'), 'user_id', Select::make()->props([
                     'placeholder' => '指定用户（为空表示发送给所有人）',
                     'clearable' => true,
                 ])],
             ])
             ->buttons([
-                Button::make()->on('click', SetAction::make('formVisible', false))->text('取消'),
-                Button::make()->type('primary')->on('click', ['call' => 'handleSubmit'])->text('确定'),
+                Button::make()->on('click', SetAction::make('formVisible', false))->text(__t('button.cancel')),
+                Button::make()->type('primary')->on('click', ['call' => 'handleSubmit'])->text(__t('button.confirm')),
             ]);
 
-        $schema = CrudPage::make('通知消息管理')
+        $schema = CrudPage::make(__t('title.notification'))
             ->apiPrefix('/notifications')
             ->columns([
                 ['key' => 'id', 'title' => 'ID', 'width' => 80],
-                ['key' => 'title', 'title' => '标题'],
-                ['key' => 'content', 'title' => '内容', 'width' => 300, 'ellipsis' => true],
-                ['key' => 'category', 'title' => '分类', 'slot' => [
+                ['key' => 'title', 'title' => __t('column.title')],
+                ['key' => 'content', 'title' => __t('column.content'), 'width' => 300, 'ellipsis' => true],
+                ['key' => 'category', 'title' => __t('column.category'), 'slot' => [
                     Tag::make()->props(['style' => '{{ "background-color:" + (slotData.row.category?.color || "#ccc") + ";color:#fff" }}'])->children('{{ slotData.row.category?.name || slotData.row.categoryKey || "-" }}'),
                 ]],
-                ['key' => 'is_read', 'title' => '状态', 'slot' => [
+                ['key' => 'is_read', 'title' => __t('column.status'), 'slot' => [
                     Tag::make()->props([
                         'type' => "{{ slotData.row.isRead ? 'default' : 'warning' }}",
-                    ])->children("{{ slotData.row.isRead ? '已读' : '未读' }}"),
+                    ])->children("{{ slotData.row.isRead ? __t('tag.read') : __t('tag.unread') }}"),
                 ]],
-                ['key' => 'created_at', 'title' => '创建时间', 'width' => 180],
+                ['key' => 'created_at', 'title' => __t('column.created_at'), 'width' => 180],
             ])
             ->search([
                 ['关键词', 'keyword', Input::make()->props(['placeholder' => '搜索标题或内容', 'clearable' => true])],
-                ['分类', 'category_key', Select::make()->props([
+                [__t('column.category'), 'category_key', Select::make()->props([
                     'placeholder' => '请选择分类',
                     'clearable' => true,
                     'options' => $categoryOptions,
@@ -225,9 +225,9 @@ class NotificationController extends CrudController
                     'placeholder' => '请选择',
                     'clearable' => true,
                     'options' => [
-                        ['label' => '全部', 'value' => ''],
-                        ['label' => '已读', 'value' => '1'],
-                        ['label' => '未读', 'value' => '0'],
+                        ['label' => __t('role.filter_all'), 'value' => ''],
+                        ['label' => __t('tag.read'), 'value' => '1'],
+                        ['label' => __t('tag.unread'), 'value' => '0'],
                     ],
                     'style' => ['min-width' => '150px'],
                 ])],
@@ -236,11 +236,11 @@ class NotificationController extends CrudController
                 Button::make()
                     ->type('primary')
                     ->on('click', [SetAction::make('formVisible', true)])
-                    ->text('发送通知'),
+                    ->text(__t('title.notif_send')),
                 Button::make()
                     ->type('info')
                     ->on('click', [FetchAction::make('/notifications/mark-all-read')->post()->then([
-                        CallAction::make('$message.success', ['全部标记为已读']),
+                        CallAction::make('$message.success', [__t('notification.all_marked_read')]),
                         CallAction::make('loadData'),
                     ])])
                     ->text('全部已读'),
@@ -254,13 +254,13 @@ class NotificationController extends CrudController
                         ->post()
                         ->body('{{ formData }}')
                         ->then([
-                            CallAction::make('$message.success', ['发送成功']),
+                            CallAction::make('$message.success', [__t('notification.sent')]),
                             SetAction::make('formVisible', false),
                             CallAction::make('loadData'),
                         ]),
                 ],
             ])
-            ->modal('form', '发送通知', $form);
+            ->modal('form', __t('title.notif_send'), $form);
 
         return success($schema->build());
     }
@@ -283,7 +283,7 @@ class NotificationController extends CrudController
         $message->read_at = now();
         $message->save();
 
-        return success('已标记为已读');
+        return success(__t('notification.marked_read'));
     }
 
     /**
@@ -305,7 +305,7 @@ class NotificationController extends CrudController
                 'read_at' => now(),
             ]);
 
-        return success('全部标记为已读');
+        return success(__t('notification.all_marked_read'));
     }
 
     /**
@@ -316,7 +316,7 @@ class NotificationController extends CrudController
         // 只能删除自己发送的通知
         $user = request()->user();
         if ($model->from_user_id !== $user->id && $user->guard_name !== 'admin') {
-            throw new \Lartrix\Exceptions\ApiException('无权删除此通知', 403);
+            throw new \Lartrix\Exceptions\ApiException(__t('notification.not_owner'), 403);
         }
     }
 

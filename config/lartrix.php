@@ -15,8 +15,8 @@ return [
     | 系统信息
     |--------------------------------------------------------------------------
     */
-    'app_title' => env('LARTRIX_APP_TITLE', 'Lartrix Admin'),
-    'logo' => env('LARTRIX_LOGO', '/admin/favicon.svg'),
+    'locale' => env('LARTRIX_LOCALE', 'zh-CN'),
+    'fallback_locale' => 'en-US',
     'copyright' => env('LARTRIX_COPYRIGHT', '© ' . date('Y') . ' Lartrix Admin. All rights reserved.'),
 
     /*

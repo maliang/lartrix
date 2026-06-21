@@ -27,12 +27,12 @@ class AuthController extends Controller
         );
 
         if (!$result) {
-            error('用户名或密码错误', null, 40001);
+            error(__t('auth.failed'), null, 40001);
         }
 
         $token = $result['token'];
 
-        return success('登录成功', [
+        return success(__t('auth.login_ok'), [
             'token' => $token->plainTextToken,
         ]);
     }
@@ -43,7 +43,7 @@ class AuthController extends Controller
     public function logout(Request $request): array
     {
         $this->authService->logout($request->user());
-        return success('登出成功');
+        return success(__t('auth.logout_ok'));
     }
 
     /**
@@ -53,7 +53,7 @@ class AuthController extends Controller
     {
         $token = $this->authService->refresh($request->user());
 
-        return success('刷新成功', [
+        return success(__t('auth.refresh_ok'), [
             'token' => $token->plainTextToken,
         ]);
     }
@@ -95,10 +95,10 @@ class AuthController extends Controller
         $result = $this->authService->revokeToken($request->user(), $id);
 
         if (!$result) {
-            error('Token 不存在', null, 40004);
+            error(__t('auth.token_not_found'), null, 40004);
         }
 
-        return success('撤销成功');
+        return success(__t('auth.revoke_ok'));
     }
 
     /**
@@ -107,10 +107,13 @@ class AuthController extends Controller
      */
     public function config(): array
     {
+        $theme = \Lartrix\Models\Setting::getGroup('theme');
         return success([
             'apiPrefix' => '/' . ltrim(config('lartrix.api_prefix', 'api/admin'), '/'),
-            'appTitle' => config('lartrix.app_title', 'Lartrix Admin'),
-            'logo' => config('lartrix.logo'),
+            'appTitle' => $theme['appTitle'] ?? 'Lartrix Admin',
+            'logo' => $theme['logo'] ?? '',
+            'locale' => config('lartrix.locale', 'zh-CN'),
+            'fallbackLocale' => config('lartrix.fallback_locale', 'en-US'),
         ]);
     }
 }

@@ -83,8 +83,8 @@ class HomeController extends Controller
                 'responsive' => 'screen',
             ])
             ->children([
-                $this->buildStatCard('总用户数', '{{ stats.totalUsers }}', 'carbon:user-multiple', 'text-primary'),
-                $this->buildStatCard('活跃用户', '{{ stats.activeUsers }}', 'carbon:activity', 'text-success'),
+                $this->buildStatCard(__t('home.total_users'), '{{ stats.totalUsers }}', 'carbon:user-multiple', 'text-primary'),
+                $this->buildStatCard(__t('home.active_users'), '{{ stats.activeUsers }}', 'carbon:activity', 'text-success'),
                 $this->buildStatCard('总订单数', '{{ stats.totalOrders }}', 'carbon:shopping-cart', 'text-warning'),
                 $this->buildStatCard('总收入', '{{ stats.revenue }}', 'carbon:currency-dollar', 'text-error'),
             ]);
@@ -145,13 +145,13 @@ class HomeController extends Controller
     {
         return [
             'tooltip' => ['trigger' => 'axis'],
-            'legend' => ['data' => ['访问量', '独立用户'], 'top' => 0],
+            'legend' => ['data' => [__t('home.visit_count'), __t('home.unique_users')], 'top' => 0],
             'grid' => ['left' => '3%', 'right' => '4%', 'top' => '15%', 'bottom' => '3%', 'containLabel' => true],
-            'xAxis' => ['type' => 'category', 'boundaryGap' => false, 'data' => ['周一', '周二', '周三', '周四', '周五', '周六', '周日']],
+            'xAxis' => ['type' => 'category', 'boundaryGap' => false, 'data' => [__t('home.mon'), __t('home.tue'), __t('home.wed'), __t('home.thu'), __t('home.fri'), __t('home.sat'), __t('home.sun')]],
             'yAxis' => ['type' => 'value'],
             'series' => [
-                ['name' => '访问量', 'type' => 'line', 'smooth' => true, 'areaStyle' => ['opacity' => 0.3], 'data' => [820, 932, 901, 1234, 1290, 1330, 1520]],
-                ['name' => '独立用户', 'type' => 'line', 'smooth' => true, 'areaStyle' => ['opacity' => 0.3], 'data' => [320, 432, 401, 634, 690, 730, 820]],
+                ['name' => __t('home.visit_count'), 'type' => 'line', 'smooth' => true, 'areaStyle' => ['opacity' => 0.3], 'data' => [820, 932, 901, 1234, 1290, 1330, 1520]],
+                ['name' => __t('home.unique_users'), 'type' => 'line', 'smooth' => true, 'areaStyle' => ['opacity' => 0.3], 'data' => [320, 432, 401, 634, 690, 730, 820]],
             ],
         ];
     }
@@ -183,7 +183,7 @@ class HomeController extends Controller
     protected function buildRecentActivities()
     {
         return Card::make()
-            ->props(['title' => '最近活动'])
+            ->props(['title' => __t('home.recent_activities')])
             ->children([
                 Timeline::make()->children([
                     TimelineItem::make()
@@ -212,12 +212,12 @@ class HomeController extends Controller
             ])
             ->children([
                 GridItem::make()->children([
-                    Card::make()->props(['title' => '快捷操作'])->children([
+                    Card::make()->props(['title' => __t('home.quick_actions')])->children([
                         Space::make()->props(['wrap' => true])->children([
-                            $this->buildQuickButton('用户管理', 'primary', '/system/user'),
-                            $this->buildQuickButton('角色管理', 'info', '/system/role'),
-                            $this->buildQuickButton('菜单管理', 'success', '/system/menu'),
-                            $this->buildQuickButton('系统设置', 'warning', '/system/setting'),
+                            $this->buildQuickButton(__t('title.user_management'), 'primary', '/system/user'),
+                            $this->buildQuickButton(__t('title.role_manage'), 'info', '/system/role'),
+                            $this->buildQuickButton(__t('title.menu_manage'), 'success', '/system/menu'),
+                            $this->buildQuickButton(__t('title.system_settings'), 'warning', '/system/setting'),
                         ]),
                     ]),
                 ]),
@@ -227,20 +227,20 @@ class HomeController extends Controller
                     ]),
                 ]),
                 GridItem::make()->children([
-                    Card::make()->props(['title' => '系统信息'])->children([
+                    Card::make()->props(['title' => __t('home.system_info')])->children([
                         Descriptions::make()->props(['column' => 1, 'labelPlacement' => 'left'])->children([
-                            DescriptionsItem::make()->props(['label' => '系统版本'])->children(['1.0.0']),
+                            DescriptionsItem::make()->props(['label' => __t('home.system_version')])->children(['1.0.0']),
                             DescriptionsItem::make()->props(['label' => 'Laravel'])->children([app()->version()]),
                             DescriptionsItem::make()->props(['label' => 'PHP'])->children([PHP_VERSION]),
                         ]),
                     ]),
                 ]),
                 GridItem::make()->children([
-                    Card::make()->props(['title' => '项目信息'])->children([
+                    Card::make()->props(['title' => __t('home.project_info')])->children([
                         Descriptions::make()->props(['column' => 1, 'labelPlacement' => 'left'])->children([
-                            DescriptionsItem::make()->props(['label' => '项目名称'])->children([config('lartrix.app_title', 'Lartrix Admin')]),
-                            DescriptionsItem::make()->props(['label' => '技术栈'])->children(['Laravel + Vue 3']),
-                            DescriptionsItem::make()->props(['label' => '渲染引擎'])->children(['vschema-ui']),
+                            DescriptionsItem::make()->props(['label' => __t('home.project_name')])->children([config('lartrix.app_title', 'Lartrix Admin')]),
+                            DescriptionsItem::make()->props(['label' => __t('home.tech_stack')])->children(['Laravel + Vue 3']),
+                            DescriptionsItem::make()->props(['label' => __t('home.render_engine')])->children(['vschema-ui']),
                         ]),
                     ]),
                 ]),

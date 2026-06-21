@@ -95,7 +95,7 @@ class SettingController extends Controller
             }
         }
 
-        return success('更新成功');
+        return success(__t('system.settings_updated'));
     }
 
     /**
@@ -104,21 +104,21 @@ class SettingController extends Controller
     protected function formUi(): array
     {
         $schema = Card::make()
-            ->title('系统设置')
+            ->title(__t('title.system_settings'))
             ->children([
                 Form::make()
                     ->props(['model' => '{{ formData }}', 'labelPlacement' => 'left', 'labelWidth' => 120])
                     ->children([
                         FormItem::make()
-                            ->label('系统名称')
+                            ->label(__t('form.app_title'))
                             ->path('app_title')
                             ->children([
                                 Input::make()
                                     ->model('formData.app_title')
-                                    ->placeholder('请输入系统名称'),
+                                    ->placeholder(__t('placeholder.app_title')),
                             ]),
                         FormItem::make()
-                            ->label('系统副标题')
+                            ->label(__t('form.subtitle'))
                             ->path('app_subtitle')
                             ->children([
                                 Input::make()
@@ -126,20 +126,20 @@ class SettingController extends Controller
                                     ->placeholder('请输入系统副标题'),
                             ]),
                         FormItem::make()
-                            ->label('Logo 地址')
+                            ->label(__t('form.logo_url'))
                             ->path('logo')
                             ->children([
                                 Input::make()
                                     ->model('formData.logo')
-                                    ->placeholder('请输入 Logo 地址'),
+                                    ->placeholder(__t('placeholder.logo_url')),
                             ]),
                         FormItem::make()
-                            ->label('版权信息')
+                            ->label(__t('form.copyright'))
                             ->path('copyright')
                             ->children([
                                 Input::make()
                                     ->model('formData.copyright')
-                                    ->placeholder('请输入版权信息'),
+                                    ->placeholder(__t('placeholder.copyright')),
                             ]),
                         FormItem::make()
                             ->children([
@@ -147,7 +147,7 @@ class SettingController extends Controller
                                     ->children([
                                         Button::make()
                                             ->type('primary')
-                                            ->children(['保存设置'])
+                                            ->children([__t('button.save_settings')])
                                             ->on('click', [
                                                 'action' => 'request',
                                                 'url' => '/settings',
@@ -160,7 +160,7 @@ class SettingController extends Controller
                                                         ['key' => 'login.copyright', 'value' => '{{ formData.copyright }}'],
                                                     ],
                                                 ],
-                                                'successMessage' => '保存成功',
+                                                'successMessage' => __t('common.save_ok'),
                                             ]),
                                     ]),
                             ]),
@@ -169,11 +169,13 @@ class SettingController extends Controller
             ->toArray();
 
         // 将 formData 合并到 schema 的 data 中
+        $theme = \Lartrix\Models\Setting::getGroup('theme');
         $schema['data'] = [
             'formData' => [
-                'app_title' => config('lartrix.app_title', 'Lartrix Admin'),
+                'app_title' => $theme['appTitle'] ?? 'Lartrix Admin',
                 'app_subtitle' => config('lartrix.app_subtitle', 'JSON 驱动的后台管理系统'),
-                'logo' => config('lartrix.logo', '/admin/favicon.svg'),
+                'logo' => $theme['logo'] ?? '',
+                'copyright' => config('lartrix.copyright', 'Lartrix Admin'),
                 'copyright' => config('lartrix.copyright', '© ' . date('Y') . ' Lartrix Admin. All rights reserved.'),
             ],
         ];

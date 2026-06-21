@@ -37,6 +37,7 @@ class AdminUser extends Authenticatable
         'remark',
         'last_login_ip',
         'last_login_time',
+        'locale',
     ];
 
     /**

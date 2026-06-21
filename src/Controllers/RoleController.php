@@ -35,7 +35,7 @@ class RoleController extends CrudController
 
     protected function getResourceName(): string
     {
-        return '角色';
+        return __t('column.roles');
     }
 
     protected function getTable(): string
@@ -138,7 +138,7 @@ class RoleController extends CrudController
     protected function beforeDelete(mixed $model): void
     {
         if ($model->isSystemRole()) {
-            throw new \Lartrix\Exceptions\ApiException('不能删除系统内置角色', 40100);
+            throw new \Lartrix\Exceptions\ApiException(__t('role.cannot_delete_system'), 40100);
         }
     }
 
@@ -158,7 +158,7 @@ class RoleController extends CrudController
 
         $this->permissionService->syncRolePermissions($model, $validated['permissions']);
 
-        return success('权限更新成功', $model->load('permissions')->toArray());
+        return success(__t('permission.updated'), $model->load('permissions')->toArray());
     }
 
     // ==================== UI Schema ====================
@@ -183,31 +183,31 @@ class RoleController extends CrudController
         // 角色表单
         $roleForm = OptForm::make('formData')
             ->fields([
-                ['角色标识', 'name', Input::make()->props(['placeholder' => '请输入角色标识（英文）', 'disabled' => '{{ !!editingId }}'])],
-                ['角色名称', 'title', Input::make()->props(['placeholder' => '请输入角色名称'])],
-                ['描述', 'description', Input::make()->props(['type' => 'textarea', 'placeholder' => '请输入角色描述'])],
-                ['权限', 'permissions', $permissionTree, []],
-                ['状态', 'status', SwitchC::make(), true],
+                [__t('form.name'), 'name', Input::make()->props(['placeholder' => __t('placeholder.role_name'), 'disabled' => '{{ !!editingId }}'])],
+                [__t('form.title'), 'title', Input::make()->props(['placeholder' => __t('placeholder.role_title')])],
+                [__t('column.description'), 'description', Input::make()->props(['type' => 'textarea', 'placeholder' => '请输入角色描述'])],
+                [__t('column.permissions'), 'permissions', $permissionTree, []],
+                [__t('column.status'), 'status', SwitchC::make(), true],
             ])
             ->buttons([
-                Button::make()->on('click', SetAction::make('formVisible', false))->text('取消'),
-                Button::make()->type('primary')->props(['loading' => '{{ submitting }}'])->on('click', ['call' => 'handleSubmit'])->text('确定'),
+                Button::make()->on('click', SetAction::make('formVisible', false))->text(__t('button.cancel')),
+                Button::make()->type('primary')->props(['loading' => '{{ submitting }}'])->on('click', ['call' => 'handleSubmit'])->text(__t('button.confirm')),
             ]);
 
-        $schema = CrudPage::make('角色管理')
+        $schema = CrudPage::make(__t('title.role_manage'))
             ->apiPrefix('/roles')
             ->columns($this->getTableColumns())
             ->scrollX(1000)
             ->pagination(false)
             ->search([
-                ['关键词', 'keyword', Input::make()->props(['placeholder' => '角色标识/名称', 'clearable' => true])],
-                ['状态', 'status', Select::make()->props([
-                    'placeholder' => '全部',
+                ['关键词', 'keyword', Input::make()->props(['placeholder' => __t('placeholder.keyword_role'), 'clearable' => true])],
+                [__t('column.status'), 'status', Select::make()->props([
+                    'placeholder' => __t('role.filter_all'),
                     'clearable' => true,
                     'style' => ['width' => '120px'],
                     'options' => [
-                        ['label' => '启用', 'value' => true],
-                        ['label' => '禁用', 'value' => false],
+                        ['label' => __t('tag.enabled'), 'value' => true],
+                        ['label' => __t('tag.disabled'), 'value' => false],
                     ],
                 ])],
             ])
@@ -225,7 +225,7 @@ class RoleController extends CrudController
                             'formVisible' => true,
                         ]),
                     ])
-                    ->text('新增'),
+                    ->text(__t('button.create')),
             ])
             ->data([
                 'formData' => $roleForm->getDefaultData(),
@@ -241,7 +241,7 @@ class RoleController extends CrudController
                                 ->put()
                                 ->body('{{ formData }}')
                                 ->then([
-                                    CallAction::make('$message.success', ['更新成功']),
+                                    CallAction::make('$message.success', [__t('crud.updated')]),
                                     SetAction::make('formVisible', false),
                                     CallAction::make('loadData'),
                                 ])
@@ -257,7 +257,7 @@ class RoleController extends CrudController
                                 ->post()
                                 ->body('{{ formData }}')
                                 ->then([
-                                    CallAction::make('$message.success', ['创建成功']),
+                                    CallAction::make('$message.success', [__t('crud.created')]),
                                     SetAction::make('formVisible', false),
                                     CallAction::make('loadData'),
                                 ])
@@ -282,26 +282,26 @@ class RoleController extends CrudController
     {
         return [
             ['key' => 'id', 'title' => 'ID', 'width' => 80],
-            ['key' => 'name', 'title' => '角色标识'],
-            ['key' => 'title', 'title' => '角色名称'],
-            ['key' => 'description', 'title' => '描述'],
-            ['key' => 'status', 'title' => '状态', 'width' => 80, 'slot' => [
+            ['key' => 'name', 'title' => __t('form.name')],
+            ['key' => 'title', 'title' => __t('form.title')],
+            ['key' => 'description', 'title' => __t('column.description')],
+            ['key' => 'status', 'title' => __t('column.status'), 'width' => 80, 'slot' => [
                 Tag::make()
                     ->props([
                         'type' => "{{ slotData.row.status ? 'success' : 'error' }}",
                         'size' => 'small',
                     ])
-                    ->children(["{{ slotData.row.status ? '启用' : '禁用' }}"]),
+                    ->children(["{{ slotData.row.status ? __t('tag.enabled') : __t('tag.disabled') }}"]),
             ]],
-            ['key' => 'is_system', 'title' => '系统角色', 'width' => 100, 'slot' => [
+            ['key' => 'is_system', 'title' => __t('column.is_system'), 'width' => 100, 'slot' => [
                 Tag::make()
                     ->props([
                         'type' => "{{ slotData.row.is_system ? 'warning' : 'default' }}",
                         'size' => 'small',
                     ])
-                    ->children(["{{ slotData.row.is_system ? '是' : '否' }}"]),
+                    ->children(["{{ slotData.row.is_system ? __t('tag.yes') : __t('tag.no') }}"]),
             ]],
-            ['key' => 'actions', 'title' => '操作', 'width' => 150, 'fixed' => 'right', 'slot' => [
+            ['key' => 'actions', 'title' => __t('column.actions'), 'width' => 150, 'fixed' => 'right', 'slot' => [
                 Space::make()->children([
                     Button::make()
                         ->size('small')
@@ -315,18 +315,18 @@ class RoleController extends CrudController
                             SetAction::make('formData.status', '{{ slotData.row.status }}'),
                             SetAction::make('formVisible', true),
                         ])
-                        ->text('编辑'),
+                        ->text(__t('button.edit')),
                     Popconfirm::make()
                         ->if('!slotData.row.is_system')
                         ->props([
-                            'positiveText' => '确定',
-                            'negativeText' => '取消',
+                            'positiveText' => __t('button.confirm'),
+                            'negativeText' => __t('button.cancel'),
                         ])
                         ->on('positive-click',
                             FetchAction::make('/roles/{{ slotData.row.id }}')
                                 ->delete()
                                 ->then([
-                                    CallAction::make('$message.success', ['删除成功']),
+                                    CallAction::make('$message.success', [__t('crud.deleted')]),
                                     CallAction::make('loadData'),
                                 ])
                                 ->catch([
@@ -337,9 +337,9 @@ class RoleController extends CrudController
                             Button::make()
                                 ->size('small')
                                 ->props(['type' => 'error', 'text' => true])
-                                ->text('删除'),
+                                ->text(__t('button.delete')),
                         ])
-                        ->children(['确定要删除该角色吗？']),
+                        ->children([__t('confirm.delete_role')]),
                 ]),
             ]],
         ];

@@ -8,6 +8,7 @@ use Lartrix\Services\DataDictService;
 use Lartrix\Services\ModuleService;
 use Lartrix\Services\PermissionService;
 use Lartrix\Services\RealtimeService;
+use Lartrix\Services\TranslationService;
 
 class LartrixServiceProvider extends ServiceProvider
 {
@@ -25,6 +26,7 @@ class LartrixServiceProvider extends ServiceProvider
         $this->app->singleton(ModuleService::class);
         $this->app->singleton(PermissionService::class);
         $this->app->singleton(RealtimeService::class);
+        $this->app->singleton(TranslationService::class);
     }
 
     /**
@@ -32,10 +34,18 @@ class LartrixServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // 加载语言包
+        $this->loadTranslationsFrom(__DIR__ . '/../lang', 'lartrix');
+
         // 发布配置文件
         $this->publishes([
             __DIR__ . '/../config/lartrix.php' => config_path('lartrix.php'),
         ], 'lartrix-config');
+
+        // 发布语言文件
+        $this->publishes([
+            __DIR__ . '/../lang' => lang_path('vendor/lartrix'),
+        ], 'lartrix-translations');
 
         // 发布前端资源到 public/admin 目录
         $this->publishes([

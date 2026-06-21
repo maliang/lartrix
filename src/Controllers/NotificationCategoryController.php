@@ -29,7 +29,7 @@ class NotificationCategoryController extends CrudController
      */
     protected function getResourceName(): string
     {
-        return '通知分类';
+        return __t('notification.category_resource');
     }
 
     /**
@@ -114,11 +114,11 @@ class NotificationCategoryController extends CrudController
         $form = OptForm::make('formData')
             ->labelWidth(80)
             ->fields([
-                ['分类名称', 'name', Input::make()->props(['placeholder' => '请输入分类名称', 'clearable' => true])],
-                ['分类标识', 'key', Input::make()->props(['placeholder' => '请输入分类标识 (如：system)', 'clearable' => true])],
-                ['图标', 'icon', Input::make()->props(['placeholder' => '请输入图标 (如：ph:bell)', 'clearable' => true])],
-                ['颜色', 'color', Input::make()->props(['placeholder' => '请输入颜色 (如：#18a058)', 'type' => 'color']), '#18a058'],
-                ['消息类型', 'message_types', Select::make()->props([
+                [__t('column.name'), 'name', Input::make()->props(['placeholder' => '请输入分类名称', 'clearable' => true])],
+                [__t('column.code'), 'key', Input::make()->props(['placeholder' => '请输入分类标识 (如：system)', 'clearable' => true])],
+                [__t('form.icon'), 'icon', Input::make()->props(['placeholder' => '请输入图标 (如：ph:bell)', 'clearable' => true])],
+                [__t('column.color'), 'color', Input::make()->props(['placeholder' => '请输入颜色 (如：#18a058)', 'type' => 'color']), '#18a058'],
+                [__t('column.type'), 'message_types', Select::make()->props([
                     'placeholder' => '请选择消息类型',
                     'multiple' => true,
                     'options' => [
@@ -128,51 +128,51 @@ class NotificationCategoryController extends CrudController
                         ['label' => '待办', 'value' => 'todo'],
                     ],
                 ]), ['system']],
-                ['所属后台', 'guard_name', Select::make()->props([
+                [__t('column.module'), 'guard_name', Select::make()->props([
                     'placeholder' => '请选择所属后台',
                     'options' => [
-                        ['label' => '主后台', 'value' => 'admin'],
-                        ['label' => '商户后台', 'value' => 'merchant'],
-                        ['label' => '供应商后台', 'value' => 'vendor'],
-                        ['label' => '代理商后台', 'value' => 'agent'],
+                        ['label' => __t('admin.main_backend'), 'value' => 'admin'],
+                        ['label' => __t('admin.opt_merchant'), 'value' => 'merchant'],
+                        ['label' => __t('admin.opt_vendor'), 'value' => 'vendor'],
+                        ['label' => __t('admin.opt_agent'), 'value' => 'agent'],
                     ],
                 ]), 'admin'],
-                ['排序', 'sort', Input::make()->props(['placeholder' => '请输入排序', 'type' => 'number']), 0],
-                ['是否启用', 'enabled', SwitchC::make(), true],
+                [__t('column.sort'), 'sort', Input::make()->props(['placeholder' => '请输入排序', 'type' => 'number']), 0],
+                [__t('form.is_enabled'), 'enabled', SwitchC::make(), true],
             ])
             ->buttons([
-                Button::make()->on('click', SetAction::make('formVisible', false))->text('取消'),
-                Button::make()->type('primary')->on('click', ['call' => 'handleSubmit'])->text('确定'),
+                Button::make()->on('click', SetAction::make('formVisible', false))->text(__t('button.cancel')),
+                Button::make()->type('primary')->on('click', ['call' => 'handleSubmit'])->text(__t('button.confirm')),
             ]);
 
-        $schema = CrudPage::make('通知分类管理')
+        $schema = CrudPage::make(__t('title.notification_category'))
             ->apiPrefix('/notification-categories')
             ->columns([
                 ['key' => 'id', 'title' => 'ID', 'width' => 80],
-                ['key' => 'name', 'title' => '分类名称'],
-                ['key' => 'message_types', 'title' => '消息类型', 'slot' => [
+                ['key' => 'name', 'title' => __t('column.name')],
+                ['key' => 'message_types', 'title' => __t('column.type'), 'slot' => [
                     Tag::make()->props(['size' => 'small'])->children('{{ (slotData.row.messageTypes || []).join(", ") }}'),
                 ]],
                 ['key' => 'key', 'title' => '标识'],
-                ['key' => 'icon', 'title' => '图标', 'width' => 100, 'slot' => [
+                ['key' => 'icon', 'title' => __t('form.icon'), 'width' => 100, 'slot' => [
                     Icon::make('{{ slotData.row.icon }}')->size(20),
                 ]],
-                ['key' => 'color', 'title' => '颜色', 'width' => 100, 'slot' => [
+                ['key' => 'color', 'title' => __t('column.color'), 'width' => 100, 'slot' => [
                     Tag::make()->props(['style' => 'background-color: {{ slotData.row.color }};color:#fff'])->children('{{ slotData.row.color }}'),
                 ]],
-                ['key' => 'guard_name', 'title' => '所属后台'],
-                ['key' => 'enabled', 'title' => '状态', 'slot' => [
+                ['key' => 'guard_name', 'title' => __t('column.module')],
+                ['key' => 'enabled', 'title' => __t('column.status'), 'slot' => [
                     SwitchC::make()
                         ->props(['value' => '{{ slotData.row.enabled }}'])
                         ->on('update:value',
                             FetchAction::make('/notification-categories/{{ slotData.row.id }}')
                                 ->put()
                                 ->body(['action_type' => 'status', 'enabled' => '{{ $event }}'])
-                                ->then([CallAction::make('$message.success', ['更新成功'])])
+                                ->then([CallAction::make('$message.success', [__t('crud.updated')])])
                         ),
                 ]],
-                ['key' => 'sort', 'title' => '排序', 'width' => 100],
-                ['key' => 'actions', 'title' => '操作', 'width' => 150, 'fixed' => 'right', 'slot' => [
+                ['key' => 'sort', 'title' => __t('column.sort'), 'width' => 100],
+                ['key' => 'actions', 'title' => __t('column.actions'), 'width' => 150, 'fixed' => 'right', 'slot' => [
                     Space::make()->children([
                         Button::make()
                             ->size('small')
@@ -182,17 +182,17 @@ class NotificationCategoryController extends CrudController
                                 SetAction::make('editingId', '{{ slotData.row.id }}'),
                                 SetAction::make('formVisible', true),
                             ])
-                            ->text('编辑'),
+                            ->text(__t('button.edit')),
                         Popconfirm::make()
                             ->props([
-                                'positiveText' => '确定',
-                                'negativeText' => '取消',
+                                'positiveText' => __t('button.confirm'),
+                                'negativeText' => __t('button.cancel'),
                             ])
                             ->on('positive-click',
                                 FetchAction::make('/notification-categories/{{ slotData.row.id }}')
                                     ->delete()
                                     ->then([
-                                        CallAction::make('$message.success', ['删除成功']),
+                                        CallAction::make('$message.success', [__t('crud.deleted')]),
                                         CallAction::make('loadData'),
                                     ])
                                     ->catch([
@@ -203,9 +203,9 @@ class NotificationCategoryController extends CrudController
                                 Button::make()
                                     ->size('small')
                                     ->props(['type' => 'error', 'text' => true])
-                                    ->text('删除'),
+                                    ->text(__t('button.delete')),
                             ])
-                            ->children('确定要删除此分类吗？'),
+                            ->children(__t('confirm.delete_notification_category')),
                     ]),
                 ]],
             ])
@@ -220,7 +220,7 @@ class NotificationCategoryController extends CrudController
                         SetAction::make('editingId', null),
                         SetAction::make('formVisible', true),
                     ])
-                    ->text('新增分类'),
+                    ->text(__t('button.create')),
             ])
             ->data([
                 'formData' => $form->getDefaultData(),
@@ -233,7 +233,7 @@ class NotificationCategoryController extends CrudController
                             ->put()
                             ->body('{{ formData }}')
                             ->then([
-                                CallAction::make('$message.success', ['更新成功']),
+                                CallAction::make('$message.success', [__t('crud.updated')]),
                                 SetAction::make('formVisible', false),
                                 CallAction::make('loadData'),
                             ]),
@@ -242,7 +242,7 @@ class NotificationCategoryController extends CrudController
                             ->post()
                             ->body('{{ formData }}')
                             ->then([
-                                CallAction::make('$message.success', ['创建成功']),
+                                CallAction::make('$message.success', [__t('crud.created')]),
                                 SetAction::make('formVisible', false),
                                 CallAction::make('loadData'),
                             ]),
@@ -263,6 +263,6 @@ class NotificationCategoryController extends CrudController
         $category->enabled = $request->boolean('enabled');
         $category->save();
 
-        return success('状态更新成功', ['enabled' => $category->enabled]);
+        return success(__t('crud.status_updated'), ['enabled' => $category->enabled]);
     }
 }

@@ -31,7 +31,7 @@ class MenuController extends CrudController
 
     protected function getResourceName(): string
     {
-        return '菜单';
+        return __t('menu.resource_name');
     }
 
     protected function getTable(): string
@@ -131,7 +131,7 @@ class MenuController extends CrudController
 
         // 防止设置自己为父级
         if (isset($validated['parent_id']) && $validated['parent_id'] == $id) {
-            throw new \Lartrix\Exceptions\ApiException('不能将自己设为父级菜单', 40022);
+            throw new \Lartrix\Exceptions\ApiException(__t('menu.cannot_parent_self'), 40022);
         }
 
         return $validated;
@@ -140,7 +140,7 @@ class MenuController extends CrudController
     protected function beforeDelete(mixed $model): void
     {
         if ($model->children()->exists()) {
-            throw new \Lartrix\Exceptions\ApiException('请先删除子菜单', 40022);
+            throw new \Lartrix\Exceptions\ApiException(__t('menu.delete_children_first'), 40022);
         }
     }
 
@@ -211,7 +211,7 @@ class MenuController extends CrudController
             ]);
         }
 
-        return success('排序成功');
+        return success(__t('crud.sorted'));
     }
 
     // ==================== UI Schema ====================
@@ -221,49 +221,49 @@ class MenuController extends CrudController
         // 菜单表单
         $menuForm = OptForm::make('formData')
             ->fields([
-                ['父级菜单', 'parent_id', TreeSelect::make()->props([
-                    'placeholder' => '无（顶级菜单）',
+                [__t('form.parent_id'), 'parent_id', TreeSelect::make()->props([
+                    'placeholder' => __t('placeholder.parent'),
                     'clearable' => true,
                     'options' => '{{ menuTreeOptions }}',
                     'keyField' => 'id',
                     'labelField' => 'title',
                     'childrenField' => 'children',
                 ])],
-                ['菜单名称', 'name', Input::make()->props(['placeholder' => '路由名称（英文）'])],
-                ['菜单标题', 'title', Input::make()->props(['placeholder' => '显示的菜单标题'])],
-                ['路由路径', 'path', Input::make()->props(['placeholder' => '如：/user'])],
-                ['图标', 'icon', Input::make()->props(['placeholder' => '如：mdi:account'])],
-                ['重定向', 'redirect', Input::make()->props(['placeholder' => '重定向路径'])],
-                ['排序', 'order', InputNumber::make()->props(['min' => 0]), 0],
-                ['布局类型', 'layout_type', Select::make()->props([
+                [__t('column.name'), 'name', Input::make()->props(['placeholder' => __t('placeholder.name')])],
+                [__t('form.title'), 'title', Input::make()->props(['placeholder' => __t('placeholder.title')])],
+                [__t('form.path'), 'path', Input::make()->props(['placeholder' => __t('placeholder.path_example')])],
+                [__t('form.icon'), 'icon', Input::make()->props(['placeholder' => __t('placeholder.icon_example')])],
+                [__t('form.redirect'), 'redirect', Input::make()->props(['placeholder' => __t('placeholder.redirect')])],
+                [__t('column.sort'), 'order', InputNumber::make()->props(['min' => 0]), 0],
+                [__t('form.layout_type'), 'layout_type', Select::make()->props([
                     'clearable' => true,
                     'options' => [
-                        ['label' => '普通布局', 'value' => 'normal'],
-                        ['label' => '空白布局', 'value' => 'blank'],
+                        ['label' => __t('title.normal_layout'), 'value' => 'normal'],
+                        ['label' => __t('title.blank_layout'), 'value' => 'blank'],
                     ],
                 ])],
-                ['打开方式', 'open_type', Select::make()->props([
+                [__t('form.open_type'), 'open_type', Select::make()->props([
                     'clearable' => true,
                     'options' => [
-                        ['label' => '正常打开', 'value' => 'normal'],
+                        ['label' => __t('title.normal_open'), 'value' => 'normal'],
                         ['label' => 'iframe 嵌入', 'value' => 'iframe'],
-                        ['label' => '新窗口打开', 'value' => 'newWindow'],
+                        ['label' => __t('title.new_window'), 'value' => 'newWindow'],
                     ],
                 ])],
-                ['外链地址', 'href', Input::make()->props(['placeholder' => '外部链接地址']), '', "formData.open_type === 'iframe' || formData.open_type === 'newWindow'"],
-                ['使用 JSON 渲染', 'use_json_renderer', SwitchC::make(), false],
+                [__t('form.href'), 'href', Input::make()->props(['placeholder' => __t('placeholder.href')]), '', "formData.open_type === 'iframe' || formData.open_type === 'newWindow'"],
+                [__t('form.use_json_renderer'), 'use_json_renderer', SwitchC::make(), false],
                 ['Schema 来源', 'schema_source', Input::make()->props(['placeholder' => 'API 地址或静态文件路径']), '', 'formData.use_json_renderer'],
-                ['隐藏菜单', 'hide_in_menu', SwitchC::make(), false],
+                [__t('form.hide_in_menu'), 'hide_in_menu', SwitchC::make(), false],
                 ['缓存页面', 'keep_alive', SwitchC::make(), false],
-                ['需要认证', 'requires_auth', SwitchC::make(), true],
-                ['登录后默认页', 'is_default_after_login', SwitchC::make(), false],
+                [__t('form.requires_auth'), 'requires_auth', SwitchC::make(), true],
+                [__t('form.is_default_after_login'), 'is_default_after_login', SwitchC::make(), false],
             ])
             ->buttons([
-                Button::make()->on('click', SetAction::make('formVisible', false))->text('取消'),
-                Button::make()->type('primary')->props(['loading' => '{{ submitting }}'])->on('click', ['call' => 'handleSubmit'])->text('确定'),
+                Button::make()->on('click', SetAction::make('formVisible', false))->text(__t('button.cancel')),
+                Button::make()->type('primary')->props(['loading' => '{{ submitting }}'])->on('click', ['call' => 'handleSubmit'])->text(__t('button.confirm')),
             ]);
 
-        $schema = CrudPage::make('菜单管理')
+        $schema = CrudPage::make(__t('title.menu_manage'))
             ->apiPrefix('/menus')
             ->apiParams(['action_type' => 'all'])
             ->columns($this->getTableColumns())
@@ -281,7 +281,7 @@ class MenuController extends CrudController
                         ]),
                         CallAction::make('loadMenuTree'),
                     ])
-                    ->text('新增'),
+                    ->text(__t('button.create')),
                 'expandAll',
                 'collapseAll',
             ])
@@ -307,7 +307,7 @@ class MenuController extends CrudController
                                 ->put()
                                 ->body('{{ formData }}')
                                 ->then([
-                                    CallAction::make('$message.success', ['更新成功']),
+                                    CallAction::make('$message.success', [__t('crud.updated')]),
                                     SetAction::make('formVisible', false),
                                     CallAction::make('loadData'),
                                 ])
@@ -323,7 +323,7 @@ class MenuController extends CrudController
                                 ->post()
                                 ->body('{{ formData }}')
                                 ->then([
-                                    CallAction::make('$message.success', ['创建成功']),
+                                    CallAction::make('$message.success', [__t('crud.created')]),
                                     SetAction::make('formVisible', false),
                                     CallAction::make('loadData'),
                                 ])
@@ -361,20 +361,20 @@ class MenuController extends CrudController
     {
         return [
             ['key' => 'id', 'title' => 'ID', 'width' => 80],
-            ['key' => 'title', 'title' => '菜单标题'],
-            ['key' => 'name', 'title' => '路由名称'],
-            ['key' => 'path', 'title' => '路由路径'],
-            ['key' => 'icon', 'title' => '图标'],
-            ['key' => 'order', 'title' => '排序', 'width' => 80],
-            ['key' => 'hide_in_menu', 'title' => '隐藏', 'width' => 80, 'slot' => [
+            ['key' => 'title', 'title' => __t('form.title')],
+            ['key' => 'name', 'title' => __t('form.name')],
+            ['key' => 'path', 'title' => __t('form.path')],
+            ['key' => 'icon', 'title' => __t('form.icon')],
+            ['key' => 'order', 'title' => __t('column.sort'), 'width' => 80],
+            ['key' => 'hide_in_menu', 'title' => __t('column.hide_in_menu'), 'width' => 80, 'slot' => [
                 Tag::make()
                     ->props([
                         'type' => "{{ slotData.row.hide_in_menu ? 'warning' : 'success' }}",
                         'size' => 'small',
                     ])
-                    ->children(["{{ slotData.row.hide_in_menu ? '是' : '否' }}"]),
+                    ->children(["{{ slotData.row.hide_in_menu ? __t('tag.yes') : __t('tag.no') }}"]),
             ]],
-            ['key' => 'actions', 'title' => '操作', 'width' => 200, 'fixed' => 'right', 'slot' => [
+            ['key' => 'actions', 'title' => __t('column.actions'), 'width' => 200, 'fixed' => 'right', 'slot' => [
                 Space::make()->children([
                     Button::make()
                         ->size('small')
@@ -400,22 +400,22 @@ class MenuController extends CrudController
                             SetAction::make('formVisible', true),
                             CallAction::make('loadMenuTree'),
                         ])
-                        ->text('编辑'),
+                        ->text(__t('button.edit')),
                     Button::make()
                         ->size('small')
                         ->props(['type' => 'success', 'text' => true])
                         ->on('click', ['call' => 'handleAddChild', 'args' => ['{{ slotData.row }}']])
-                        ->text('添加子菜单'),
+                        ->text(__t('button.add_child_menu')),
                     Popconfirm::make()
                         ->props([
-                            'positiveText' => '确定',
-                            'negativeText' => '取消',
+                            'positiveText' => __t('button.confirm'),
+                            'negativeText' => __t('button.cancel'),
                         ])
                         ->on('positive-click',
                             FetchAction::make('/menus/{{ slotData.row.id }}')
                                 ->delete()
                                 ->then([
-                                    CallAction::make('$message.success', ['删除成功']),
+                                    CallAction::make('$message.success', [__t('crud.deleted')]),
                                     CallAction::make('loadData'),
                                 ])
                                 ->catch([
@@ -426,9 +426,9 @@ class MenuController extends CrudController
                             Button::make()
                                 ->size('small')
                                 ->props(['type' => 'error', 'text' => true])
-                                ->text('删除'),
+                                ->text(__t('button.delete')),
                         ])
-                        ->children(['确定要删除该菜单吗？']),
+                        ->children([__t('confirm.delete_menu')]),
                 ]),
             ]],
         ];

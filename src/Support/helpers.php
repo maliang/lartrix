@@ -42,3 +42,29 @@ if (!function_exists('error')) {
         throw new ApiException($msg, $data, $code);
     }
 }
+
+if (!function_exists('__t')) {
+    /**
+     * 语言翻译辅助函数
+     *
+     * 封装 Laravel 的 __() 函数，支持 lartrix 命名空间。
+     * 如果 key 以 'lartrix.' 开头，自动添加命名空间前缀。
+     * 支持参数替换：__t('auth.login_ok')、__t('welcome :name', ['name' => '张三'])
+     *
+     * @param string $key     翻译键名（可使用 'lartrix.auth.login_ok' 或 'auth.login_ok'）
+     * @param array  $replace 替换参数
+     * @return string
+     */
+    function __t(string $key, array $replace = []): string
+    {
+        // 如果 key 不包含命名空间前缀，自动添加 lartrix.
+        if (!str_contains($key, '.')) {
+            $key = 'lartrix.' . $key;
+        } elseif (!str_starts_with($key, 'lartrix.') && !str_contains($key, '::')) {
+            // 如果有点号但不是 lartrix. 开头，也不是 :: 格式，则添加 lartrix. 前缀
+            $key = 'lartrix.' . $key;
+        }
+
+        return __($key, $replace);
+    }
+}

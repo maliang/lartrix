@@ -29,7 +29,7 @@ abstract class CrudController extends Controller
      */
     protected function getResourceName(): string
     {
-        return '记录';
+        return __t('crud.resource_name');
     }
 
     /**
@@ -93,7 +93,7 @@ abstract class CrudController extends Controller
      */
     protected function getExportFilenamePrefix(): string
     {
-        return '导出数据';
+        return __t('crud.export_prefix');
     }
 
     // ==================== 路由方法 ====================
@@ -123,7 +123,7 @@ abstract class CrudController extends Controller
         $model = $this->performStore($validated);
         $this->afterStore($model, $validated);
 
-        return success('创建成功', $model->load($this->getShowWith())->toArray());
+        return success(__t('crud.created'), $model->load($this->getShowWith())->toArray());
     }
 
     /**
@@ -292,7 +292,7 @@ abstract class CrudController extends Controller
         
         $this->afterUpdate($model, $validated);
 
-        return success('更新成功', $model->load($this->getShowWith())->toArray());
+        return success(__t('crud.updated'), $model->load($this->getShowWith())->toArray());
     }
 
     /**
@@ -343,7 +343,7 @@ abstract class CrudController extends Controller
 
         $this->afterStatusUpdate($model, $validated['status']);
 
-        return success('状态更新成功', ['status' => $model->status]);
+        return success(__t('crud.status_updated'), ['status' => $model->status]);
     }
 
     /**
@@ -367,7 +367,7 @@ abstract class CrudController extends Controller
         $model->delete();
         $this->afterDelete($model);
 
-        return success('删除成功');
+        return success(__t('crud.deleted'));
     }
 
     /**
@@ -397,7 +397,7 @@ abstract class CrudController extends Controller
             $this->afterDelete($model);
         }
 
-        return success('批量删除成功', ['deleted' => $deleted]);
+        return success(__t('crud.batch_deleted'), ['deleted' => $deleted]);
     }
 
     /**

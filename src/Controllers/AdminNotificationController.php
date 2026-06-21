@@ -62,7 +62,7 @@ class AdminNotificationController extends Controller
             $created[] = $guard;
         }
 
-        return success("通知已发送至：" . implode(', ', $created), [
+        return success(__t('notification.sent') . '：' . implode(', ', $created), [
             'guards' => $created,
             'count' => count($created),
         ]);
@@ -111,8 +111,8 @@ class AdminNotificationController extends Controller
 
         // 添加默认的二级后台选项
         $defaultGuards = [
-            ['label' => '商户后台', 'value' => 'merchant'],
-            ['label' => '供应商后台', 'value' => 'vendor'],
+            ['label' => __t('admin.opt_merchant'), 'value' => 'merchant'],
+            ['label' => __t('admin.opt_vendor'), 'value' => 'vendor'],
         ];
 
         $existingValues = array_column($guards, 'value');
@@ -154,10 +154,10 @@ class AdminNotificationController extends Controller
     protected function getGuardLabel(string $guard): string
     {
         $labels = [
-            'admin' => '主后台',
-            'merchant' => '商户后台',
-            'vendor' => '供应商后台',
-            'agent' => '代理商后台',
+            'admin' => __t('admin.main_backend'),
+            'merchant' => __t('admin.opt_merchant'),
+            'vendor' => __t('admin.opt_vendor'),
+            'agent' => __t('admin.opt_agent'),
         ];
 
         return $labels[$guard] ?? ucfirst($guard);

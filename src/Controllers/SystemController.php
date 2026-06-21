@@ -26,6 +26,7 @@ use Lartrix\Schema\Components\Common\ThemeButton;
 use Lartrix\Schema\Components\Common\UserAvatar;
 use Lartrix\Schema\Components\Common\HeaderNotification;
 use Lartrix\Schema\Components\Common\HeaderCustomItem;
+use Lartrix\Services\TranslationService;
 
 class SystemController extends Controller
 {
@@ -60,11 +61,27 @@ class SystemController extends Controller
      */
     protected function getEntryConfig(): array
     {
+        $theme = $this->getThemeSettings();
         return [
             'apiPrefix' => '/' . ltrim(config('lartrix.api_prefix', 'api/admin'), '/'),
-            'appTitle' => config('lartrix.app_title', 'Lartrix Admin'),
-            'logo' => config('lartrix.logo'),
+            'appTitle' => $theme['appTitle'] ?? 'Lartrix Admin',
+            'logo' => $theme['logo'] ?? '',
+            'locale' => config('lartrix.locale', 'zh-CN'),
+            'fallbackLocale' => config('lartrix.fallback_locale', 'en-US'),
         ];
+    }
+
+    /**
+     * 获取完整主题配置（DB + 默认值合并）
+     */
+    protected function getThemeSettings(): array
+    {
+        $settingModel = $this->getSettingModel();
+        $themeConfig = $settingModel::getGroup('theme');
+        if (empty($themeConfig)) {
+            $themeConfig = $this->getDefaultThemeConfig();
+        }
+        return $themeConfig;
     }
 
     /**
@@ -73,7 +90,7 @@ class SystemController extends Controller
     protected function getNotificationTabs(): array
     {
         return [
-            ['key' => 'all', 'label' => '全部', 'icon' => 'ph:bell', 'types' => []],
+            ['key' => 'all', 'label' => __t('role.filter_all'), 'icon' => 'ph:bell', 'types' => []],
             ['key' => 'system', 'label' => '系统', 'icon' => 'ph:gear', 'types' => ['system']],
             ['key' => 'notice', 'label' => '通知', 'icon' => 'ph:bell', 'types' => ['notice']],
             ['key' => 'message', 'label' => '消息', 'icon' => 'ph:chat-circle', 'types' => ['message']],
@@ -95,7 +112,8 @@ class SystemController extends Controller
      */
     public function loginPage(): array
     {
-        $appTitle = config('lartrix.app_title', 'Lartrix Admin');
+        $theme = $this->getThemeSettings();
+        $appTitle = $theme['appTitle'] ?? 'Lartrix Admin';
         $appSubtitle = 'JSON 驱动的后台管理系统';
         $copyright = config('lartrix.copyright', 'Lartrix Admin');
 
@@ -164,16 +182,16 @@ class SystemController extends Controller
             'countdown' => 0,
             'rules' => [
                 'username' => [
-                    ['required' => true, 'message' => '请输入用户名', 'trigger' => 'blur'],
+                    ['required' => true, 'message' => __t('placeholder.username'), 'trigger' => 'blur'],
                 ],
                 'password' => [
-                    ['required' => true, 'message' => '请输入密码', 'trigger' => 'blur'],
+                    ['required' => true, 'message' => __t('placeholder.password'), 'trigger' => 'blur'],
                     ['min' => 6, 'message' => '密码长度不能少于6位', 'trigger' => 'blur'],
                 ],
             ],
             'resetRules' => [
                 'phone' => [
-                    ['required' => true, 'message' => '请输入手机号', 'trigger' => 'blur'],
+                    ['required' => true, 'message' => __t('placeholder.phone'), 'trigger' => 'blur'],
                     ['pattern' => '^1[3-9]\\d{9}$', 'message' => '请输入正确的手机号', 'trigger' => 'blur'],
                 ],
                 'code' => [
@@ -313,7 +331,7 @@ class SystemController extends Controller
             ->props(['style' => ['marginBottom' => '32px', 'gap' => '12px']])
             ->children([
                 Html::make('img')
-                    ->props(['src' => config('lartrix.logo'), 'style' => ['width' => '48px', 'height' => '48px']]),
+                    ->props(['src' => $theme['logo'] ?? '', 'style' => ['width' => '48px', 'height' => '48px']]),
                 Flex::make()
                     ->vertical()
                     ->props(['style' => ['gap' => '2px']])
@@ -349,7 +367,7 @@ class SystemController extends Controller
                             ->children([
                                 Input::make()
                                     ->model('form.username')
-                                    ->placeholder('用户名')
+                                    ->placeholder(__t('column.username'))
                                     ->size('large')
                                     ->clearable()
                                     ->slot('prefix', [
@@ -364,7 +382,7 @@ class SystemController extends Controller
                                 Input::make()
                                     ->model('form.password')
                                     ->type('password')
-                                    ->placeholder('密码')
+                                    ->placeholder(__t('form.password'))
                                     ->size('large')
                                     ->showPasswordOn('click')
                                     ->clearable()
@@ -381,7 +399,7 @@ class SystemController extends Controller
                             ->children([
                                 Checkbox::make()
                                     ->props(['model:checked' => 'rememberMe'])
-                                    ->children(['记住我']),
+                                    ->children([__t('system.remember_me')]),
                                 Button::make()
                                     ->props(['text' => true, 'type' => 'primary'])
                                     ->on('click', ['set' => 'mode', 'value' => 'reset'])
@@ -398,7 +416,7 @@ class SystemController extends Controller
                                 'style' => ['height' => '44px', 'fontSize' => '16px'],
                             ])
                             ->on('click', ['script' => 'state.loading = true; try { await $methods.login(state.form.username, state.form.password); } finally { state.loading = false; }'])
-                            ->text('登 录'),
+                            ->text(__t('menu.login')),
                     ])
             ]);
     }
@@ -427,7 +445,7 @@ class SystemController extends Controller
                         Text::make()
                             ->strong()
                             ->props(['style' => ['fontSize' => '18px', 'marginLeft' => '12px']])
-                            ->children(['重置密码']),
+                            ->children([__t('button.reset_password')]),
                     ]),
                 // 重置密码表单
                 Form::make()
@@ -441,7 +459,7 @@ class SystemController extends Controller
                             ->children([
                                 Input::make()
                                     ->model('resetForm.phone')
-                                    ->placeholder('手机号')
+                                    ->placeholder(__t('column.phone'))
                                     ->size('large')
                                     ->clearable()
                                     ->maxlength(11)
@@ -475,9 +493,9 @@ class SystemController extends Controller
                                                 'style' => ['width' => '120px'],
                                             ])
                                             ->on('click', [
-                                                'script' => "if (!/^1[3-9]\\d{9}\$/.test(state.resetForm.phone)) { window.\$message?.warning('请输入正确的手机号'); return; } state.countdown = 60; const timer = setInterval(() => { state.countdown--; if (state.countdown <= 0) clearInterval(timer); }, 1000); window.\$message?.success('验证码已发送');",
+                                                'script' => "if (!/^1[3-9]\\d{9}\$/.test(state.resetForm.phone)) { window.\$message?.warning('请输入正确的手机号'); return; } state.countdown = 60; const timer = setInterval(() => { state.countdown--; if (state.countdown <= 0) clearInterval(timer); }, 1000); window.\$message?.success(__t('system.code_sent'));",
                                             ])
-                                            ->children(["{{ countdown > 0 ? countdown + 's' : '获取验证码' }}"]),
+                                            ->children(["{{ countdown > 0 ? countdown + 's' : __t('system.get_code') }}"]),
                                     ]),
                             ]),
                         // 新密码
@@ -487,7 +505,7 @@ class SystemController extends Controller
                                 Input::make()
                                     ->model('resetForm.newPassword')
                                     ->type('password')
-                                    ->placeholder('新密码')
+                                    ->placeholder(__t('form.new_password'))
                                     ->size('large')
                                     ->showPasswordOn('click')
                                     ->clearable()
@@ -534,7 +552,7 @@ class SystemController extends Controller
                                     ],
                                 ],
                             ])
-                            ->text('重置密码'),
+                            ->text(__t('button.reset_password')),
                     ]),
             ]);
     }
@@ -554,7 +572,7 @@ class SystemController extends Controller
                 Result::make()
                     ->status('403')
                     ->title('403')
-                    ->description('抱歉，您没有权限访问此页面')
+                    ->description(__t('system.forbidden'))
                     ->slot('footer', [
                         Flex::make()
                             ->justify('center')
@@ -563,10 +581,10 @@ class SystemController extends Controller
                                 Button::make()
                                     ->type('primary')
                                     ->on('click', ['call' => '$router.push', 'args' => ['/']])
-                                    ->text('返回首页'),
+                                    ->text(__t('system.home')),
                                 Button::make()
                                     ->on('click', ['call' => '$router.back'])
-                                    ->text('返回上一页'),
+                                    ->text(__t('system.back')),
                             ]),
                     ]),
             ]);
@@ -588,7 +606,7 @@ class SystemController extends Controller
                 Result::make()
                     ->status('404')
                     ->title('404')
-                    ->description('抱歉，您访问的页面不存在')
+                    ->description(__t('system.not_found_page'))
                     ->slot('footer', [
                         Flex::make()
                             ->justify('center')
@@ -597,10 +615,10 @@ class SystemController extends Controller
                                 Button::make()
                                     ->type('primary')
                                     ->on('click', ['call' => '$router.push', 'args' => ['/']])
-                                    ->text('返回首页'),
+                                    ->text(__t('system.home')),
                                 Button::make()
                                     ->on('click', ['call' => '$router.back'])
-                                    ->text('返回上一页'),
+                                    ->text(__t('system.back')),
                             ]),
                     ]),
             ]);
@@ -622,7 +640,7 @@ class SystemController extends Controller
                 Result::make()
                     ->status('500')
                     ->title('500')
-                    ->description('抱歉，服务器出现错误，请稍后再试')
+                    ->description(__t('system.server_error'))
                     ->slot('footer', [
                         Flex::make()
                             ->justify('center')
@@ -631,10 +649,10 @@ class SystemController extends Controller
                                 Button::make()
                                     ->type('primary')
                                     ->on('click', ['call' => '$router.push', 'args' => ['/']])
-                                    ->text('返回首页'),
+                                    ->text(__t('system.home')),
                                 Button::make()
                                     ->on('click', ['call' => 'location.reload'])
-                                    ->text('刷新页面'),
+                                    ->text(__t('system.refresh')),
                             ]),
                     ]),
             ]);
@@ -712,8 +730,8 @@ class SystemController extends Controller
                     ['label' => '中文', 'value' => 'zh-CN'],
                     ['label' => 'English', 'value' => 'en-US'],
                 ],
-                'defaultLang' => 'zh-CN',
-                'submitUrl' => '',
+                'defaultLang' => config('lartrix.locale', 'zh-CN'),
+                'submitUrl' => '/' . ltrim(config('lartrix.api_prefix', 'api/admin'), '/') . '/system/locale',
             ]);
 
         // 主题模式切换
@@ -728,22 +746,22 @@ class SystemController extends Controller
                 'menuItems' => [
                     [
                         'key' => 'profile',
-                        'label' => '个人中心',
+                        'label' => __t('menu.profile'),
                                 'icon' => 'ph:user',
                                 'action' => 'modal',
                                 'modal' => [
-                                    'title' => '个人中心',
+                                    'title' => __t('menu.profile'),
                                     'width' => 600,
                                     'uiApi' => '/user/profile/ui',
                                 ],
                             ],
                             [
                                 'key' => 'settings',
-                                'label' => '账号设置',
+                                'label' => __t('menu.account_settings'),
                                 'icon' => 'ph:gear',
                                 'action' => 'modal',
                                 'modal' => [
-                                    'title' => '账号设置',
+                                    'title' => __t('menu.account_settings'),
                                     'width' => 500,
                                     'uiApi' => '/user/settings/ui',
                                     'submitApi' => '/user/settings',
@@ -751,11 +769,11 @@ class SystemController extends Controller
                             ],
                             [
                                 'key' => 'password',
-                                'label' => '修改密码',
+                                'label' => __t('menu.change_password'),
                                 'icon' => 'ph:lock-key',
                                 'action' => 'modal',
                                 'modal' => [
-                                    'title' => '修改密码',
+                                    'title' => __t('menu.change_password'),
                                     'width' => 400,
                                     'uiApi' => '/user/password/ui',
                                     'submitApi' => '/user/password',
@@ -772,9 +790,7 @@ class SystemController extends Controller
                                 'action' => 'logout',
                             ],
                         ],
-                    ]),
-            ]);
-
+                    ]);
         $schema = Html::div()
             ->props(['class' => 'h-full flex-y-center gap-4px'])
             ->children($children);
@@ -788,15 +804,7 @@ class SystemController extends Controller
      */
     public function getThemeConfig(): array
     {
-        $settingModel = $this->getSettingModel();
-        $themeConfig = $settingModel::getGroup('theme');
-
-        // 如果没有配置，返回默认主题
-        if (empty($themeConfig)) {
-            $themeConfig = $this->getDefaultThemeConfig();
-        }
-
-        return success($themeConfig);
+        return success($this->getThemeSettings());
     }
 
     /**
@@ -828,7 +836,7 @@ class SystemController extends Controller
             }
         }
 
-        return success('主题配置保存成功');
+        return success(__t('system.theme_saved'));
     }
 
     /**
@@ -838,5 +846,32 @@ class SystemController extends Controller
     protected function getDefaultThemeConfig(): array
     {
         return config('lartrix.theme', []);
+    }
+
+    /**
+     * 获取翻译
+     * GET /api/admin/system/translations?locale=zh-CN
+     */
+    public function translations(TranslationService $translationService): array
+    {
+        $locale = request()->input('locale', config('lartrix.locale', 'zh-CN'));
+        return success($translationService->getTranslations($locale));
+    }
+
+    /**
+     * 设置用户语言偏好
+     * POST /api/admin/system/locale
+     */
+    public function setLocale(Request $request): array
+    {
+        $locale = $request->input('locale', 'zh-CN');
+        $user = $request->user();
+        
+        if ($user) {
+            $user->locale = $locale;
+            $user->save();
+        }
+        
+        return success(__t('system.locale_saved'));
     }
 }
