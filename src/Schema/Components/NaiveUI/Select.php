@@ -12,6 +12,7 @@ class Select extends Component
     public function __construct()
     {
         parent::__construct('NSelect');
+        $this->props = ['style' => ['width' => '100%']];
     }
 
     public static function make(): static
