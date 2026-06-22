@@ -57,14 +57,7 @@ if (!function_exists('__t')) {
      */
     function __t(string $key, array $replace = []): string
     {
-        // 如果 key 不包含命名空间前缀，自动添加 lartrix.
-        if (!str_contains($key, '.')) {
-            $key = 'lartrix.' . $key;
-        } elseif (!str_starts_with($key, 'lartrix.') && !str_contains($key, '::')) {
-            // 如果有点号但不是 lartrix. 开头，也不是 :: 格式，则添加 lartrix. 前缀
-            $key = 'lartrix.' . $key;
-        }
-
-        return __($key, $replace);
+        $key = str_starts_with($key, 'lartrix.') ? substr($key, 8) : $key;
+        return app(\Lartrix\Services\TranslationService::class)->translate($key, $replace);
     }
 }

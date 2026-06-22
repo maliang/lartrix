@@ -55,6 +55,30 @@ return [
 ];
 ```
 
+### 多语言
+
+Lartrix 与 Thinkrix 对前端提供相同的语言配置结构，以及 `/translations`、`/locale` 接口。Laravel 版内部使用 Laravel Translator 和 Nwidart 模块语言 namespace。
+
+增加语言时，在 `config/lartrix.php` 声明：
+
+```php
+'languages' => [
+    'zh-CN' => ['label' => '中文', 'file' => 'zh-CN', 'naive_locale' => 'zh-CN'],
+    'en-US' => ['label' => 'English', 'file' => 'en-US', 'naive_locale' => 'en-US'],
+    'ja-JP' => ['label' => '日本語', 'file' => 'ja-JP', 'naive_locale' => 'en-US'],
+],
+```
+
+项目覆盖或新增的完整界面语言包放在 `lang/vendor/lartrix/ja-JP.php`。前端会动态加载，无需增加 Trix 语言模块或重新构建前端。
+
+Nwidart 模块继续使用原生目录和 namespace，例如：
+
+```text
+Modules/Blog/Resources/lang/ja-JP/messages.php
+```
+
+模块 PHP 中使用 `__('blog::messages.title')`。Lartrix 的前端翻译目录会同时暴露为 `blog.messages.title`。通过 Nwidart 发布到 `resources/lang/modules/blog` 的项目覆盖优先级更高。旧版模块的 `Resources/lang/ja-JP.php` 汇总文件仍受兼容支持。
+
 ## 开发指南
 
 ### 模块化开发

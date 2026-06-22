@@ -384,7 +384,7 @@ abstract class CrudController extends Controller
         $models = $modelClass::whereIn($this->getPrimaryKey(), $validated['ids'])->get();
 
         if ($models->isEmpty()) {
-            return error("未找到要删除的{$this->getResourceName()}");
+            return error(__t('crud.not_found_to_delete', ['name' => $this->getResourceName()]));
         }
 
         foreach ($models as $model) {
@@ -433,10 +433,10 @@ abstract class CrudController extends Controller
             $page = (int) $request->input('page', 1);
             $pageSize = (int) $request->input('page_size', $this->getDefaultPageSize());
             $data = $query->skip(($page - 1) * $pageSize)->take($pageSize)->get();
-            $filename = "{$prefix}_第{$page}页_" . date('YmdHis') . '.xlsx';
+            $filename = "{$prefix}_" . __t('crud.current_page', ['page' => $page]) . '_' . date('YmdHis') . '.xlsx';
         } else {
             $data = $query->get();
-            $filename = "{$prefix}_全部_" . date('YmdHis') . '.xlsx';
+            $filename = "{$prefix}_" . __t('crud.all') . '_' . date('YmdHis') . '.xlsx';
         }
 
         $columns = $this->getExportColumns();
@@ -479,7 +479,7 @@ abstract class CrudController extends Controller
         $model = $query->find($id);
 
         if (!$model) {
-            throw new \Lartrix\Exceptions\ApiException("{$this->getResourceName()}不存在", 40004);
+            throw new \Lartrix\Exceptions\ApiException(__t('crud.not_found', ['name' => $this->getResourceName()]), 40004);
         }
 
         return $model;

@@ -136,14 +136,14 @@ class ModuleController extends Controller
         $logoFile = $moduleJson->get('logo', '');
 
         if (empty($logoFile)) {
-            abort(404, 'Logo 未配置');
+            abort(404, __t('module.logo_not_configured'));
         }
 
         // 构建完整路径（模块目录 + logo 文件名）
         $fullPath = $module->getPath() . '/' . $logoFile;
 
         if (!file_exists($fullPath)) {
-            abort(404, 'Logo 文件不存在');
+            abort(404, __t('module.logo_not_found'));
         }
 
         // 获取 MIME 类型
@@ -211,7 +211,7 @@ class ModuleController extends Controller
                             SetAction::make('modules', '{{ $response.data || [] }}'),
                         ])
                         ->catch([
-                            CallAction::make('$message.error', ['{{ $error.message || "加载失败" }}']),
+                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('crud.load_failed') . '" }}']),
                         ])
                         ->finally([
                             SetAction::make('loading', false),
@@ -225,7 +225,7 @@ class ModuleController extends Controller
                             CallAction::make('loadData'),
                         ])
                         ->catch([
-                            CallAction::make('$message.error', ['{{ $error.message || "启用失败" }}']),
+                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('module.enable_failed') . '" }}']),
                         ]),
                 ],
                 'handleDisable' => [
@@ -236,7 +236,7 @@ class ModuleController extends Controller
                             CallAction::make('loadData'),
                         ])
                         ->catch([
-                            CallAction::make('$message.error', ['{{ $error.message || "禁用失败" }}']),
+                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('module.disable_failed') . '" }}']),
                         ]),
                 ],
                 'handleInstall' => [
@@ -247,7 +247,7 @@ class ModuleController extends Controller
                             CallAction::make('loadData'),
                         ])
                         ->catch([
-                            CallAction::make('$message.error', ['{{ $error.message || "安装失败" }}']),
+                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('module.install_failed') . '" }}']),
                         ]),
                 ],
                 'handleUninstall' => [
@@ -258,7 +258,7 @@ class ModuleController extends Controller
                             CallAction::make('loadData'),
                         ])
                         ->catch([
-                            CallAction::make('$message.error', ['{{ $error.message || "卸载失败" }}']),
+                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('module.uninstall_failed') . '" }}']),
                         ]),
                 ],
             ])

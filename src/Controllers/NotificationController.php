@@ -172,23 +172,23 @@ class NotificationController extends CrudController
         $form = OptForm::make('formData')
             ->labelWidth(80)
             ->fields([
-                [__t('column.title'), 'title', Input::make()->props(['placeholder' => '请输入通知标题', 'clearable' => true])],
-                [__t('column.content'), 'content', Input::make()->props(['placeholder' => '请输入通知内容', 'clearable' => true, 'type' => 'textarea', 'rows' => 4])],
+                [__t('column.title'), 'title', Input::make()->props(['placeholder' => __t('placeholder.notification_title'), 'clearable' => true])],
+                [__t('column.content'), 'content', Input::make()->props(['placeholder' => __t('placeholder.notification_content'), 'clearable' => true, 'type' => 'textarea', 'rows' => 4])],
                 [__t('column.type'), 'type', Select::make()->props([
-                    'placeholder' => '请选择消息类型',
+                    'placeholder' => __t('placeholder.message_type'),
                     'options' => [
-                        ['label' => '系统', 'value' => 'system'],
-                        ['label' => '通知', 'value' => 'notice'],
-                        ['label' => '消息', 'value' => 'message'],
-                        ['label' => '待办', 'value' => 'todo'],
+                        ['label' => __t('notification.type_system'), 'value' => 'system'],
+                        ['label' => __t('notification.type_notice'), 'value' => 'notice'],
+                        ['label' => __t('notification.type_message'), 'value' => 'message'],
+                        ['label' => __t('notification.type_todo'), 'value' => 'todo'],
                     ],
                 ]), 'system'],
-                ['所属分类', 'category_key', Select::make()->props([
-                    'placeholder' => '请选择分类',
+                [__t('column.category'), 'category_key', Select::make()->props([
+                    'placeholder' => __t('placeholder.category'),
                     'options' => $categoryOptions,
                 ])],
                 [__t('column.target_users'), 'user_id', Select::make()->props([
-                    'placeholder' => '指定用户（为空表示发送给所有人）',
+                    'placeholder' => __t('placeholder.target_users'),
                     'clearable' => true,
                 ])],
             ])
@@ -214,15 +214,15 @@ class NotificationController extends CrudController
                 ['key' => 'created_at', 'title' => __t('column.created_at'), 'width' => 180],
             ])
             ->search([
-                ['关键词', 'keyword', Input::make()->props(['placeholder' => '搜索标题或内容', 'clearable' => true])],
+                [__t('search.keyword'), 'keyword', Input::make()->props(['placeholder' => __t('search.title_or_content'), 'clearable' => true])],
                 [__t('column.category'), 'category_key', Select::make()->props([
-                    'placeholder' => '请选择分类',
+                    'placeholder' => __t('placeholder.category'),
                     'clearable' => true,
                     'options' => $categoryOptions,
                     'style' => ['min-width' => '150px'],
                 ])],
-                ['已读状态', 'is_read', Select::make()->props([
-                    'placeholder' => '请选择',
+                [__t('search.read_status'), 'is_read', Select::make()->props([
+                    'placeholder' => __t('placeholder.select'),
                     'clearable' => true,
                     'options' => [
                         ['label' => __t('role.filter_all'), 'value' => ''],
@@ -243,7 +243,7 @@ class NotificationController extends CrudController
                         CallAction::make('$message.success', [__t('notification.all_marked_read')]),
                         CallAction::make('loadData'),
                     ])])
-                    ->text('全部已读'),
+                    ->text(__t('notification.mark_all_read')),
             ])
             ->data([
                 'formData' => $form->getDefaultData(),

@@ -246,15 +246,15 @@ class MenuController extends CrudController
                     'clearable' => true,
                     'options' => [
                         ['label' => __t('title.normal_open'), 'value' => 'normal'],
-                        ['label' => 'iframe 嵌入', 'value' => 'iframe'],
+                    ['label' => __t('title.iframe_embed'), 'value' => 'iframe'],
                         ['label' => __t('title.new_window'), 'value' => 'newWindow'],
                     ],
                 ])],
                 [__t('form.href'), 'href', Input::make()->props(['placeholder' => __t('placeholder.href')]), '', "formData.open_type === 'iframe' || formData.open_type === 'newWindow'"],
                 [__t('form.use_json_renderer'), 'use_json_renderer', SwitchC::make(), false],
-                ['Schema 来源', 'schema_source', Input::make()->props(['placeholder' => 'API 地址或静态文件路径']), '', 'formData.use_json_renderer'],
+            [__t('form.schema_source'), 'schema_source', Input::make()->props(['placeholder' => __t('placeholder.schema_source')]), '', 'formData.use_json_renderer'],
                 [__t('form.hide_in_menu'), 'hide_in_menu', SwitchC::make(), false],
-                ['缓存页面', 'keep_alive', SwitchC::make(), false],
+            [__t('form.keep_alive'), 'keep_alive', SwitchC::make(), false],
                 [__t('form.requires_auth'), 'requires_auth', SwitchC::make(), true],
                 [__t('form.is_default_after_login'), 'is_default_after_login', SwitchC::make(), false],
             ])
@@ -312,7 +312,7 @@ class MenuController extends CrudController
                                     CallAction::make('loadData'),
                                 ])
                                 ->catch([
-                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('crud.operation_failed') . '" }}']),
                                 ])
                                 ->finally([
                                     SetAction::make('submitting', false),
@@ -328,7 +328,7 @@ class MenuController extends CrudController
                                     CallAction::make('loadData'),
                                 ])
                                 ->catch([
-                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('crud.operation_failed') . '" }}']),
                                 ])
                                 ->finally([
                                     SetAction::make('submitting', false),
@@ -344,7 +344,7 @@ class MenuController extends CrudController
                     CallAction::make('loadMenuTree'),
                 ],
             ])
-            ->modal('form', '{{ editingId ? "编辑菜单" : "新增菜单" }}', $menuForm, ['width' => '600px']);
+            ->modal('form', '{{ editingId ? "' . __t('title.edit_menu') . '" : "' . __t('title.create_menu') . '" }}', $menuForm, ['width' => '600px']);
 
         return success($schema->build());
     }
@@ -419,7 +419,7 @@ class MenuController extends CrudController
                                     CallAction::make('loadData'),
                                 ])
                                 ->catch([
-                                    CallAction::make('$message.error', ['{{ $error.message || "删除失败" }}']),
+                            CallAction::make('$message.error', ['{{ $error.message || "' . __t('crud.delete_failed') . '" }}']),
                                 ])
                         )
                         ->slot('trigger', [

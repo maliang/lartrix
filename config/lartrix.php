@@ -17,6 +17,12 @@ return [
     */
     'locale' => env('LARTRIX_LOCALE', 'zh-CN'),
     'fallback_locale' => 'en-US',
+    // 新增语言只需追加配置，并创建 lang/vendor/lartrix/{file}.php。
+    // naive_locale 用于 Naive UI 内置组件语言，目前可选 zh-CN / en-US。
+    'languages' => [
+        'zh-CN' => ['label' => '中文', 'file' => 'zh-CN', 'naive_locale' => 'zh-CN'],
+        'en-US' => ['label' => 'English', 'file' => 'en-US', 'naive_locale' => 'en-US'],
+    ],
     'copyright' => env('LARTRIX_COPYRIGHT', '© ' . date('Y') . ' Lartrix Admin. All rights reserved.'),
 
     /*

@@ -4,6 +4,7 @@ namespace Lartrix\Controllers;
 
 use Illuminate\Http\Request;
 use Lartrix\Services\AuthService;
+use Lartrix\Services\TranslationService;
 
 class AuthController extends Controller
 {
@@ -75,6 +76,7 @@ class AuthController extends Controller
             'status' => $user->status,
             'roles' => $user->getRoleNames(),
             'permissions' => $user->getActivePermissions()->pluck('name'),
+            'locale' => $user->locale ?: config('lartrix.locale', 'zh-CN'),
         ]);
     }
 
@@ -114,6 +116,8 @@ class AuthController extends Controller
             'logo' => $theme['logo'] ?? '',
             'locale' => config('lartrix.locale', 'zh-CN'),
             'fallbackLocale' => config('lartrix.fallback_locale', 'en-US'),
+            'languages' => app(TranslationService::class)->getLanguageOptions(),
+            'translationsUrl' => '/translations',
         ]);
     }
 }

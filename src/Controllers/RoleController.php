@@ -185,7 +185,7 @@ class RoleController extends CrudController
             ->fields([
                 [__t('form.name'), 'name', Input::make()->props(['placeholder' => __t('placeholder.role_name'), 'disabled' => '{{ !!editingId }}'])],
                 [__t('form.title'), 'title', Input::make()->props(['placeholder' => __t('placeholder.role_title')])],
-                [__t('column.description'), 'description', Input::make()->props(['type' => 'textarea', 'placeholder' => '请输入角色描述'])],
+                [__t('column.description'), 'description', Input::make()->props(['type' => 'textarea', 'placeholder' => __t('placeholder.role_description')])],
                 [__t('column.permissions'), 'permissions', $permissionTree, []],
                 [__t('column.status'), 'status', SwitchC::make(), true],
             ])
@@ -200,7 +200,7 @@ class RoleController extends CrudController
             ->scrollX(1000)
             ->pagination(false)
             ->search([
-                ['关键词', 'keyword', Input::make()->props(['placeholder' => __t('placeholder.keyword_role'), 'clearable' => true])],
+                [__t('search.keyword'), 'keyword', Input::make()->props(['placeholder' => __t('placeholder.keyword_role'), 'clearable' => true])],
                 [__t('column.status'), 'status', Select::make()->props([
                     'placeholder' => __t('role.filter_all'),
                     'clearable' => true,
@@ -246,7 +246,7 @@ class RoleController extends CrudController
                                     CallAction::make('loadData'),
                                 ])
                                 ->catch([
-                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('crud.operation_failed') . '" }}']),
                                 ])
                                 ->finally([
                                     SetAction::make('submitting', false),
@@ -262,7 +262,7 @@ class RoleController extends CrudController
                                     CallAction::make('loadData'),
                                 ])
                                 ->catch([
-                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('crud.operation_failed') . '" }}']),
                                 ])
                                 ->finally([
                                     SetAction::make('submitting', false),
@@ -270,7 +270,7 @@ class RoleController extends CrudController
                         ),
                 ],
             ])
-            ->modal('form', '{{ editingId ? "编辑角色" : "新增角色" }}', $roleForm, ['width' => '600px']);
+            ->modal('form', '{{ editingId ? "' . __t('title.edit_role') . '" : "' . __t('title.create_role') . '" }}', $roleForm, ['width' => '600px']);
 
         return success($schema->build());
     }
@@ -330,7 +330,7 @@ class RoleController extends CrudController
                                     CallAction::make('loadData'),
                                 ])
                                 ->catch([
-                                    CallAction::make('$message.error', ['{{ $error.message || "删除失败" }}']),
+                        CallAction::make('$message.error', ['{{ $error.message || "' . __t('crud.delete_failed') . '" }}']),
                                 ])
                         )
                         ->slot('trigger', [

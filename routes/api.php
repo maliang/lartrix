@@ -73,6 +73,10 @@ Route::prefix($prefix)->group(function () use (
         });
 
         // 系统配置
+        Route::get('translations', [$systemController, 'translations']);
+        Route::post('locale', [$systemController, 'setLocale']);
+
+        // 旧版路径保留兼容
         Route::prefix('system')->group(function () use ($systemController) {
             Route::post('theme-config', [$systemController, 'saveThemeConfig']);
             Route::get('translations', [$systemController, 'translations']);
@@ -177,7 +181,7 @@ Route::prefix($prefix)->group(function () use (
                 ]);
 
             // 添加"全部"选项
-            $allTab = ['key' => 'all', 'label' => '全部', 'icon' => 'ph:bell', 'color' => null, 'types' => []];
+            $allTab = ['key' => 'all', 'label' => __t('role.filter_all'), 'icon' => 'ph:bell', 'color' => null, 'types' => []];
             $categories->prepend($allTab);
 
             return success($categories->toArray());

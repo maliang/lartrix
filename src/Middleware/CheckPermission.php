@@ -26,12 +26,12 @@ class CheckPermission
         $user = $request->user();
 
         if (!$user) {
-            error('未认证', null, 40001);
+            error(__t('auth.unauthenticated'), null, 40001);
         }
 
         // 检查用户是否有任一指定权限（排除禁用角色的权限）
         if (!empty($permissions) && !$this->permissionService->userHasAnyPermission($user, $permissions)) {
-            error('无权限访问', null, 40003);
+            error(__t('system.forbidden'), null, 40003);
         }
 
         return $next($request);

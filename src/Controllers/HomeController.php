@@ -65,8 +65,8 @@ class HomeController extends Controller
     protected function getActivities(): array
     {
         return [
-            ['type' => 'success', 'title' => '系统启动', 'time' => now()->subMinutes(5)->format('Y-m-d H:i'), 'content' => '系统已成功启动'],
-            ['type' => 'info', 'title' => '用户登录', 'time' => now()->subMinutes(10)->format('Y-m-d H:i'), 'content' => '管理员登录系统'],
+                ['type' => 'success', 'title' => __t('home.system_started'), 'time' => now()->subMinutes(5)->format('Y-m-d H:i'), 'content' => __t('home.system_started_content')],
+                ['type' => 'info', 'title' => __t('home.user_login'), 'time' => now()->subMinutes(10)->format('Y-m-d H:i'), 'content' => __t('home.admin_logged_in')],
         ];
     }
 
@@ -85,8 +85,8 @@ class HomeController extends Controller
             ->children([
                 $this->buildStatCard(__t('home.total_users'), '{{ stats.totalUsers }}', 'carbon:user-multiple', 'text-primary'),
                 $this->buildStatCard(__t('home.active_users'), '{{ stats.activeUsers }}', 'carbon:activity', 'text-success'),
-                $this->buildStatCard('总订单数', '{{ stats.totalOrders }}', 'carbon:shopping-cart', 'text-warning'),
-                $this->buildStatCard('总收入', '{{ stats.revenue }}', 'carbon:currency-dollar', 'text-error'),
+                $this->buildStatCard(__t('home.total_orders'), '{{ stats.totalOrders }}', 'carbon:shopping-cart', 'text-warning'),
+                $this->buildStatCard(__t('home.revenue'), '{{ stats.revenue }}', 'carbon:currency-dollar', 'text-error'),
             ]);
     }
 
@@ -121,7 +121,7 @@ class HomeController extends Controller
             ->children([
                 GridItem::make()->children([
                     Card::make()
-                        ->props(['title' => '访问趋势', 'class' => 'h-400px'])
+            ->props(['title' => __t('home.visit_trend'), 'class' => 'h-400px'])
                         ->children([
                             VueECharts::make()
                                 ->props(['option' => $this->getVisitTrendChartOption(), 'style' => ['height' => '100%']]),
@@ -129,7 +129,7 @@ class HomeController extends Controller
                 ]),
                 GridItem::make()->children([
                     Card::make()
-                        ->props(['title' => '销售统计', 'class' => 'h-400px'])
+            ->props(['title' => __t('home.sales_stats'), 'class' => 'h-400px'])
                         ->children([
                             VueECharts::make()
                                 ->props(['option' => $this->getSalesChartOption(), 'style' => ['height' => '100%']]),
@@ -163,16 +163,16 @@ class HomeController extends Controller
     {
         return [
             'tooltip' => ['trigger' => 'axis', 'axisPointer' => ['type' => 'shadow']],
-            'legend' => ['data' => ['销售额', '订单量'], 'top' => 0],
+            'legend' => ['data' => [__t('home.sales_amount'), __t('home.order_count')], 'top' => 0],
             'grid' => ['left' => '3%', 'right' => '4%', 'top' => '15%', 'bottom' => '3%', 'containLabel' => true],
-            'xAxis' => ['type' => 'category', 'data' => ['1月', '2月', '3月', '4月', '5月', '6月']],
+            'xAxis' => ['type' => 'category', 'data' => data_get(app(\Lartrix\Services\TranslationService::class)->getTranslations(app()->getLocale()), 'home.months', [])],
             'yAxis' => [
-                ['type' => 'value', 'name' => '销售额', 'axisLabel' => ['formatter' => '¥{value}']],
-                ['type' => 'value', 'name' => '订单量', 'position' => 'right'],
+                ['type' => 'value', 'name' => __t('home.sales_amount'), 'axisLabel' => ['formatter' => '¥{value}']],
+                ['type' => 'value', 'name' => __t('home.order_count'), 'position' => 'right'],
             ],
             'series' => [
-                ['name' => '销售额', 'type' => 'bar', 'data' => [12000, 15000, 18000, 22000, 28000, 35000], 'itemStyle' => ['borderRadius' => [4, 4, 0, 0]]],
-                ['name' => '订单量', 'type' => 'line', 'yAxisIndex' => 1, 'smooth' => true, 'data' => [120, 150, 180, 220, 280, 350]],
+                ['name' => __t('home.sales_amount'), 'type' => 'bar', 'data' => [12000, 15000, 18000, 22000, 28000, 35000], 'itemStyle' => ['borderRadius' => [4, 4, 0, 0]]],
+                ['name' => __t('home.order_count'), 'type' => 'line', 'yAxisIndex' => 1, 'smooth' => true, 'data' => [120, 150, 180, 220, 280, 350]],
             ],
         ];
     }
@@ -222,7 +222,7 @@ class HomeController extends Controller
                     ]),
                 ]),
                 GridItem::make()->children([
-                    Card::make()->props(['title' => 'CopyAction 测试'])->children([
+        Card::make()->props(['title' => __t('home.copy_test')])->children([
                         $this->buildCopyActionTest(),
                     ]),
                 ]),
@@ -274,7 +274,7 @@ class HomeController extends Controller
                 Space::make()->props(['size' => 'small'])->children([
                     Button::make()
                         ->props(['type' => 'primary', 'size' => 'small'])
-                        ->text('复制 API Key')
+                ->text(__t('home.copy_api_key'))
                         ->on('click', [
                             [
                                 'script' => 'console.log("API Key:", state.stats.testApiKey);',
@@ -282,16 +282,16 @@ class HomeController extends Controller
                             [
                                 'copy' => '{{ stats.testApiKey }}',
                                 'then' => [
-                                    ['call' => '$methods.$message.success', 'args' => ['API Key 已复制到剪贴板']],
+                        ['call' => '$methods.$message.success', 'args' => [__t('home.api_key_copied')]],
                                 ],
                                 'catch' => [
-                                    ['call' => '$methods.$message.error', 'args' => ['复制失败：{{ $error.message }}']],
+                        ['call' => '$methods.$message.error', 'args' => [__t('home.copy_failed')]],
                                 ],
                             ],
                         ]),
                     Button::make()
                         ->props(['size' => 'small'])
-                        ->text('带验证的复制')
+                ->text(__t('home.verified_copy'))
                         ->on('click', [
                             [
                                 'if' => 'stats && stats.testApiKey',
@@ -299,12 +299,12 @@ class HomeController extends Controller
                                     [
                                         'copy' => '{{ stats.testApiKey }}',
                                         'then' => [
-                                            ['call' => '$methods.$message.success', 'args' => ['复制成功']],
+                        ['call' => '$methods.$message.success', 'args' => [__t('home.copy_success')]],
                                         ],
                                     ],
                                 ],
                                 'else' => [
-                                    ['call' => '$methods.$message.error', 'args' => ['没有可复制的内容']],
+                        ['call' => '$methods.$message.error', 'args' => [__t('home.nothing_to_copy')]],
                                 ],
                             ],
                         ]),

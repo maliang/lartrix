@@ -71,7 +71,7 @@ class DictController extends Controller
         // 分组表单
         $groupForm = OptForm::make('formData')
             ->fields([
-                [__t('ui.dict_code'), 'code', Input::make()->props(['placeholder' => __t('ui.placeholder_input') . __t('ui.dict_code') . '，如 order_status', 'disabled' => '{{ !!editingId && editingSystem }}'])],
+                [__t('ui.dict_code'), 'code', Input::make()->props(['placeholder' => __t('placeholder.code'), 'disabled' => '{{ !!editingId && editingSystem }}'])],
                 [__t('ui.dict_name'), 'name', Input::make()->props(['placeholder' => __t('ui.placeholder_input') . __t('ui.dict_name')])],
                 [__t('ui.dict_description'), 'description', Input::make()->props(['type' => 'textarea', 'placeholder' => __t('ui.placeholder_input') . __t('ui.dict_description')])],
             ])
@@ -159,13 +159,13 @@ class DictController extends Controller
                                     ->props(['type' => 'error', 'text' => true])
                                     ->text(__t('ui.delete')),
                             ])
-                            ->children(['确定要删除该字典分组吗？删除后其下所有字典项也将被删除。']),
+                            ->children([__t('confirm.delete_dict_group')]),
                     ]),
                 ]],
             ])
             ->scrollX(1100)
             ->search([
-                ['关键词', 'keyword', Input::make()->props(['placeholder' => __t('ui.placeholder_search') . __t('ui.dict_code') . '/' . __t('ui.dict_name'), 'clearable' => true])],
+                [__t('search.keyword'), 'keyword', Input::make()->props(['placeholder' => __t('ui.placeholder_search') . __t('ui.dict_code') . '/' . __t('ui.dict_name'), 'clearable' => true])],
             ])
             ->toolbarLeft([
                 Button::make()
@@ -241,7 +241,7 @@ class DictController extends Controller
                             SetAction::make('itemsData', '{{ $response.data.list || [] }}'),
                         ])
                         ->catch([
-                            CallAction::make('$message.error', ['{{ $error.message || "加载字典项失败" }}']),
+                            CallAction::make('$message.error', ['{{ $error.message || "' . __t('crud.load_failed') . '" }}']),
                         ])
                         ->finally([
                             SetAction::make('itemsLoading', false),
@@ -284,8 +284,8 @@ class DictController extends Controller
                         ),
                 ],
             ])
-            ->modal('form', '{{ editingId ? "编辑字典分组" : "新增字典分组" }}', $groupForm)
-            ->drawer('items', '{{ currentGroupName + " - 字典项管理" }}', $this->buildItemsDrawerContent($itemForm), ['width' => 800]);
+            ->modal('form', '{{ editingId ? "' . __t('title.edit_dict_group') . '" : "' . __t('title.create_dict_group') . '" }}', $groupForm)
+            ->drawer('items', '{{ currentGroupName + " - ' . __t('title.dict_items') . '" }}', $this->buildItemsDrawerContent($itemForm), ['width' => 800]);
 
         return success($schema->build());
     }
@@ -352,7 +352,7 @@ class DictController extends Controller
                                 ->props(['type' => 'error', 'text' => true])
                                 ->text(__t('ui.delete')),
                         ])
-                        ->children(['确定要删除该字典项吗？']),
+                            ->children([__t('confirm.delete_dict_item')]),
                 ]),
             ], 'slotData');
 
@@ -380,7 +380,7 @@ class DictController extends Controller
             \Lartrix\Schema\Components\NaiveUI\Modal::make()
                 ->props([
                     'show' => '{{ itemFormVisible }}',
-                    'title' => '{{ editingItemId ? "编辑字典项" : "新增字典项" }}',
+                'title' => '{{ editingItemId ? "' . __t('title.edit_dict_item') . '" : "' . __t('title.create_dict_item') . '" }}',
                     'style' => ['width' => '500px'],
                     'preset' => 'card',
                 ])

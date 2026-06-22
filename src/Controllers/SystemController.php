@@ -40,7 +40,7 @@ class SystemController extends Controller
         $indexPath = public_path('admin/index.html');
 
         if (!file_exists($indexPath)) {
-            abort(404, '前端资源未发布，请运行 php artisan vendor:publish --tag=lartrix-assets');
+            abort(404, __t('system.assets_not_publish'));
         }
 
         $html = file_get_contents($indexPath);
@@ -68,6 +68,8 @@ class SystemController extends Controller
             'logo' => $theme['logo'] ?? '',
             'locale' => config('lartrix.locale', 'zh-CN'),
             'fallbackLocale' => config('lartrix.fallback_locale', 'en-US'),
+            'languages' => app(TranslationService::class)->getLanguageOptions(),
+            'translationsUrl' => '/translations',
         ];
     }
 
@@ -91,10 +93,10 @@ class SystemController extends Controller
     {
         return [
             ['key' => 'all', 'label' => __t('role.filter_all'), 'icon' => 'ph:bell', 'types' => []],
-            ['key' => 'system', 'label' => '系统', 'icon' => 'ph:gear', 'types' => ['system']],
-            ['key' => 'notice', 'label' => '通知', 'icon' => 'ph:bell', 'types' => ['notice']],
-            ['key' => 'message', 'label' => '消息', 'icon' => 'ph:chat-circle', 'types' => ['message']],
-            ['key' => 'todo', 'label' => '待办', 'icon' => 'ph:check-square', 'types' => ['todo']],
+                ['key' => 'system', 'label' => __t('notification.type_system'), 'icon' => 'ph:gear', 'types' => ['system']],
+                ['key' => 'notice', 'label' => __t('notification.type_notice'), 'icon' => 'ph:bell', 'types' => ['notice']],
+                ['key' => 'message', 'label' => __t('notification.type_message'), 'icon' => 'ph:chat-circle', 'types' => ['message']],
+                ['key' => 'todo', 'label' => __t('notification.type_todo'), 'icon' => 'ph:check-square', 'types' => ['todo']],
         ];
     }
 
@@ -114,7 +116,7 @@ class SystemController extends Controller
     {
         $theme = $this->getThemeSettings();
         $appTitle = $theme['appTitle'] ?? 'Lartrix Admin';
-        $appSubtitle = 'JSON 驱动的后台管理系统';
+            $appSubtitle = __t('system.default_subtitle');
         $copyright = config('lartrix.copyright', 'Lartrix Admin');
 
         // 构建登录页面 Schema
@@ -186,24 +188,24 @@ class SystemController extends Controller
                 ],
                 'password' => [
                     ['required' => true, 'message' => __t('placeholder.password'), 'trigger' => 'blur'],
-                    ['min' => 6, 'message' => '密码长度不能少于6位', 'trigger' => 'blur'],
+                    ['min' => 6, 'message' => __t('validation.password_min'), 'trigger' => 'blur'],
                 ],
             ],
             'resetRules' => [
                 'phone' => [
                     ['required' => true, 'message' => __t('placeholder.phone'), 'trigger' => 'blur'],
-                    ['pattern' => '^1[3-9]\\d{9}$', 'message' => '请输入正确的手机号', 'trigger' => 'blur'],
+                    ['pattern' => '^1[3-9]\\d{9}$', 'message' => __t('validation.phone_invalid'), 'trigger' => 'blur'],
                 ],
                 'code' => [
-                    ['required' => true, 'message' => '请输入验证码', 'trigger' => 'blur'],
-                    ['len' => 6, 'message' => '验证码为6位数字', 'trigger' => 'blur'],
+                    ['required' => true, 'message' => __t('validation.code_required'), 'trigger' => 'blur'],
+                    ['len' => 6, 'message' => __t('validation.code_length'), 'trigger' => 'blur'],
                 ],
                 'newPassword' => [
-                    ['required' => true, 'message' => '请输入新密码', 'trigger' => 'blur'],
-                    ['min' => 6, 'message' => '密码长度不能少于6位', 'trigger' => 'blur'],
+                    ['required' => true, 'message' => __t('validation.new_password_required'), 'trigger' => 'blur'],
+                    ['min' => 6, 'message' => __t('validation.password_min'), 'trigger' => 'blur'],
                 ],
                 'confirmPassword' => [
-                    ['required' => true, 'message' => '请再次输入密码', 'trigger' => 'blur'],
+                    ['required' => true, 'message' => __t('validation.confirm_password'), 'trigger' => 'blur'],
                 ],
             ],
         ];
@@ -403,7 +405,7 @@ class SystemController extends Controller
                                 Button::make()
                                     ->props(['text' => true, 'type' => 'primary'])
                                     ->on('click', ['set' => 'mode', 'value' => 'reset'])
-                                    ->children(['忘记密码？']),
+                            ->children([__t('system.forgot_password')]),
                             ]),
                         // 登录按钮
                         Button::make()
@@ -476,7 +478,7 @@ class SystemController extends Controller
                                     ->children([
                                         Input::make()
                                             ->model('resetForm.code')
-                                            ->placeholder('验证码')
+                                            ->placeholder(__t('placeholder.verification_code'))
                                             ->size('large')
                                             ->clearable()
                                             ->maxlength(6)
@@ -493,7 +495,7 @@ class SystemController extends Controller
                                                 'style' => ['width' => '120px'],
                                             ])
                                             ->on('click', [
-                                                'script' => "if (!/^1[3-9]\\d{9}\$/.test(state.resetForm.phone)) { window.\$message?.warning('请输入正确的手机号'); return; } state.countdown = 60; const timer = setInterval(() => { state.countdown--; if (state.countdown <= 0) clearInterval(timer); }, 1000); window.\$message?.success(__t('system.code_sent'));",
+                                                'script' => "if (!/^1[3-9]\\d{9}\$/.test(state.resetForm.phone)) { window.\$message?.warning(" . json_encode(__t('validation.phone_invalid'), JSON_UNESCAPED_UNICODE) . "); return; } state.countdown = 60; const timer = setInterval(() => { state.countdown--; if (state.countdown <= 0) clearInterval(timer); }, 1000); window.\$message?.success(__t('system.code_sent'));",
                                             ])
                                             ->children(["{{ countdown > 0 ? countdown + 's' : __t('system.get_code') }}"]),
                                     ]),
@@ -521,7 +523,7 @@ class SystemController extends Controller
                                 Input::make()
                                     ->model('resetForm.confirmPassword')
                                     ->type('password')
-                                    ->placeholder('确认密码')
+                                    ->placeholder(__t('form.confirm_pwd'))
                                     ->size('large')
                                     ->showPasswordOn('click')
                                     ->clearable()
@@ -540,12 +542,12 @@ class SystemController extends Controller
                             ])
                             ->on('click', [
                                 'if' => '!resetForm.phone || !resetForm.code || !resetForm.newPassword || !resetForm.confirmPassword',
-                                'then' => ['script' => "window.\$message?.warning?.('请填写完整信息');"],
+                                    'then' => ['script' => "window.\$message?.warning?.(" . json_encode(__t('validation.complete_info'), JSON_UNESCAPED_UNICODE) . ");"],
                                 'else' => [
                                     'if' => 'resetForm.newPassword !== resetForm.confirmPassword',
-                                    'then' => ['script' => "window.\$message?.error?.('两次输入的密码不一致');"],
+                                    'then' => ['script' => "window.\$message?.error?.(" . json_encode(__t('auth.password_mismatch'), JSON_UNESCAPED_UNICODE) . ");"],
                                     'else' => [
-                                        ['script' => "window.\$message?.success?.('密码重置成功');"],
+                                ['script' => "window.\$message?.success?.(" . json_encode(__t('auth.password_reset_ok'), JSON_UNESCAPED_UNICODE) . ");"],
                                         ['set' => 'mode', 'value' => 'login'],
                                         ['set' => 'resetForm', 'value' => "{{ ({ phone: '', code: '', newPassword: '', confirmPassword: '' }) }}"],
                                         ['set' => 'countdown', 'value' => 0],
@@ -724,14 +726,15 @@ class SystemController extends Controller
         $children[] = FullScreen::make();
 
         // 语言切换
+        $translationService = app(TranslationService::class);
+        $locale = request()->user()?->locale ?: config('lartrix.locale', 'zh-CN');
         $children[] = LangSwitch::make()
             ->props([
-                'langOptions' => [
-                    ['label' => '中文', 'value' => 'zh-CN'],
-                    ['label' => 'English', 'value' => 'en-US'],
-                ],
-                'defaultLang' => config('lartrix.locale', 'zh-CN'),
-                'submitUrl' => '/' . ltrim(config('lartrix.api_prefix', 'api/admin'), '/') . '/system/locale',
+                'langOptions' => $translationService->getLanguageOptions(),
+                'defaultLang' => $locale,
+                'submitUrl' => '/locale',
+                'translationsUrl' => '/translations',
+                'reloadOnChange' => true,
             ]);
 
         // 主题模式切换
@@ -855,6 +858,10 @@ class SystemController extends Controller
     public function translations(TranslationService $translationService): array
     {
         $locale = request()->input('locale', config('lartrix.locale', 'zh-CN'));
+        $locale = $translationService->normalizeLocale((string) $locale);
+        if ($locale === null) {
+            error(__t('system.locale_invalid'), null, 40022);
+        }
         return success($translationService->getTranslations($locale));
     }
 
@@ -864,14 +871,19 @@ class SystemController extends Controller
      */
     public function setLocale(Request $request): array
     {
-        $locale = $request->input('locale', 'zh-CN');
+        $service = app(TranslationService::class);
+        $locale = $service->normalizeLocale((string) $request->input('locale', ''));
+        if ($locale === null) {
+            error(__t('system.locale_invalid'), null, 40022);
+        }
         $user = $request->user();
         
         if ($user) {
             $user->locale = $locale;
             $user->save();
         }
-        
+
+        app()->setLocale($locale);
         return success(__t('system.locale_saved'));
     }
 }

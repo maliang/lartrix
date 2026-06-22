@@ -123,7 +123,7 @@ class SettingController extends Controller
                             ->children([
                                 Input::make()
                                     ->model('formData.app_subtitle')
-                                    ->placeholder('请输入系统副标题'),
+                                    ->placeholder(__t('placeholder.system_subtitle')),
                             ]),
                         FormItem::make()
                             ->label(__t('form.logo_url'))
@@ -173,7 +173,7 @@ class SettingController extends Controller
         $schema['data'] = [
             'formData' => [
                 'app_title' => $theme['appTitle'] ?? 'Lartrix Admin',
-                'app_subtitle' => config('lartrix.app_subtitle', 'JSON 驱动的后台管理系统'),
+            'app_subtitle' => config('lartrix.app_subtitle', __t('system.default_subtitle')),
                 'logo' => $theme['logo'] ?? '',
                 'copyright' => config('lartrix.copyright', 'Lartrix Admin'),
                 'copyright' => config('lartrix.copyright', '© ' . date('Y') . ' Lartrix Admin. All rights reserved.'),

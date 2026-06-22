@@ -190,17 +190,17 @@ class PermissionController extends CrudController
         $permissionForm = OptForm::make('formData')
             ->fields([
                 [__t('form.parent_id'), 'parent_id', TreeSelect::make()->props([
-                    'placeholder' => '无（顶级权限）',
+                    'placeholder' => __t('placeholder.parent'),
                     'clearable' => true,
                     'options' => '{{ permissionTreeOptions }}',
                     'keyField' => 'id',
                     'labelField' => 'title',
                     'childrenField' => 'children',
                 ])],
-                ['权限标识', 'name', Input::make()->props(['placeholder' => __t('placeholder.perm_name')])],
-                ['权限名称', 'title', Input::make()->props(['placeholder' => __t('placeholder.perm_title')])],
+                [__t('column.permission_identifier'), 'name', Input::make()->props(['placeholder' => __t('placeholder.perm_name')])],
+                [__t('column.permission_title'), 'title', Input::make()->props(['placeholder' => __t('placeholder.perm_title')])],
                 [__t('column.module'), 'module', Input::make()->props(['placeholder' => __t('placeholder.module')])],
-                [__t('column.description'), 'description', Input::make()->props(['type' => 'textarea', 'placeholder' => '请输入权限描述'])],
+                [__t('column.description'), 'description', Input::make()->props(['type' => 'textarea', 'placeholder' => __t('placeholder.permission_description')])],
                 [__t('column.sort'), 'sort', InputNumber::make()->props(['min' => 0]), 0],
             ])
             ->buttons([
@@ -262,7 +262,7 @@ class PermissionController extends CrudController
                                     CallAction::make('loadData'),
                                 ])
                                 ->catch([
-                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('crud.operation_failed') . '" }}']),
                                 ])
                                 ->finally([
                                     SetAction::make('submitting', false),
@@ -278,7 +278,7 @@ class PermissionController extends CrudController
                                     CallAction::make('loadData'),
                                 ])
                                 ->catch([
-                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('crud.operation_failed') . '" }}']),
                                 ])
                                 ->finally([
                                     SetAction::make('submitting', false),
@@ -299,7 +299,7 @@ class PermissionController extends CrudController
                     CallAction::make('loadPermissionTree'),
                 ],
             ])
-            ->modal('form', '{{ editingId ? "编辑权限" : "新增权限" }}', $permissionForm, ['width' => '500px']);
+            ->modal('form', '{{ editingId ? "' . __t('title.edit_permission') . '" : "' . __t('title.create_permission') . '" }}', $permissionForm, ['width' => '500px']);
 
         return success($schema->build());
     }
@@ -317,8 +317,8 @@ class PermissionController extends CrudController
     {
         return [
             ['key' => 'id', 'title' => 'ID', 'width' => 80],
-            ['key' => 'name', 'title' => '权限标识'],
-            ['key' => 'title', 'title' => '权限名称'],
+            ['key' => 'name', 'title' => __t('column.permission_identifier')],
+            ['key' => 'title', 'title' => __t('column.permission_title')],
             ['key' => 'module', 'title' => __t('column.module')],
             ['key' => 'description', 'title' => __t('column.description')],
             ['key' => 'sort', 'title' => __t('column.sort'), 'width' => 80],
@@ -357,7 +357,7 @@ class PermissionController extends CrudController
                                     CallAction::make('loadData'),
                                 ])
                                 ->catch([
-                                    CallAction::make('$message.error', ['{{ $error.message || "删除失败" }}']),
+                        CallAction::make('$message.error', ['{{ $error.message || "' . __t('crud.delete_failed') . '" }}']),
                                 ])
                         )
                         ->slot('trigger', [

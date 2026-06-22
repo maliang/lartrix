@@ -235,11 +235,11 @@ class UserController extends CrudController
                         ->put()
                         ->body(['action_type' => 'reset_password', 'password' => '{{ newPassword }}'])
                         ->then([
-                            CallAction::make('$message.success', ['密码重置成功']),
+                                    CallAction::make('$message.success', [__t('auth.password_reset_ok')]),
                             SetAction::make('resetPwdVisible', false),
                         ])
                         ->catch([
-                            CallAction::make('$message.error', ['{{ $error.message || "密码重置失败" }}']),
+                                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('crud.operation_failed') . '" }}']),
                         ])
                         ->finally([
                             SetAction::make('resetPwdSubmitting', false),
@@ -253,7 +253,7 @@ class UserController extends CrudController
             ->scrollX(1200)
             ->defaultPageSize(15)
             ->search([
-                ['关键词', 'keyword', Input::make()->props(['placeholder' => __t('placeholder.keyword_user'), 'clearable' => true])],
+                [__t('search.keyword'), 'keyword', Input::make()->props(['placeholder' => __t('placeholder.keyword_user'), 'clearable' => true])],
                 [__t('column.status'), 'status', Select::make()->props([
                     'placeholder' => __t('role.filter_all'),
                     'clearable' => true,
@@ -314,7 +314,7 @@ class UserController extends CrudController
                                     CallAction::make('loadData'),
                                 ])
                                 ->catch([
-                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('crud.operation_failed') . '" }}']),
                                 ])
                                 ->finally([
                                     SetAction::make('submitting', false),
@@ -330,7 +330,7 @@ class UserController extends CrudController
                                     CallAction::make('loadData'),
                                 ])
                                 ->catch([
-                                    CallAction::make('$message.error', ['{{ $error.message || "操作失败" }}']),
+                                    CallAction::make('$message.error', ['{{ $error.message || "' . __t('crud.operation_failed') . '" }}']),
                                 ])
                                 ->finally([
                                     SetAction::make('submitting', false),
@@ -338,8 +338,8 @@ class UserController extends CrudController
                         ),
                 ],
             ])
-            ->modal('form', '{{ editingId ? "编辑用户" : "新增用户" }}', $userForm, ['width' => '500px'])
-            ->modal('resetPwd', '重置密码 - {{ resetPwdUserName }}', $resetPwdForm, ['width' => '400px']);
+            ->modal('form', '{{ editingId ? "' . __t('title.edit_user') . '" : "' . __t('title.create_user') . '" }}', $userForm, ['width' => '500px'])
+            ->modal('resetPwd', __t('user.reset_password_title', ['name' => '{{ resetPwdUserName }}']), $resetPwdForm, ['width' => '400px']);
 
         return success($schema->build());
     }
@@ -377,7 +377,7 @@ class UserController extends CrudController
                                 CallAction::make('loadData'),
                             ])
                             ->catch([
-                                CallAction::make('$message.error', ['{{ $error.message || "状态更新失败" }}']),
+                            CallAction::make('$message.error', ['{{ $error.message || "' . __t('crud.operation_failed') . '" }}']),
                             ])
                     ),
             ]],
@@ -423,7 +423,7 @@ class UserController extends CrudController
                                     CallAction::make('loadData'),
                                 ])
                                 ->catch([
-                                    CallAction::make('$message.error', ['{{ $error.message || "删除失败" }}']),
+                            CallAction::make('$message.error', ['{{ $error.message || "' . __t('crud.delete_failed') . '" }}']),
                                 ])
                         )
                         ->slot('trigger', [
@@ -432,7 +432,7 @@ class UserController extends CrudController
                                 ->props(['type' => 'error', 'text' => true])
                                 ->text(__t('button.delete')),
                         ])
-                        ->children(['确定要删除用户 {{ slotData.row.username }} 吗？']),
+                    ->children([__t('confirm.delete_user_template')]),
                 ]),
             ]],
         ];
