@@ -109,7 +109,7 @@ class AuthController extends Controller
      */
     public function config(): array
     {
-        $theme = \Lartrix\Models\Setting::getGroup('theme');
+        $theme = \Lartrix\Models\Setting::fetchThemeConfig(config('lartrix.theme', []));
         return success([
             'apiPrefix' => '/' . ltrim(config('lartrix.api_prefix', 'api/admin'), '/'),
             'appTitle' => $theme['appTitle'] ?? 'Lartrix Admin',

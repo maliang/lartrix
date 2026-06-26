@@ -3,7 +3,6 @@
 namespace Lartrix\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Lartrix\Models\Setting;
 use Lartrix\Schema\Components\NaiveUI\Card;
 use Lartrix\Schema\Components\NaiveUI\Form;
@@ -67,35 +66,42 @@ class SettingController extends Controller
     {
         $validated = $request->validate([
             'settings' => 'required|array',
-            'settings.*.key' => 'required|string|exists:admin_settings,key',
+            'settings.*.key' => 'required|string',
             'settings.*.value' => 'nullable',
         ]);
 
-        $cachePrefix = config('lartrix.settings.cache.prefix', 'lartrix.setting.');
+        $themeUpdates = [];
+        $themeMapping = [
+            'login.app_title' => 'appTitle',
+            'login.logo' => 'logo',
+            'login.copyright' => 'copyright',
+        ];
 
         foreach ($validated['settings'] as $item) {
-            $setting = Setting::where('key', $item['key'])->first();
-            
-            if ($setting) {
-                // 根据类型处理值
-                $value = $item['value'];
-                if (is_array($value) || is_object($value)) {
-                    $value = json_encode($value);
-                } elseif (is_bool($value)) {
-                    $value = $value ? '1' : '0';
-                } else {
-                    $value = (string) $value;
-                }
+            Setting::set($item['key'], $item['value'] ?? '');
 
-                $setting->value = $value;
-                $setting->save();
-
-                // 清除缓存
-                Cache::forget($cachePrefix . $item['key']);
+            if (array_key_exists($item['key'], $themeMapping)) {
+                $themeUpdates[$themeMapping[$item['key']]] = $item['value'] ?? '';
             }
         }
 
+        $this->syncThemeSettings($themeUpdates);
+
         return success(__t('system.settings_updated'));
+    }
+
+    protected function syncThemeSettings(array $themeUpdates): void
+    {
+        if ($themeUpdates === []) {
+            return;
+        }
+
+        $theme = Setting::get('theme', config('lartrix.theme', []));
+        if (!is_array($theme)) {
+            $theme = config('lartrix.theme', []);
+        }
+
+        Setting::set('theme', array_merge($theme, $themeUpdates));
     }
 
     /**
@@ -169,13 +175,12 @@ class SettingController extends Controller
             ->toArray();
 
         // 将 formData 合并到 schema 的 data 中
-        $theme = \Lartrix\Models\Setting::getGroup('theme');
+        $theme = \Lartrix\Models\Setting::fetchThemeConfig(config('lartrix.theme', []));
         $schema['data'] = [
             'formData' => [
                 'app_title' => $theme['appTitle'] ?? 'Lartrix Admin',
-            'app_subtitle' => config('lartrix.app_subtitle', __t('system.default_subtitle')),
+                'app_subtitle' => config('lartrix.app_subtitle', __t('system.default_subtitle')),
                 'logo' => $theme['logo'] ?? '',
-                'copyright' => config('lartrix.copyright', 'Lartrix Admin'),
                 'copyright' => config('lartrix.copyright', '© ' . date('Y') . ' Lartrix Admin. All rights reserved.'),
             ],
         ];

@@ -79,11 +79,7 @@ class SystemController extends Controller
     protected function getThemeSettings(): array
     {
         $settingModel = $this->getSettingModel();
-        $themeConfig = $settingModel::getGroup('theme');
-        if (empty($themeConfig)) {
-            $themeConfig = $this->getDefaultThemeConfig();
-        }
-        return $themeConfig;
+        return $settingModel::fetchThemeConfig($this->getDefaultThemeConfig());
     }
 
     /**
@@ -116,8 +112,9 @@ class SystemController extends Controller
     {
         $theme = $this->getThemeSettings();
         $appTitle = $theme['appTitle'] ?? 'Lartrix Admin';
-            $appSubtitle = __t('system.default_subtitle');
-        $copyright = config('lartrix.copyright', 'Lartrix Admin');
+        $appSubtitle = __t('system.default_subtitle');
+        $copyright = $theme['copyright'] ?? config('lartrix.copyright', 'Lartrix Admin');
+        $logo = $theme['logo'] ?? '';
 
         // 构建登录页面 Schema
         $schema = Html::div()
@@ -144,7 +141,7 @@ class SystemController extends Controller
                 // 顶部渐变动画
                 $this->buildTopGradient(),
                 // 登录卡片
-                $this->buildLoginCard($appTitle, $appSubtitle),
+                $this->buildLoginCard($appTitle, $appSubtitle, $logo),
                 // 版权信息
                 Text::make()
                     ->props([
@@ -296,7 +293,7 @@ class SystemController extends Controller
     /**
      * 构建登录卡片
      */
-    protected function buildLoginCard(string $appTitle, string $appSubtitle): Card
+    protected function buildLoginCard(string $appTitle, string $appSubtitle, string $logo): Card
     {
         return Card::make()
             ->bordered(false)
@@ -314,7 +311,7 @@ class SystemController extends Controller
             ])
             ->children([
                 // Logo 和标题
-                $this->buildLogoHeader($appTitle, $appSubtitle),
+                $this->buildLogoHeader($appTitle, $appSubtitle, $logo),
                 // 登录表单
                 $this->buildLoginForm(),
                 // 重置密码表单
@@ -325,7 +322,7 @@ class SystemController extends Controller
     /**
      * 构建 Logo 头部
      */
-    protected function buildLogoHeader(string $appTitle, string $appSubtitle): Flex
+    protected function buildLogoHeader(string $appTitle, string $appSubtitle, string $logo): Flex
     {
         return Flex::make()
             ->align('center')
@@ -333,7 +330,7 @@ class SystemController extends Controller
             ->props(['style' => ['marginBottom' => '32px', 'gap' => '12px']])
             ->children([
                 Html::make('img')
-                    ->props(['src' => $theme['logo'] ?? '', 'style' => ['width' => '48px', 'height' => '48px']]),
+                    ->props(['src' => $logo, 'style' => ['width' => '48px', 'height' => '48px']]),
                 Flex::make()
                     ->vertical()
                     ->props(['style' => ['gap' => '2px']])

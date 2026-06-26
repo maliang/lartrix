@@ -54,6 +54,35 @@ class Setting extends Model
     }
 
     /**
+     * 获取主题配置，并兼容系统设置页保存的登录/站点配置。
+     */
+    public static function fetchThemeConfig(array $default = []): array
+    {
+        $theme = static::get('theme', null);
+        if (!is_array($theme)) {
+            $theme = static::getGroup('theme');
+        }
+        if (!is_array($theme) || $theme === []) {
+            $theme = $default;
+        }
+
+        $loginSettings = static::getGroup('login');
+        $mapping = [
+            'app_title' => 'appTitle',
+            'logo' => 'logo',
+            'copyright' => 'copyright',
+        ];
+
+        foreach ($mapping as $settingKey => $themeKey) {
+            if (array_key_exists($settingKey, $loginSettings) && $loginSettings[$settingKey] !== null) {
+                $theme[$themeKey] = $loginSettings[$settingKey];
+            }
+        }
+
+        return $theme;
+    }
+
+    /**
      * 设置值（不存在则创建）
      */
     public static function set(string $key, $value, ?string $group = null): bool
