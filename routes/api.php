@@ -119,11 +119,11 @@ Route::prefix($prefix)->group(function () use (
             Route::put('/', [$settingController, 'update']);
         });
 
-        // 字典管理
+        // 字典管理 - 注意路由顺序：具体路由在前，通用路由在后
         Route::prefix('dicts')->group(function () use ($dictController) {
             // 字典选项（供前端 select 使用）
-            Route::get('options/{code}', [$dictController, 'options'])->where('code', '[a-zA-Z_]+');
             Route::post('options/batch', [$dictController, 'batchOptions']);
+            Route::get('options/{code}', [$dictController, 'options'])->where('code', '[a-zA-Z_]+');
 
             // 字典分组管理
             Route::get('groups', [$dictController, 'groups']);
@@ -146,15 +146,13 @@ Route::prefix($prefix)->group(function () use (
             ->parameters(['notification-categories' => 'id'])
             ->except(['create', 'edit']);
 
-        // 通知消息管理
-        Route::resource('notifications', $notificationController)
-            ->parameters(['notifications' => 'id'])
-            ->except(['create', 'edit']);
-
-        // 通知操作
+        // 通知消息管理 - 具体路由在前，通用 resource 在后
         Route::post('notifications/{id}/mark-read', [$notificationController, 'markAsRead']);
         Route::post('notifications/mark-all-read', [$notificationController, 'markAllAsRead']);
         Route::get('notifications/poll', [$notificationController, 'poll']);
+        Route::resource('notifications', $notificationController)
+            ->parameters(['notifications' => 'id'])
+            ->except(['create', 'edit']);
 
         // 主后台发送通知给二级后台
         Route::prefix('admin')->group(function () use ($adminNotificationController) {
