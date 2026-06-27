@@ -87,6 +87,7 @@ class MenuController extends CrudController
             'keep_alive' => 'boolean',
             'permissions' => 'nullable|array',
             'permissions.*' => 'string',
+            'badge' => 'nullable|array',
             'use_json_renderer' => 'boolean',
             'schema_source' => 'nullable|string|max:255',
             'layout_type' => 'nullable|string|in:normal,blank',
@@ -114,6 +115,7 @@ class MenuController extends CrudController
             'keep_alive' => 'boolean',
             'permissions' => 'nullable|array',
             'permissions.*' => 'string',
+            'badge' => 'nullable|array',
             'use_json_renderer' => 'boolean',
             'schema_source' => 'nullable|string|max:255',
             'layout_type' => 'nullable|string|in:normal,blank',
@@ -127,6 +129,7 @@ class MenuController extends CrudController
 
     protected function validateUpdate(Request $request, int $id): array
     {
+        $this->normalizeBadgeInput($request);
         $validated = parent::validateUpdate($request, $id);
 
         // 防止设置自己为父级
@@ -135,6 +138,50 @@ class MenuController extends CrudController
         }
 
         return $validated;
+    }
+
+    protected function validateStore(Request $request): array
+    {
+        $this->normalizeBadgeInput($request);
+        return parent::validateStore($request);
+    }
+
+    protected function prepareStoreData(array $validated): array
+    {
+        $validated['guard_name'] = config('lartrix.guard', 'admin');
+        if (($validated['badge'] ?? null) === []) {
+            $validated['badge'] = null;
+        }
+        return $validated;
+    }
+
+    protected function prepareUpdateData(array $validated): array
+    {
+        if (($validated['badge'] ?? null) === []) {
+            $validated['badge'] = null;
+        }
+        return $validated;
+    }
+
+    protected function normalizeBadgeInput(Request $request): void
+    {
+        if (!$request->has('badge')) {
+            return;
+        }
+
+        $badge = $request->input('badge');
+        if ($badge === null || $badge === '') {
+            $request->merge(['badge' => []]);
+            return;
+        }
+
+        if (is_string($badge)) {
+            $decoded = json_decode($badge, true);
+            if (!is_array($decoded)) {
+                throw new \Lartrix\Exceptions\ApiException(__t('crud.badge_invalid'), 40022);
+            }
+            $request->merge(['badge' => $decoded]);
+        }
     }
 
     protected function beforeDelete(mixed $model): void
@@ -147,12 +194,6 @@ class MenuController extends CrudController
     /**
      * 创建时自动设置 guard_name
      */
-    protected function prepareStoreData(array $validated): array
-    {
-        $validated['guard_name'] = config('lartrix.guard', 'admin');
-        return $validated;
-    }
-
     // ==================== 自定义方法 ====================
 
     /**
@@ -257,6 +298,7 @@ class MenuController extends CrudController
             [__t('form.keep_alive'), 'keep_alive', SwitchC::make(), false],
                 [__t('form.requires_auth'), 'requires_auth', SwitchC::make(), true],
                 [__t('form.is_default_after_login'), 'is_default_after_login', SwitchC::make(), false],
+                [__t('form.badge'), 'badge', Input::make()->props(['type' => 'textarea', 'placeholder' => __t('placeholder.badge'), 'autosize' => ['minRows' => 3, 'maxRows' => 6]]), ''],
             ])
             ->buttons([
                 Button::make()->on('click', SetAction::make('formVisible', false))->text(__t('button.cancel')),
@@ -397,6 +439,7 @@ class MenuController extends CrudController
                             SetAction::make('formData.keep_alive', '{{ slotData.row.keep_alive || false }}'),
                             SetAction::make('formData.requires_auth', '{{ slotData.row.requires_auth !== false }}'),
                             SetAction::make('formData.is_default_after_login', '{{ slotData.row.is_default_after_login || false }}'),
+                            SetAction::make('formData.badge', '{{ slotData.row.badge ? JSON.stringify(slotData.row.badge, null, 2) : "" }}'),
                             SetAction::make('formVisible', true),
                             CallAction::make('loadMenuTree'),
                         ])

@@ -36,6 +36,7 @@ class Menu extends Model
         'fixed_index_in_tab',
         'requires_auth',
         'active_menu',
+        'badge',
     ];
 
     /**
@@ -49,6 +50,7 @@ class Menu extends Model
         'fixed_index_in_tab' => 'integer',
         'requires_auth' => 'boolean',
         'permissions' => 'array',
+        'badge' => 'array',
         'order' => 'integer',
     ];
 
@@ -129,6 +131,7 @@ class Menu extends Model
         if ($this->fixed_index_in_tab !== null) $meta['fixedIndexInTab'] = $this->fixed_index_in_tab;
         if ($this->requires_auth) $meta['requiresAuth'] = true;
         if ($this->active_menu) $meta['activeMenu'] = $this->active_menu;
+        if (!empty($this->badge)) $meta['badge'] = $this->badge;
 
         if (!empty($meta)) {
             $route['meta'] = $meta;

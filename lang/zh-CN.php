@@ -34,6 +34,7 @@ return [
         'not_found_to_delete' => '未找到要删除的:name',
         'load_failed' => '加载失败',
         'operation_failed' => '操作失败',
+        'badge_invalid' => 'Badge 配置必须是合法的 JSON 对象',
         'delete_failed' => '删除失败',
     ],
     'notification' => [
@@ -181,6 +182,7 @@ return [
         'keep_alive' => '保持连接',
         'requires_auth' => '需要认证',
         'is_default_after_login' => '登录后默认页',
+        'badge' => 'Badge 配置',
         'parent_id' => '父级',
         'module' => '所属模块',
         'description' => '描述',
@@ -206,6 +208,7 @@ return [
         'redirect' => '请输入重定向路径',
         'href' => '请输入外部链接',
         'schema_source' => '请输入 Schema 来源',
+        'badge' => '{"source":"notification","types":["approval.contract","task.todo"],"max":99}',
         'code' => '请输入编码，如 order_status',
         'label' => '请输入显示文本',
         'value' => '请输入存储值',

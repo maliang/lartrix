@@ -118,6 +118,23 @@ class AuthController extends Controller
             'fallbackLocale' => config('lartrix.fallback_locale', 'en-US'),
             'languages' => app(TranslationService::class)->getLanguageOptions(),
             'translationsUrl' => '/translations',
+            'realtime' => $this->getRealtimeConfig(),
         ]);
+    }
+
+    protected function getRealtimeConfig(): array
+    {
+        return [
+            'enabled' => (bool) config('lartrix.realtime.enabled', true),
+            'driver' => config('lartrix.realtime.driver', 'polling'),
+            'polling' => [
+                'api' => config('lartrix.realtime.polling.api', '/notifications/poll'),
+                'interval' => (int) config('lartrix.realtime.polling.interval', 15000),
+            ],
+            'websocket' => [
+                'url' => config('lartrix.realtime.websocket.url', ''),
+            ],
+            'behaviors' => config('lartrix.realtime.behaviors', []),
+        ];
     }
 }

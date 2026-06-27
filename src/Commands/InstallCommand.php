@@ -362,6 +362,7 @@ PHP;
             'create_admin_users_table',
             'add_fields_to_permission_tables',
             'create_admin_menus_table',
+            'add_badge_to_admin_menus_table',
             'create_admin_settings_table',
             'create_modules_table',
         ];
@@ -749,6 +750,7 @@ PHP;
             'is_default_after_login' => $meta['isDefaultAfterLogin'] ?? false,
             'fixed_index_in_tab' => $meta['fixedIndexInTab'] ?? null,
             'permissions' => $meta['permissions'] ?? null,
+            'badge' => $meta['badge'] ?? null,
         ];
 
         $menu = Menu::updateOrCreate(

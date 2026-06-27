@@ -34,6 +34,7 @@ return [
         'not_found_to_delete' => 'No :name found to delete',
         'load_failed' => 'Load failed',
         'operation_failed' => 'Operation failed',
+        'badge_invalid' => 'Badge config must be a valid JSON object',
         'delete_failed' => 'Delete failed',
     ],
     'notification' => [
@@ -181,6 +182,7 @@ return [
         'keep_alive' => 'Keep Alive',
         'requires_auth' => 'Requires Auth',
         'is_default_after_login' => 'Default After Login',
+        'badge' => 'Badge Config',
         'parent_id' => 'Parent',
         'module' => 'Module',
         'description' => 'Description',
@@ -206,6 +208,7 @@ return [
         'redirect' => 'Please enter redirect path',
         'href' => 'Please enter external link',
         'schema_source' => 'Please enter schema source',
+        'badge' => '{"source":"notification","types":["approval.contract","task.todo"],"max":99}',
         'code' => 'Please enter code, e.g. order_status',
         'label' => 'Please enter display text',
         'value' => 'Please enter value',

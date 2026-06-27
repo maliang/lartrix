@@ -31,6 +31,11 @@ class HeaderCustomItem extends Component
         return $this->props(['badgeApi' => $api]);
     }
 
+    public function badge(array $config): static
+    {
+        return $this->props(['badge' => $config]);
+    }
+
     public function badgeColor(string $color): static
     {
         return $this->props(['badgeColor' => $color]);

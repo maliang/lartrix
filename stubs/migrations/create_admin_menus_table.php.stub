@@ -39,6 +39,7 @@ return new class extends Migration
             $table->integer('fixed_index_in_tab')->nullable()->comment('固定标签页顺序');
             $table->boolean('requires_auth')->default(true)->comment('是否需要登录');
             $table->string('active_menu')->nullable()->comment('父级菜单路径');
+            $table->json('badge')->nullable()->comment('菜单徽标配置(JSON)');
             
             $table->timestamps();
 
