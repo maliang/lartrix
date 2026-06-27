@@ -681,7 +681,16 @@ class SystemController extends Controller
      */
     public function headerRight(): array
     {
+        // 自定义导航项位置：left（默认，最左）/ right（最右）
+        $customItemsPosition = config('lartrix.header.custom_items_position', 'left');
+        $customItems = $this->buildHeaderCustomItems();
+
         $children = [];
+
+        // 自定义项置于默认右侧组件整体的最左侧
+        if ($customItemsPosition === 'left') {
+            $children = array_merge($children, $customItems);
+        }
 
         // 全局搜索
         $children[] = GlobalSearch::make();
@@ -714,29 +723,6 @@ class SystemController extends Controller
             }
         }
         $children[] = $notification;
-
-        // 自定义导航项（从配置读取）
-        foreach (config('lartrix.header.custom_items', []) as $item) {
-            $custom = HeaderCustomItem::make()
-                ->icon($item['icon'] ?? 'carbon:dot-mark')
-                ->tooltip($item['tooltip'] ?? '');
-            if (!empty($item['badge']) && is_array($item['badge'])) {
-                $custom->badge($item['badge']);
-            }
-            if (!empty($item['click'])) {
-                $custom->click($item['click']);
-            }
-            if (!empty($item['click_target'])) {
-                $custom->clickTarget($item['click_target']);
-            }
-            if (!empty($item['target'])) {
-                $custom->target($item['target']);
-            }
-            if (!empty($item['schema_api'])) {
-                $custom->schemaApi($item['schema_api']);
-            }
-            $children[] = $custom;
-        }
 
         // 全屏切换
         $children[] = FullScreen::make();
@@ -810,11 +796,46 @@ class SystemController extends Controller
                             ],
                         ],
                     ]);
+        // 自定义项置于默认右侧组件整体的最右侧
+        if ($customItemsPosition !== 'left') {
+            $children = array_merge($children, $customItems);
+        }
+
         $schema = Html::div()
             ->props(['class' => 'h-full flex-y-center gap-4px'])
             ->children($children);
 
         return success($schema->toArray());
+    }
+
+    /**
+     * 构建头部自定义导航项（从配置读取）
+     */
+    protected function buildHeaderCustomItems(): array
+    {
+        $items = [];
+        foreach (config('lartrix.header.custom_items', []) as $item) {
+            $custom = HeaderCustomItem::make()
+                ->icon($item['icon'] ?? 'carbon:dot-mark')
+                ->tooltip($item['tooltip'] ?? '');
+            if (!empty($item['badge']) && is_array($item['badge'])) {
+                $custom->badge($item['badge']);
+            }
+            if (!empty($item['click'])) {
+                $custom->click($item['click']);
+            }
+            if (!empty($item['click_target'])) {
+                $custom->clickTarget($item['click_target']);
+            }
+            if (!empty($item['target'])) {
+                $custom->target($item['target']);
+            }
+            if (!empty($item['schema_api'])) {
+                $custom->schemaApi($item['schema_api']);
+            }
+            $items[] = $custom;
+        }
+        return $items;
     }
 
     /**
