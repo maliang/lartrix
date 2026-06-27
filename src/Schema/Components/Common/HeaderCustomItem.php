@@ -41,6 +41,11 @@ class HeaderCustomItem extends Component
         return $this->props(['clickTarget' => $target]);
     }
 
+    public function target(string $target): static
+    {
+        return $this->props(['target' => $target]);
+    }
+
     public function schemaApi(string $api): static
     {
         return $this->props(['schemaApi' => $api]);

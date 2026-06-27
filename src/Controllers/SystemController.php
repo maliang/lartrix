@@ -729,6 +729,9 @@ class SystemController extends Controller
             if (!empty($item['click_target'])) {
                 $custom->clickTarget($item['click_target']);
             }
+            if (!empty($item['target'])) {
+                $custom->target($item['target']);
+            }
             if (!empty($item['schema_api'])) {
                 $custom->schemaApi($item['schema_api']);
             }
