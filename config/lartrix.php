@@ -184,6 +184,9 @@ return [
     */
     'realtime' => [
         'enabled' => env('LARTRIX_REALTIME_ENABLED', true),
+        // 是否在新消息到达时弹出应用内通知 toast（全局开关），默认 true。
+        // 如需仅对某些类型关闭弹窗，可在下方 behaviors 中对应 type 设置 'notify' => false。
+        'enable_notification' => env('LARTRIX_REALTIME_ENABLE_NOTIFICATION', true),
         'driver' => env('LARTRIX_REALTIME_DRIVER', 'polling'), // polling 或 ws
         'polling' => [
             'interval' => env('LARTRIX_REALTIME_POLLING_INTERVAL', 15000),
@@ -198,10 +201,12 @@ return [
         | 消息行为配置
         | 按通知 type 触发前端动作。actions 支持内置动作 sound / notification，
         | 也支持前端通过 registerBehaviorAction 注册自定义动作。
+        | 可选 'notify' => false 关闭该类型新消息的应用内弹窗（声音/角标不受影响）。
         |
         | 示例：
         | 'behaviors' => [
         |     'audit.pending' => [
+        |         'notify' => false,   // 不弹窗，但仍可播放声音、更新角标
         |         'actions' => [
         |             ['type' => 'sound', 'src' => '/sounds/audit.mp3', 'times' => 3],
         |             ['type' => 'notification', 'title' => '新的审核任务'],

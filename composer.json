@@ -1,6 +1,6 @@
 {
     "name": "lartrix/lartrix",
-    "version": "1.0.52",
+    "version": "1.0.53",
     "description": "Laravel 后台管理包，为 trix 前端提供 API 接口",
     "type": "library",
     "license": "MIT",

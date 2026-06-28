@@ -78,6 +78,7 @@ class SystemController extends Controller
     {
         return [
             'enabled' => (bool) config('lartrix.realtime.enabled', true),
+            'enableNotification' => (bool) config('lartrix.realtime.enable_notification', true),
             'driver' => config('lartrix.realtime.driver', 'polling'),
             'polling' => [
                 'api' => config('lartrix.realtime.polling.api', '/notifications/poll'),
