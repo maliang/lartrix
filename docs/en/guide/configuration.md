@@ -14,8 +14,10 @@ return [
     ],
     
     // System info
-    'app_title' => 'Admin System',
-    'logo' => '/admin/logo.svg',
+    'theme' => [
+        'appTitle' => 'Admin System',
+        'logo' => '/admin/logo.svg',
+    ],
     'copyright' => '© 2024 All Rights Reserved',
 ];
 ```
@@ -100,8 +102,10 @@ return [
         'guard' => 'admin',
     ],
 
-    'app_title' => env('LARTRIX_TITLE', 'Admin System'),
-    'logo' => env('LARTRIX_LOGO', '/admin/logo.svg'),
+    'theme' => [
+        'appTitle' => env('LARTRIX_APP_TITLE', 'Admin System'),
+        'logo' => env('LARTRIX_LOGO', '/admin/logo.svg'),
+    ],
     'copyright' => env('LARTRIX_COPYRIGHT', '© 2024 All Rights Reserved'),
 
     'models' => [

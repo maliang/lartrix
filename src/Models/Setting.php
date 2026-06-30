@@ -67,15 +67,15 @@ class Setting extends Model
         }
 
         $loginSettings = static::getGroup('login');
-        $mapping = [
-            'app_title' => 'appTitle',
-            'logo' => 'logo',
-            'copyright' => 'copyright',
-        ];
+        if (array_key_exists('appTitle', $loginSettings) && $loginSettings['appTitle'] !== null) {
+            $theme['appTitle'] = $loginSettings['appTitle'];
+        } elseif (array_key_exists('app_title', $loginSettings) && $loginSettings['app_title'] !== null) {
+            $theme['appTitle'] = $loginSettings['app_title'];
+        }
 
-        foreach ($mapping as $settingKey => $themeKey) {
+        foreach (['logo', 'copyright'] as $settingKey) {
             if (array_key_exists($settingKey, $loginSettings) && $loginSettings[$settingKey] !== null) {
-                $theme[$themeKey] = $loginSettings[$settingKey];
+                $theme[$settingKey] = $loginSettings[$settingKey];
             }
         }
 

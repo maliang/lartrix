@@ -238,7 +238,7 @@ class HomeController extends Controller
                 GridItem::make()->children([
                     Card::make()->props(['title' => __t('home.project_info')])->children([
                         Descriptions::make()->props(['column' => 1, 'labelPlacement' => 'left'])->children([
-                            DescriptionsItem::make()->props(['label' => __t('home.project_name')])->children([config('lartrix.app_title', 'Lartrix Admin')]),
+                            DescriptionsItem::make()->props(['label' => __t('home.project_name')])->children([config('lartrix.theme.appTitle', 'Lartrix Admin')]),
                             DescriptionsItem::make()->props(['label' => __t('home.tech_stack')])->children(['Laravel + Vue 3']),
                             DescriptionsItem::make()->props(['label' => __t('home.render_engine')])->children(['vschema-ui']),
                         ]),

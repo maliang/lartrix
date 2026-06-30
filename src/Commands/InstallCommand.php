@@ -608,8 +608,8 @@ PHP;
 
         // 主题配置（与 trix 前端 themeSettings 保持一致）
         $themeConfig = [
-            'appTitle' => config('lartrix.app_title', 'Lartrix Admin'),
-            'logo' => config('lartrix.logo', '/favicon.svg'),
+            'appTitle' => config('lartrix.theme.appTitle', 'Lartrix Admin'),
+            'logo' => config('lartrix.theme.logo', '/favicon.svg'),
             'themeScheme' => 'light',
             'grayscale' => false,
             'colourWeakness' => false,
@@ -671,7 +671,7 @@ PHP;
             ],
             'watermark' => [
                 'visible' => false,
-                'text' => config('lartrix.app_title', 'Lartrix Admin'),
+                'text' => config('lartrix.theme.appTitle', 'Lartrix Admin'),
                 'enableUserName' => false,
                 'enableTime' => false,
                 'timeFormat' => 'YYYY-MM-DD HH:mm',

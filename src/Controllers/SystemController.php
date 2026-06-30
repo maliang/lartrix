@@ -694,57 +694,69 @@ class SystemController extends Controller
         }
 
         // 全局搜索
-        $children[] = GlobalSearch::make();
+        if (config('lartrix.header.global_search', true)) {
+            $children[] = GlobalSearch::make();
+        }
 
         // 通知中心
-        $notification = HeaderNotification::make()
-            ->fetchApi('/notifications')
-            ->readApi('/notifications/{id}/mark-read')
-            ->readAllApi('/notifications/mark-all-read')
-            ->badgeMode('count')
-            ->pageSize(10)
-            ->enableNotification(true)
-            ->notificationDuration(4500)
-            ->enableDetail(true)
-            ->tabs($this->getNotificationTabs())
-            ->titlePrefixField('categoryLabel');
+        if (config('lartrix.header.notification', true)) {
+            $notification = HeaderNotification::make()
+                ->fetchApi('/notifications')
+                ->readApi('/notifications/{id}/mark-read')
+                ->readAllApi('/notifications/mark-all-read')
+                ->badgeMode('count')
+                ->pageSize(10)
+                ->enableNotification(true)
+                ->notificationDuration(4500)
+                ->enableDetail(true)
+                ->tabs($this->getNotificationTabs())
+                ->titlePrefixField('categoryLabel');
 
-        // 实时消息配置
-        if (config('lartrix.realtime.enabled', true)) {
-            $driver = config('lartrix.realtime.driver', 'polling');
-            if ($driver === 'polling') {
-                $notification->enablePolling(true)
-                    ->pollingInterval((int) config('lartrix.realtime.polling.interval', 15000))
-                    ->pollingApi(config('lartrix.realtime.polling.api', '/notifications/poll'));
-            } elseif ($driver === 'ws') {
-                $wsUrl = config('lartrix.realtime.websocket.url', '');
-                if ($wsUrl) {
-                    $notification->enableWs(true)->wsUrl($wsUrl);
+            // 实时消息配置
+            if (config('lartrix.realtime.enabled', true)) {
+                $driver = config('lartrix.realtime.driver', 'polling');
+                if ($driver === 'polling') {
+                    $notification->enablePolling(true)
+                        ->pollingInterval((int) config('lartrix.realtime.polling.interval', 15000))
+                        ->pollingApi(config('lartrix.realtime.polling.api', '/notifications/poll'));
+                } elseif ($driver === 'ws') {
+                    $wsUrl = config('lartrix.realtime.websocket.url', '');
+                    if ($wsUrl) {
+                        $notification->enableWs(true)->wsUrl($wsUrl);
+                    }
                 }
             }
+            $children[] = $notification;
         }
-        $children[] = $notification;
 
         // 全屏切换
-        $children[] = FullScreen::make();
+        if (config('lartrix.header.full_screen', true)) {
+            $children[] = FullScreen::make();
+        }
 
         // 语言切换
-        $translationService = app(TranslationService::class);
-        $locale = request()->user()?->locale ?: config('lartrix.locale', 'zh-CN');
-        $children[] = LangSwitch::make()
-            ->props([
-                'langOptions' => $translationService->getLanguageOptions(),
-                'defaultLang' => $locale,
-                'submitUrl' => '/locale',
-                'translationsUrl' => '/translations',
-                'reloadOnChange' => true,
-            ]);
+        if (config('lartrix.header.lang_switch', true)) {
+            $translationService = app(TranslationService::class);
+            $locale = request()->user()?->locale ?: config('lartrix.locale', 'zh-CN');
+            $children[] = LangSwitch::make()
+                ->props([
+                    'langOptions' => $translationService->getLanguageOptions(),
+                    'defaultLang' => $locale,
+                    'submitUrl' => '/locale',
+                    'translationsUrl' => '/translations',
+                    'reloadOnChange' => true,
+                ]);
+        }
 
         // 主题模式切换
-        $children[] = ThemeSchemaSwitch::make();
+        if (config('lartrix.header.theme_schema_switch', true)) {
+            $children[] = ThemeSchemaSwitch::make();
+        }
 
         // 主题设置按钮
-        $children[] = ThemeButton::make();
+        if (config('lartrix.header.theme_button', true)) {
+            $children[] = ThemeButton::make();
+        }
 
         // 用户头像菜单
         $children[] = UserAvatar::make()

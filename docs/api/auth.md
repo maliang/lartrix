@@ -160,7 +160,7 @@ GET /api/admin/auth/config
     "code": 200,
     "message": "success",
     "data": {
-        "app_title": "管理系统",
+        "appTitle": "管理系统",
         "logo": "/admin/logo.svg",
         "copyright": "© 2024"
     }

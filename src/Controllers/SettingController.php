@@ -72,7 +72,7 @@ class SettingController extends Controller
 
         $themeUpdates = [];
         $themeMapping = [
-            'login.app_title' => 'appTitle',
+            'login.appTitle' => 'appTitle',
             'login.logo' => 'logo',
             'login.copyright' => 'copyright',
         ];
@@ -116,12 +116,12 @@ class SettingController extends Controller
                     ->props(['model' => '{{ formData }}', 'labelPlacement' => 'left', 'labelWidth' => 120])
                     ->children([
                         FormItem::make()
-                            ->label(__t('form.app_title'))
-                            ->path('app_title')
+                            ->label(__t('form.appTitle'))
+                            ->path('appTitle')
                             ->children([
                                 Input::make()
-                                    ->model('formData.app_title')
-                                    ->placeholder(__t('placeholder.app_title')),
+                                    ->model('formData.appTitle')
+                                    ->placeholder(__t('placeholder.appTitle')),
                             ]),
                         FormItem::make()
                             ->label(__t('form.subtitle'))
@@ -160,7 +160,7 @@ class SettingController extends Controller
                                                 'method' => 'PUT',
                                                 'data' => [
                                                     'settings' => [
-                                                        ['key' => 'login.app_title', 'value' => '{{ formData.app_title }}'],
+                                                        ['key' => 'login.appTitle', 'value' => '{{ formData.appTitle }}'],
                                                         ['key' => 'login.app_subtitle', 'value' => '{{ formData.app_subtitle }}'],
                                                         ['key' => 'login.logo', 'value' => '{{ formData.logo }}'],
                                                         ['key' => 'login.copyright', 'value' => '{{ formData.copyright }}'],
@@ -178,7 +178,7 @@ class SettingController extends Controller
         $theme = \Lartrix\Models\Setting::fetchThemeConfig(config('lartrix.theme', []));
         $schema['data'] = [
             'formData' => [
-                'app_title' => $theme['appTitle'] ?? 'Lartrix Admin',
+                'appTitle' => $theme['appTitle'] ?? 'Lartrix Admin',
                 'app_subtitle' => config('lartrix.app_subtitle', __t('system.default_subtitle')),
                 'logo' => $theme['logo'] ?? '',
                 'copyright' => config('lartrix.copyright', '© ' . date('Y') . ' Lartrix Admin. All rights reserved.'),

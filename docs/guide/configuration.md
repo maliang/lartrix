@@ -14,8 +14,10 @@ return [
     ],
     
     // 系统信息
-    'app_title' => '管理系统',
-    'logo' => '/admin/logo.svg',
+    'theme' => [
+        'appTitle' => '管理系统',
+        'logo' => '/admin/logo.svg',
+    ],
     'copyright' => '© 2024 All Rights Reserved',
 ];
 ```
@@ -100,8 +102,10 @@ return [
         'guard' => 'admin',
     ],
     
-    'app_title' => env('LARTRIX_TITLE', '管理系统'),
-    'logo' => env('LARTRIX_LOGO', '/admin/logo.svg'),
+    'theme' => [
+        'appTitle' => env('LARTRIX_APP_TITLE', '管理系统'),
+        'logo' => env('LARTRIX_LOGO', '/admin/logo.svg'),
+    ],
     'copyright' => env('LARTRIX_COPYRIGHT', '© 2024 All Rights Reserved'),
     
     'models' => [

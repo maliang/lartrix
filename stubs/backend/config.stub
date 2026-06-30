@@ -17,4 +17,34 @@ return [
         'model' => \Modules\{{MODULE_NAME}}\Models\{{MODEL_NAME}}::class,
         'table' => '{{TABLE}}',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | 导航栏自定义项（模块启用后自动合并到全局 lartrix.header.custom_items）
+    |--------------------------------------------------------------------------
+    */
+    // 'header_custom_items' => [
+    //     [
+    //         'icon'         => 'mdi:wallet-plus-outline',
+    //         'tooltip'      => '待处理充值',
+    //         'badge'        => ['source' => 'notification', 'types' => ['{{LOWER_NAME}}.recharge.pending'], 'mode' => 'count', 'max' => 99, 'color' => '#f5222d'],
+    //         'click'        => 'route',
+    //         'click_target' => '/finance/recharges',
+    //     ],
+    // ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | 实时消息行为（模块启用后按 type 合并到全局 lartrix.realtime.behaviors）
+    | 'notify' => false 表示该类型不弹出应用内通知（声音/角标不受影响）
+    |--------------------------------------------------------------------------
+    */
+    // 'realtime_behaviors' => [
+    //     '{{LOWER_NAME}}.recharge.pending' => [
+    //         'notify'  => false,
+    //         'actions' => [
+    //             ['type' => 'sound', 'src' => '/voice/chongzhi.mp3', 'times' => 3],
+    //         ],
+    //     ],
+    // ],
 ];

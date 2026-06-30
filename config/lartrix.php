@@ -102,6 +102,53 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | 导航栏组件显示配置
+    | 控制导航栏右侧各功能按钮的显示/隐藏
+    |--------------------------------------------------------------------------
+    */
+    'header' => [
+        'global_search' => env('LARTRIX_HEADER_GLOBAL_SEARCH', true),
+        'notification' => env('LARTRIX_HEADER_NOTIFICATION', true),
+        'full_screen' => env('LARTRIX_HEADER_FULL_SCREEN', true),
+        'lang_switch' => env('LARTRIX_HEADER_LANG_SWITCH', true),
+        'theme_schema_switch' => env('LARTRIX_HEADER_THEME_SCHEMA_SWITCH', true),
+        'theme_button' => env('LARTRIX_HEADER_THEME_BUTTON', true),
+
+        /*
+        |----------------------------------------------------------------------
+        | 自定义导航项位置
+        | left  ：位于默认右侧组件整体的最左侧（默认）
+        | right ：位于默认右侧组件整体的最右侧
+        |----------------------------------------------------------------------
+        */
+        'custom_items_position' => env('LARTRIX_HEADER_CUSTOM_ITEMS_POSITION', 'left'),
+
+        /*
+        |----------------------------------------------------------------------
+        | 自定义导航项
+        | 在导航栏右侧添加自定义功能入口。除在此处配置外，
+        | 模块也可在其 config/config.php 的 'header_custom_items' 中声明，
+        | 模块启用后自动合并到此处。
+        |
+        | 简单图标按钮（无需自定义组件）：
+        |   [
+        |       'icon'         => 'carbon:rocket',
+        |       'tooltip'      => '消息中心',
+        |       'badge'        => ['source' => 'notification', 'types' => ['audit.pending'], 'mode' => 'count', 'max' => 99, 'color' => '#f00'],
+        |       'click'        => 'route',                // route | link | modal | drawer
+        |       'click_target' => '/audit',
+        |       'target'       => '_blank',               // 仅 link 模式使用，默认 _blank
+        |   ]
+        |
+        | 高级自定义（通过 schema_api 返回任意 schema UI）：
+        |   ['schema_api' => '/api/admin/header/my-dropdown']
+        |----------------------------------------------------------------------
+        */
+        'custom_items' => [],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | 模块市场配置
     | 连接远程模块市场获取可用模块
     |--------------------------------------------------------------------------
