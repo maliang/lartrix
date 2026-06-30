@@ -9,6 +9,8 @@ use Lartrix\Schema\Components\NaiveUI\Form;
 use Lartrix\Schema\Components\NaiveUI\FormItem;
 use Lartrix\Schema\Components\NaiveUI\Input;
 use Lartrix\Schema\Components\NaiveUI\SwitchC;
+use Lartrix\Schema\Components\NaiveUI\Upload;
+use Lartrix\Schema\Components\NaiveUI\Image;
 use Lartrix\Schema\Components\NaiveUI\Button;
 use Lartrix\Schema\Components\NaiveUI\Space;
 
@@ -109,6 +111,8 @@ class SettingController extends Controller
      */
     protected function formUi(): array
     {
+        $uploadAction = '/' . trim((string) config('lartrix.api_prefix', 'api/admin'), '/') . '/upload/image';
+
         $schema = Card::make()
             ->title(__t('title.system_settings'))
             ->children([
@@ -135,9 +139,39 @@ class SettingController extends Controller
                             ->label(__t('form.logo_url'))
                             ->path('logo')
                             ->children([
-                                Input::make()
-                                    ->model('formData.logo')
-                                    ->placeholder(__t('placeholder.logo_url')),
+                                Space::make()
+                                    ->props(['vertical' => true, 'size' => 'small'])
+                                    ->children([
+                                        Upload::make()
+                                            ->action($uploadAction)
+                                            ->accept('.jpg,.jpeg,.png,.gif,.webp,.ico')
+                                            // 不用 image-card + max，避免达到上限后触发器被隐藏（导致必须先删除才能再传）；
+                                            // 关闭自带文件列表，改用下方 NImage 作为可点击的上传触发区，点击当前 logo 即可重新上传。
+                                            ->showFileList(false)
+                                            ->props(['name' => 'file'])
+                                            ->on('finish', [
+                                                // Naive UI 的 onFinish 回调中 file 对象没有 response 字段，
+                                                // 上传返回数据只能从 XHR 事件读取：$event.event.target.response（原始 JSON 字符串），需 JSON.parse 解析。
+                                                ['set' => 'formData.logo', 'value' => '{{ JSON.parse($event.event.target.response)?.data?.url || "" }}'],
+                                                ['call' => '$methods.$message.success', 'args' => [__t('upload.ok')]],
+                                            ])
+                                            ->on('error', [
+                                                ['call' => '$methods.$message.error', 'args' => [__t('upload.failed')]],
+                                            ])
+                                            ->children([
+                                                // 已有 logo：直接点击图片即可重新选图上传（previewDisabled 确保点击冒泡到上传触发器，而非打开预览）
+                                                Image::make()
+                                                    ->if('formData.logo')
+                                                    ->src('{{ formData.logo }}')
+                                                    ->width(100)
+                                                    ->height(100)
+                                                    ->objectFit('contain')
+                                                    ->previewDisabled()
+                                                    ->props(['style' => 'cursor: pointer; display: block; border: 1px dashed #d9d9d9; border-radius: 6px; padding: 4px;']),
+                                                // 无 logo：显示选择按钮
+                                                Button::make()->if('!formData.logo')->children([__t('upload.select_image')]),
+                                            ]),
+                                    ]),
                             ]),
                         FormItem::make()
                             ->label(__t('form.copyright'))
@@ -155,10 +189,9 @@ class SettingController extends Controller
                                             ->type('primary')
                                             ->children([__t('button.save_settings')])
                                             ->on('click', [
-                                                'action' => 'request',
-                                                'url' => '/settings',
+                                                'fetch' => '/settings',
                                                 'method' => 'PUT',
-                                                'data' => [
+                                                'body' => [
                                                     'settings' => [
                                                         ['key' => 'login.appTitle', 'value' => '{{ formData.appTitle }}'],
                                                         ['key' => 'login.app_subtitle', 'value' => '{{ formData.app_subtitle }}'],
@@ -166,7 +199,9 @@ class SettingController extends Controller
                                                         ['key' => 'login.copyright', 'value' => '{{ formData.copyright }}'],
                                                     ],
                                                 ],
-                                                'successMessage' => __t('common.save_ok'),
+                                                'then' => [
+                                                    ['call' => '$methods.$message.success', 'args' => [__t('common.save_ok')]],
+                                                ],
                                             ]),
                                     ]),
                             ]),

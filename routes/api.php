@@ -119,6 +119,9 @@ Route::prefix($prefix)->group(function () use (
             Route::put('/', [$settingController, 'update']);
         });
 
+        // 文件上传（图片）
+        Route::post('upload/image', [\Lartrix\Controllers\UploadController::class, 'image']);
+
         // 字典管理 - 注意路由顺序：具体路由在前，通用路由在后
         Route::prefix('dicts')->group(function () use ($dictController) {
             // 字典选项（供前端 select 使用）

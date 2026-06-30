@@ -314,4 +314,12 @@ return [
         'new_pwd_required' => '请输入新密码',
         'confirm_required' => '请再次输入密码',
     ],
+    'upload' => [
+        'ok' => '上传成功',
+        'failed' => '上传失败',
+        'file_required' => '请选择上传文件',
+        'image_type_invalid' => '仅支持图片文件',
+        'image_too_large' => '图片大小不能超过 2MB',
+        'select_image' => '上传图片',
+    ],
 ];

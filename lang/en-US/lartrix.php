@@ -314,4 +314,12 @@ return [
         'new_pwd_required' => 'Please enter new password',
         'confirm_required' => 'Please confirm password',
     ],
+    'upload' => [
+        'ok' => 'Uploaded successfully',
+        'failed' => 'Upload failed',
+        'file_required' => 'Please choose a file to upload',
+        'image_type_invalid' => 'Only image files are supported',
+        'image_too_large' => 'Image size must not exceed 2MB',
+        'select_image' => 'Upload Image',
+    ],
 ];
