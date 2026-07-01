@@ -73,6 +73,10 @@ class Setting extends Model
             $theme['appTitle'] = $loginSettings['app_title'];
         }
 
+        if (array_key_exists('appSubtitle', $loginSettings) && $loginSettings['appSubtitle'] !== null) {
+            $theme['appSubtitle'] = $loginSettings['appSubtitle'];
+        }
+
         foreach (['logo', 'copyright'] as $settingKey) {
             if (array_key_exists($settingKey, $loginSettings) && $loginSettings[$settingKey] !== null) {
                 $theme[$settingKey] = $loginSettings[$settingKey];

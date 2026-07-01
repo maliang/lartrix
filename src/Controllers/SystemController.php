@@ -130,7 +130,7 @@ class SystemController extends Controller
     {
         $theme = $this->getThemeSettings();
         $appTitle = $theme['appTitle'] ?? 'Lartrix Admin';
-        $appSubtitle = __t('system.default_subtitle');
+        $appSubtitle = $theme['appSubtitle'] ?? config('lartrix.theme.appSubtitle', __t('system.default_subtitle'));
         $copyright = $theme['copyright'] ?? config('lartrix.copyright', 'Lartrix Admin');
         $logo = $theme['logo'] ?? '';
 

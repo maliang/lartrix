@@ -273,6 +273,7 @@ return [
     */
     'theme' => [
         'appTitle' => env('LARTRIX_APP_TITLE', 'Lartrix Admin'),
+        'appSubtitle' => env('LARTRIX_APP_SUBTITLE', '基于 Laravel 和 Trix 的后台管理系统'),
         'logo' => env('LARTRIX_LOGO', '/favicon.svg'),
         'themeScheme' => 'light',
         'grayscale' => false,
