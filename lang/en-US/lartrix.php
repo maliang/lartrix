@@ -187,7 +187,7 @@ return [
         'module' => 'Module',
         'description' => 'Description',
         'appTitle' => 'System Title',
-        'logo_url' => 'Logo URL',
+        'logo_url' => 'Logo',
         'copyright' => 'Copyright',
     ],
     'placeholder' => [

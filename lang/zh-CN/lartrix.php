@@ -187,7 +187,7 @@ return [
         'module' => '所属模块',
         'description' => '描述',
         'appTitle' => '系统名称',
-        'logo_url' => 'Logo 地址',
+        'logo_url' => 'Logo',
         'copyright' => '版权信息',
     ],
     'placeholder' => [

@@ -9,10 +9,9 @@ use Lartrix\Schema\Components\NaiveUI\Form;
 use Lartrix\Schema\Components\NaiveUI\FormItem;
 use Lartrix\Schema\Components\NaiveUI\Input;
 use Lartrix\Schema\Components\NaiveUI\SwitchC;
-use Lartrix\Schema\Components\NaiveUI\Upload;
-use Lartrix\Schema\Components\NaiveUI\Image;
 use Lartrix\Schema\Components\NaiveUI\Button;
 use Lartrix\Schema\Components\NaiveUI\Space;
+use Lartrix\Schema\Components\Business\OneImgUp;
 
 class SettingController extends Controller
 {
@@ -139,39 +138,10 @@ class SettingController extends Controller
                             ->label(__t('form.logo_url'))
                             ->path('logo')
                             ->children([
-                                Space::make()
-                                    ->props(['vertical' => true, 'size' => 'small'])
-                                    ->children([
-                                        Upload::make()
-                                            ->action($uploadAction)
-                                            ->accept('.jpg,.jpeg,.png,.gif,.webp,.ico')
-                                            // 不用 image-card + max，避免达到上限后触发器被隐藏（导致必须先删除才能再传）；
-                                            // 关闭自带文件列表，改用下方 NImage 作为可点击的上传触发区，点击当前 logo 即可重新上传。
-                                            ->showFileList(false)
-                                            ->props(['name' => 'file'])
-                                            ->on('finish', [
-                                                // Naive UI 的 onFinish 回调中 file 对象没有 response 字段，
-                                                // 上传返回数据只能从 XHR 事件读取：$event.event.target.response（原始 JSON 字符串），需 JSON.parse 解析。
-                                                ['set' => 'formData.logo', 'value' => '{{ JSON.parse($event.event.target.response)?.data?.url || "" }}'],
-                                                ['call' => '$methods.$message.success', 'args' => [__t('upload.ok')]],
-                                            ])
-                                            ->on('error', [
-                                                ['call' => '$methods.$message.error', 'args' => [__t('upload.failed')]],
-                                            ])
-                                            ->children([
-                                                // 已有 logo：直接点击图片即可重新选图上传（previewDisabled 确保点击冒泡到上传触发器，而非打开预览）
-                                                Image::make()
-                                                    ->if('formData.logo')
-                                                    ->src('{{ formData.logo }}')
-                                                    ->width(100)
-                                                    ->height(100)
-                                                    ->objectFit('contain')
-                                                    ->previewDisabled()
-                                                    ->props(['style' => 'cursor: pointer; display: block; border: 1px dashed #d9d9d9; border-radius: 6px; padding: 4px;']),
-                                                // 无 logo：显示选择按钮
-                                                Button::make()->if('!formData.logo')->children([__t('upload.select_image')]),
-                                            ]),
-                                    ]),
+                                OneImgUp::make('formData.logo')
+                                    ->action($uploadAction)
+                                    ->size(120)
+                                    ->mode('replace'),
                             ]),
                         FormItem::make()
                             ->label(__t('form.copyright'))

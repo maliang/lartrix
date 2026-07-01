@@ -39,6 +39,24 @@ check(
     !str_contains($settingController, 'exists:admin_settings,key'),
     'SettingController must allow missing login.* setting keys so site settings can be created.'
 );
+$oneImgUp = source('src/Schema/Components/Business/OneImgUp.php');
+check(
+    str_contains($settingController, "OneImgUp::make('formData.logo')")
+        && str_contains($settingController, '->action($uploadAction)')
+        && !str_contains($settingController, "Input::make()->model('formData.logo')"),
+    'SettingController logo field must use the OneImgUp single-image upload component bound to formData.logo.'
+);
+check(
+    str_contains($oneImgUp, 'JSON.parse($event.event.target.response)')
+        && str_contains($oneImgUp, '->showFileList(false)')
+        && str_contains($oneImgUp, 'previewDisabled')
+        && str_contains($oneImgUp, "'mouseenter'")
+        && str_contains($oneImgUp, "'click.stop'")
+        && str_contains($oneImgUp, "->listType('image-card')")
+        && str_contains($oneImgUp, "->on('remove'")
+        && !str_contains($oneImgUp, "\$event.file.response"),
+    'OneImgUp: replace mode uses click-to-replace + hover delete; preview mode uses native image-card overlay (eye/trash) with delete-to-reupload; URL read from XHR response.'
+);
 
 $systemController = source('src/Controllers/SystemController.php');
 check(
