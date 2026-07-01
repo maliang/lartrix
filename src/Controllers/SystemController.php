@@ -348,7 +348,7 @@ class SystemController extends Controller
             ->props(['style' => ['marginBottom' => '32px', 'gap' => '12px']])
             ->children([
                 Html::make('img')
-                    ->props(['src' => $logo, 'style' => ['width' => '48px', 'height' => '48px']]),
+                    ->props(['src' => $logo, 'style' => ['height' => '48px', 'width' => 'auto']]),
                 Flex::make()
                     ->vertical()
                     ->props(['style' => ['gap' => '2px']])

@@ -278,7 +278,6 @@ class OneImgUp implements JsonNodeInterface
         $w = $this->widthCss();
         $h = $this->heightCss();
         $scope = $this->scopeClass();
-        $imgStyle = "display:block; border:1px solid #eee; border-radius:{$this->radius};";
 
         $children = [];
 
@@ -297,13 +296,21 @@ class OneImgUp implements JsonNodeInterface
             ->on('finish', $this->finishActions())
             ->on('error', $this->errorActions())
             ->children([
-                Image::make()
+                // 回显：在设定尺寸的容器内居中显示（flex 居中 + object-fit）
+                Html::div()
                     ->if($model)
-                    ->src("{{ {$model} }}")
-                    ->width($w)->height($h)
-                    ->objectFit($this->objectFit)
-                    ->previewDisabled()
-                    ->props(['style' => $imgStyle . ' cursor:pointer;']),
+                    ->css("width:{$w}; height:{$h}; display:flex; align-items:center; justify-content:center; "
+                        . "overflow:hidden; box-sizing:border-box; cursor:pointer; background:#fff; "
+                        . "border:1px solid #eee; border-radius:{$this->radius};")
+                    ->children([
+                        Image::make()
+                            ->src("{{ {$model} }}")
+                            ->width('100%')
+                            ->height('100%')
+                            ->objectFit($this->objectFit)
+                            ->previewDisabled()
+                            ->props(['style' => 'display:block;']),
+                    ]),
                 $this->buildPlaceholder(),
             ]);
 
