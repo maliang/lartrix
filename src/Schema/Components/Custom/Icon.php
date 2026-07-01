@@ -26,7 +26,8 @@ class Icon extends Component
 
     public function size(int|string $size): static
     {
-        return $this->props(['size' => $size]);
+        // @iconify/vue 的 Icon 用 width/height 控制尺寸（不认 size 属性）
+        return $this->props(['width' => $size, 'height' => $size]);
     }
 
     public function color(string $color): static
