@@ -21,7 +21,9 @@ class RealtimeService
             ->where(function ($q) use ($userId) {
                 $q->where('user_id', $userId)->orWhereNull('user_id');
             })
-            ->where('id', '>', $sinceId);
+            ->where('id', '>', $sinceId)
+            // 轮询只提示未读消息：已读消息（可能在其他会话/设备已读）不应再次弹窗/触发 behaviors
+            ->where('is_read', false);
 
         if ($type && $type !== 'all') {
             $query->where('category_key', $type);
