@@ -62,7 +62,7 @@ return [
         'dashboard' => 'Dashboard',
         'welcome' => 'Welcome to Lartrix Admin',
         'welcome_desc' => 'Laravel + Trix frontend admin solution',
-        'assets_not_publish' => 'Frontend assets not published. Run php artisan vendor:publish --tag=lartrix-assets',
+        'assets_not_publish' => 'Frontend assets not published. Run php artisan lartrix:publish-assets',
         'forbidden' => 'Sorry, you do not have permission to access this page',
         'not_found_page' => 'Sorry, the page you visited does not exist',
         'server_error' => 'Sorry, the server encountered an error',

@@ -62,7 +62,7 @@ return [
         'dashboard' => '仪表盘',
         'welcome' => '欢迎使用 Lartrix 后台管理系统',
         'welcome_desc' => '基于 Laravel 和 Trix 前端的后台管理解决方案',
-        'assets_not_publish' => '前端资源未发布，请运行 php artisan vendor:publish --tag=lartrix-assets',
+        'assets_not_publish' => '前端资源未发布，请运行 php artisan lartrix:publish-assets',
         'forbidden' => '抱歉，您没有权限访问此页面',
         'not_found_page' => '抱歉，您访问的页面不存在',
         'server_error' => '抱歉，服务器出现错误，请稍后再试',
