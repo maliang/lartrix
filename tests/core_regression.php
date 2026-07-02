@@ -47,6 +47,11 @@ check(
     'SettingController logo field must use the OneImgUp single-image upload component bound to formData.logo.'
 );
 check(
+    str_contains($settingController, "'call' => '\$methods.\$theme.updateSite'")
+        && str_contains($settingController, "'args' => ['{{ formData.appTitle }}', '{{ formData.logo }}']"),
+    'SettingController must update the frontend theme title and logo immediately after saving site settings.'
+);
+check(
     str_contains($oneImgUp, 'JSON.parse($event.event.target.response)')
         && str_contains($oneImgUp, '->showFileList(false)')
         && str_contains($oneImgUp, 'previewDisabled')

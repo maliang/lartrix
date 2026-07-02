@@ -171,6 +171,7 @@ class SettingController extends Controller
                                                     ],
                                                 ],
                                                 'then' => [
+                                                    ['call' => '$methods.$theme.updateSite', 'args' => ['{{ formData.appTitle }}', '{{ formData.logo }}']],
                                                     ['call' => '$methods.$message.success', 'args' => [__t('common.save_ok')]],
                                                 ],
                                             ]),
