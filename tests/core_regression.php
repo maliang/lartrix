@@ -64,6 +64,11 @@ check(
     'SystemController must read merged theme config so site settings update entry, login and layout titles.'
 );
 check(
+    !str_contains($systemController, "__t('system.forgot_password')")
+        && !str_contains($systemController, '$this->buildResetPasswordForm(),'),
+    'SystemController login page must not expose the forgot-password/reset-password entry.'
+);
+check(
     str_contains($systemController, 'protected function buildLogoHeader(string $appTitle, string $appSubtitle, string $logo): Flex')
         && !str_contains($systemController, "->props(['src' => \$theme['logo']"),
     'SystemController login logo header must not read an out-of-scope $theme variable.'
@@ -74,6 +79,36 @@ check(
     str_contains($authController, 'Setting::fetchThemeConfig'),
     'AuthController config must read merged theme config.'
 );
+
+$installCommand = source('src/Commands/InstallCommand.php');
+check(
+    str_contains($installCommand, "'name' => 'system.module'")
+        && !str_contains($installCommand, "'path' => '/module'")
+        && str_contains($installCommand, "'icon' => 'mdi:book-open'"),
+    'InstallCommand default menus must stay aligned with Thinkrix seeded menus.'
+);
+check(
+    str_contains($installCommand, 'authConfigHasEntry')
+        && str_contains($installCommand, 'insertAuthConfigEntry')
+        && str_contains($installCommand, "'admins' => [")
+        && str_contains($installCommand, "'model' => \\Lartrix\\Models\\AdminUser::class"),
+    'InstallCommand must robustly fill auth.php providers.admins for the Lartrix admin guard.'
+);
+
+foreach (['zh-CN.php', 'en-US.php', 'zh-CN/lartrix.php', 'en-US/lartrix.php'] as $langFile) {
+    $langSource = source('lang/' . $langFile);
+    foreach (['system', 'menu', 'placeholder', 'confirm', 'crud', 'admin', 'notification'] as $topKey) {
+        check(
+            substr_count($langSource, "    '{$topKey}' => [") === 1,
+            "{$langFile} must not define duplicate top-level {$topKey} language keys."
+        );
+    }
+
+    $lang = require $root . DIRECTORY_SEPARATOR . 'lang' . DIRECTORY_SEPARATOR . $langFile;
+    foreach (['total_orders', 'revenue', 'visit_trend', 'sales_stats', 'copy_api_key', 'copy_success'] as $homeKey) {
+        check(isset($lang['home'][$homeKey]), "{$langFile} must define home.{$homeKey}.");
+    }
+}
 
 if ($failures !== []) {
     fwrite(STDERR, implode(PHP_EOL, $failures) . PHP_EOL);

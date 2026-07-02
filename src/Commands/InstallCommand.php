@@ -233,56 +233,52 @@ class InstallCommand extends Command
 
         $content = file_get_contents($authPath);
 
-        // 检查是否已配置 admin guard 和 admins provider
-        if (str_contains($content, "'admin' =>") && str_contains($content, "'admins' =>")) {
-            $this->line('   admin guard 已配置，跳过。');
-            return;
-        }
-
-        // 添加 admin guard（检查 guards 区域中是否有 'admin' => 定义）
-        if (!str_contains($content, "'admin' =>")) {
+        if (!$this->authConfigHasEntry($content, 'admin', 'sanctum')) {
             $adminGuard = <<<'PHP'
-
         // Admin 后台管理 guard
         'admin' => [
             'driver' => 'sanctum',
             'provider' => 'admins',
         ],
 PHP;
-            // 兼容有逗号和无逗号两种格式
-            $searchWithComma = "'web' => [\n            'driver' => 'session',\n            'provider' => 'users',\n        ],";
-            $searchWithoutComma = "'web' => [\n            'driver' => 'session',\n            'provider' => 'users',\n        ]";
-
-            if (str_contains($content, $searchWithComma)) {
-                $content = str_replace($searchWithComma, $searchWithComma . "\n" . $adminGuard, $content);
-            } elseif (str_contains($content, $searchWithoutComma)) {
-                $content = str_replace($searchWithoutComma, $searchWithoutComma . "," . "\n" . $adminGuard, $content);
-            }
-            $this->line('   已添加 admin guard。');
+            $content = $this->insertAuthConfigEntry($content, 'guards', 'web', $adminGuard, 'admin guard');
+        } else {
+            $this->line('   admin guard 已配置，跳过。');
         }
 
-        // 添加 admins provider（检查 providers 区域中是否有 'admins' => 定义）
-        if (!str_contains($content, "'admins' =>")) {
+        if (!$this->authConfigHasEntry($content, 'admins', 'eloquent')) {
             $adminsProvider = <<<'PHP'
-
         // Admins provider 用于后台管理认证
         'admins' => [
             'driver' => 'eloquent',
             'model' => \Lartrix\Models\AdminUser::class,
         ],
 PHP;
-            $searchWithComma = "'users' => [\n            'driver' => 'eloquent',\n            'model' => env('AUTH_MODEL', App\\Models\\User::class),\n        ],";
-            $searchWithoutComma = "'users' => [\n            'driver' => 'eloquent',\n            'model' => env('AUTH_MODEL', App\\Models\\User::class),\n        ]";
-
-            if (str_contains($content, $searchWithComma)) {
-                $content = str_replace($searchWithComma, $searchWithComma . "\n" . $adminsProvider, $content);
-            } elseif (str_contains($content, $searchWithoutComma)) {
-                $content = str_replace($searchWithoutComma, $searchWithoutComma . "," . "\n" . $adminsProvider, $content);
-            }
-            $this->line('   已添加 admins provider。');
+            $content = $this->insertAuthConfigEntry($content, 'providers', 'users', $adminsProvider, 'admins provider');
+        } else {
+            $this->line('   admins provider 已配置，跳过。');
         }
 
         file_put_contents($authPath, $content);
+    }
+
+    protected function authConfigHasEntry(string $content, string $key, string $driver): bool
+    {
+        return preg_match("/'{$key}'\s*=>\s*\[\s*'driver'\s*=>\s*'{$driver}'/s", $content) === 1;
+    }
+
+    protected function insertAuthConfigEntry(string $content, string $section, string $afterKey, string $entry, string $label): string
+    {
+        $pattern = "/('{$section}'\s*=>\s*\[.*?'{$afterKey}'\s*=>\s*\[[^\]]*\],?)/s";
+        $updated = preg_replace($pattern, "$1\n\n{$entry}", $content, 1, $count);
+
+        if ($count > 0 && is_string($updated)) {
+            $this->line("   已添加 {$label}。");
+            return $updated;
+        }
+
+        $this->warn("   未找到 auth.php 的 {$section}.{$afterKey} 配置，无法自动添加 {$label}。");
+        return $content;
     }
 
     /**
@@ -887,43 +883,19 @@ PHP;
                         'path' => 'dict',
                         'meta' => [
                             'title' => '字典管理',
-                            'icon' => 'mdi:book-alphabet',
+                            'icon' => 'mdi:book-open',
                             'order' => 6,
                             'useJsonRenderer' => true,
                             'schemaSource' => '/dicts/groups?action_type=list_ui',
                         ],
                     ],
-                ],
-            ],
-            // 模块管理
-            [
-                'name' => 'module',
-                'path' => '/module',
-                'redirect' => '/module/market',
-                'meta' => [
-                    'title' => '模块管理',
-                    'icon' => 'mdi:puzzle',
-                    'order' => 9998,
-                ],
-                'children' => [
                     [
-                        'name' => 'module.market',
-                        'path' => 'market',
+                        'name' => 'system.module',
+                        'path' => 'module',
                         'meta' => [
-                            'title' => '模块市场',
-                            'icon' => 'mdi:store',
-                            'order' => 1,
-                            'useJsonRenderer' => true,
-                            'schemaSource' => '/modules?action_type=market_ui',
-                        ],
-                    ],
-                    [
-                        'name' => 'module.installed',
-                        'path' => 'installed',
-                        'meta' => [
-                            'title' => '已装模块',
-                            'icon' => 'mdi:puzzle-check',
-                            'order' => 2,
+                            'title' => '模块管理',
+                            'icon' => 'mdi:puzzle',
+                            'order' => 7,
                             'useJsonRenderer' => true,
                             'schemaSource' => '/modules?action_type=installed_ui',
                         ],

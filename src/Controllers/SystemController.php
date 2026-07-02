@@ -332,8 +332,6 @@ class SystemController extends Controller
                 $this->buildLogoHeader($appTitle, $appSubtitle, $logo),
                 // 登录表单
                 $this->buildLoginForm(),
-                // 重置密码表单
-                $this->buildResetPasswordForm(),
             ]);
     }
 
@@ -408,19 +406,14 @@ class SystemController extends Controller
                                             ->props(['style' => ['color' => '#999']]),
                                     ]),
                             ]),
-                        // 记住我 & 忘记密码
+                        // 记住我
                         Flex::make()
-                            ->justify('space-between')
                             ->align('center')
                             ->props(['style' => ['marginBottom' => '24px']])
                             ->children([
                                 Checkbox::make()
                                     ->props(['model:checked' => 'rememberMe'])
                                     ->children([__t('system.remember_me')]),
-                                Button::make()
-                                    ->props(['text' => true, 'type' => 'primary'])
-                                    ->on('click', ['set' => 'mode', 'value' => 'reset'])
-                            ->children([__t('system.forgot_password')]),
                             ]),
                         // 登录按钮
                         Button::make()
