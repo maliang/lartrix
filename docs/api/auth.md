@@ -161,7 +161,7 @@ GET /api/admin/auth/config
     "message": "success",
     "data": {
         "appTitle": "管理系统",
-        "logo": "/admin/logo.svg",
+        "logo": "/admin/favicon.svg",
         "copyright": "© 2024"
     }
 }
