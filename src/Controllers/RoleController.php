@@ -280,6 +280,13 @@ class RoleController extends CrudController
      */
     protected function getTableColumns(): array
     {
+        // 文案需在 PHP 端解析并烘焙为字符串字面量注入表达式：
+        // vschema 表达式求值器作用域内没有前端 __t，直接写 {{ __t(...) }} 会求值失败导致 Tag 无文字。
+        $enabledLabel = json_encode(__t('tag.enabled'), JSON_UNESCAPED_UNICODE);
+        $disabledLabel = json_encode(__t('tag.disabled'), JSON_UNESCAPED_UNICODE);
+        $yesLabel = json_encode(__t('tag.yes'), JSON_UNESCAPED_UNICODE);
+        $noLabel = json_encode(__t('tag.no'), JSON_UNESCAPED_UNICODE);
+
         return [
             ['key' => 'id', 'title' => 'ID', 'width' => 80],
             ['key' => 'name', 'title' => __t('form.name')],
@@ -291,7 +298,7 @@ class RoleController extends CrudController
                         'type' => "{{ slotData.row.status ? 'success' : 'error' }}",
                         'size' => 'small',
                     ])
-                    ->children(["{{ slotData.row.status ? __t('tag.enabled') : __t('tag.disabled') }}"]),
+                    ->children(["{{ slotData.row.status ? {$enabledLabel} : {$disabledLabel} }}"]),
             ]],
             ['key' => 'is_system', 'title' => __t('column.is_system'), 'width' => 100, 'slot' => [
                 Tag::make()
@@ -299,7 +306,7 @@ class RoleController extends CrudController
                         'type' => "{{ slotData.row.is_system ? 'warning' : 'default' }}",
                         'size' => 'small',
                     ])
-                    ->children(["{{ slotData.row.is_system ? __t('tag.yes') : __t('tag.no') }}"]),
+                    ->children(["{{ slotData.row.is_system ? {$yesLabel} : {$noLabel} }}"]),
             ]],
             ['key' => 'actions', 'title' => __t('column.actions'), 'width' => 150, 'fixed' => 'right', 'slot' => [
                 Space::make()->children([
