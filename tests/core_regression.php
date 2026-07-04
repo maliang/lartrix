@@ -69,6 +69,19 @@ check(
     'SystemController must read merged theme config so site settings update entry, login and layout titles.'
 );
 check(
+    str_contains($systemController, "'realtime' => \$this->getRealtimeConfig()")
+        && str_contains($systemController, "'behaviors' => config('lartrix.realtime.behaviors', [])"),
+    'SystemController must expose realtime only through the entry config payload.'
+);
+check(
+    !str_contains($systemController, '->enablePolling(')
+        && !str_contains($systemController, '->pollingInterval(')
+        && !str_contains($systemController, '->pollingApi(')
+        && !str_contains($systemController, '->enableWs(')
+        && !str_contains($systemController, '->wsUrl('),
+    'SystemController must not bind polling/ws realtime props to HeaderNotification.'
+);
+check(
     !str_contains($systemController, "__t('system.forgot_password')")
         && !str_contains($systemController, '$this->buildResetPasswordForm(),'),
     'SystemController login page must not expose the forgot-password/reset-password entry.'
@@ -77,6 +90,17 @@ check(
     str_contains($systemController, 'protected function buildLogoHeader(string $appTitle, string $appSubtitle, string $logo): Flex')
         && !str_contains($systemController, "->props(['src' => \$theme['logo']"),
     'SystemController login logo header must not read an out-of-scope $theme variable.'
+);
+
+$headerNotification = source('src/Schema/Components/Common/HeaderNotification.php');
+check(
+    !str_contains($headerNotification, 'function enablePolling')
+        && !str_contains($headerNotification, 'function pollingInterval')
+        && !str_contains($headerNotification, 'function pollingApi')
+        && !str_contains($headerNotification, 'function sinceId')
+        && !str_contains($headerNotification, 'function enableWs')
+        && !str_contains($headerNotification, 'function wsUrl'),
+    'HeaderNotification schema component must only expose display/list props, not realtime polling/ws props.'
 );
 
 $authController = source('src/Controllers/AuthController.php');

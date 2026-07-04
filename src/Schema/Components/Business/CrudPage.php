@@ -438,10 +438,14 @@ class CrudPage
 
         // 工具栏相关数据
         $allToolbarItems = array_merge($this->toolbarLeft, $this->toolbarRight);
+        $hasSelectionColumn = array_reduce($this->columns, fn($carry, $column) => $carry || (($column['type'] ?? null) === 'selection'), false);
         foreach ($allToolbarItems as $item) {
             if ($item === 'batchDelete') {
                 $data['selectedRowKeys'] = [];
             }
+        }
+        if ($hasSelectionColumn) {
+            $data['selectedRowKeys'] = $data['selectedRowKeys'] ?? [];
         }
 
         // 树形数据
@@ -519,11 +523,19 @@ class CrudPage
 
         // 工具栏相关方法
         $allToolbarItems = array_merge($this->toolbarLeft, $this->toolbarRight);
+        $hasSelectionColumn = array_reduce($this->columns, fn($carry, $column) => $carry || (($column['type'] ?? null) === 'selection'), false);
+        if ($hasSelectionColumn && !isset($methods['handleSelectionChange'])) {
+            $methods['handleSelectionChange'] = [
+                SetAction::make('selectedRowKeys', '{{ $event }}'),
+            ];
+        }
         foreach ($allToolbarItems as $item) {
-            if ($item === 'batchDelete' && !isset($methods['handleSelectionChange'])) {
-                $methods['handleSelectionChange'] = [
-                    SetAction::make('selectedRowKeys', '{{ $event }}'),
-                ];
+            if ($item === 'batchDelete') {
+                if (!isset($methods['handleSelectionChange'])) {
+                    $methods['handleSelectionChange'] = [
+                        SetAction::make('selectedRowKeys', '{{ $event }}'),
+                    ];
+                }
                 $methods['handleBatchDelete'] = [
                     FetchAction::make($this->apiPrefix)
                         ->delete()
@@ -899,13 +911,14 @@ class CrudPage
         }
 
         $hasBatchDelete = \in_array('batchDelete', [...$this->toolbarLeft, ...$this->toolbarRight]);
-        if ($hasBatchDelete) {
+        $hasSelectionColumn = array_reduce($this->columns, fn($carry, $column) => $carry || (($column['type'] ?? null) === 'selection'), false);
+        if ($hasBatchDelete || $hasSelectionColumn) {
             $tableProps['checkedRowKeys'] = '{{ selectedRowKeys }}';
         }
 
         $table = DataTable::make()->props($tableProps);
 
-        if ($hasBatchDelete) {
+        if ($hasBatchDelete || $hasSelectionColumn) {
             $table->on('update:checked-row-keys', ['call' => 'handleSelectionChange', 'args' => ['{{ $event }}']]);
         }
 

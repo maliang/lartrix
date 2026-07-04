@@ -70,6 +70,11 @@ class NotificationController extends CrudController
             $query->where('type', $request->input('type'));
         }
 
+        $types = $this->normalizeTypes($request->input('types'));
+        if (!empty($types)) {
+            $query->whereIn('type', $types);
+        }
+
         // 按已读状态筛选
         if ($request->filled('is_read')) {
             $query->where('is_read', $request->boolean('is_read'));
@@ -112,7 +117,7 @@ class NotificationController extends CrudController
             $query->where('is_read', $request->boolean('is_read'));
         }
 
-        $perPage = $request->input('page_size', 15);
+        $perPage = $request->input('page_size', $request->input('pageSize', 15));
         $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         return success([
@@ -122,6 +127,7 @@ class NotificationController extends CrudController
             'total' => $paginator->total(),
             'page' => $paginator->currentPage(),
             'page_size' => $paginator->perPage(),
+            'pageSize' => $paginator->perPage(),
         ]);
     }
 
@@ -300,6 +306,9 @@ class NotificationController extends CrudController
                 $q->whereNull('user_id')->orWhere('user_id', $user->id);
             })
             ->where('is_read', false)
+            ->when(!empty($types = $this->normalizeTypes($request->input('types'))), function ($q) use ($types) {
+                $q->whereIn('type', $types);
+            })
             ->update([
                 'is_read' => true,
                 'read_at' => now(),
@@ -335,5 +344,21 @@ class NotificationController extends CrudController
         $data = $realtime->buildPollResponse($user->id, $guard, $sinceId, $type);
 
         return success($data);
+    }
+
+    protected function normalizeTypes(mixed $types): array
+    {
+        if (is_string($types)) {
+            $types = explode(',', $types);
+        }
+
+        if (!is_array($types)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(
+            static fn ($type) => trim((string) $type),
+            $types
+        )));
     }
 }

@@ -29,11 +29,6 @@ class HeaderNotification extends Component
         return $this->props(['pageSize' => $size]);
     }
 
-    public function enableWs(bool $enable): static
-    {
-        return $this->props(['enableWs' => $enable]);
-    }
-
     public function enableNotification(bool $enable): static
     {
         return $this->props(['enableNotification' => $enable]);
@@ -94,14 +89,6 @@ class HeaderNotification extends Component
     }
 
     /**
-     * WebSocket 连接地址
-     */
-    public function wsUrl(string $url): static
-    {
-        return $this->props(['wsUrl' => $url]);
-    }
-
-    /**
      * 标题前缀字段，用于显示标题前的分类信息
      */
     public function titlePrefixField(string $field): static
@@ -109,35 +96,4 @@ class HeaderNotification extends Component
         return $this->props(['titlePrefixField' => $field]);
     }
 
-    /**
-     * 是否启用轮询
-     */
-    public function enablePolling(bool $enable): static
-    {
-        return $this->props(['enablePolling' => $enable]);
-    }
-
-    /**
-     * 轮询间隔（毫秒）
-     */
-    public function pollingInterval(int $interval): static
-    {
-        return $this->props(['pollingInterval' => $interval]);
-    }
-
-    /**
-     * 轮询 API 端点
-     */
-    public function pollingApi(string $api): static
-    {
-        return $this->props(['pollingApi' => $api]);
-    }
-
-    /**
-     * 当前检查到的最大消息 ID（用于增量拉取）
-     */
-    public function sinceId(int $id): static
-    {
-        return $this->props(['sinceId' => $id]);
-    }
 }

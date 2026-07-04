@@ -70,6 +70,7 @@ class RealtimeService
         $messages = $this->getNewMessages($userId, $guard, $sinceId, $type);
         $unreadCount = $this->getUnreadCount($userId, $guard);
         $unreadCountByType = $this->getUnreadCountByType($userId, $guard);
+        $unreadCountByType['all'] = $unreadCount;
 
         return [
             'messages' => $messages,

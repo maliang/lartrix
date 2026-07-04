@@ -705,20 +705,6 @@ class SystemController extends Controller
                 ->tabs($this->getNotificationTabs())
                 ->titlePrefixField('categoryLabel');
 
-            // 实时消息配置
-            if (config('lartrix.realtime.enabled', true)) {
-                $driver = config('lartrix.realtime.driver', 'polling');
-                if ($driver === 'polling') {
-                    $notification->enablePolling(true)
-                        ->pollingInterval((int) config('lartrix.realtime.polling.interval', 15000))
-                        ->pollingApi(config('lartrix.realtime.polling.api', '/notifications/poll'));
-                } elseif ($driver === 'ws') {
-                    $wsUrl = config('lartrix.realtime.websocket.url', '');
-                    if ($wsUrl) {
-                        $notification->enableWs(true)->wsUrl($wsUrl);
-                    }
-                }
-            }
             $children[] = $notification;
         }
 

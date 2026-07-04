@@ -178,7 +178,7 @@ abstract class CrudController extends Controller
         $query = $this->buildListQuery($request);
         
         // 分页
-        $perPage = $request->input('page_size', $this->getDefaultPageSize());
+        $perPage = $request->input('page_size', $request->input('pageSize', $this->getDefaultPageSize()));
         $paginator = $query->paginate($perPage);
 
         return success([
@@ -186,6 +186,7 @@ abstract class CrudController extends Controller
             'total' => $paginator->total(),
             'page' => $paginator->currentPage(),
             'page_size' => $paginator->perPage(),
+            'pageSize' => $paginator->perPage(),
         ]);
     }
 
