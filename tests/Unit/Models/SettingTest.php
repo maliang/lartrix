@@ -16,11 +16,11 @@ class SettingTest extends TestCase
         $setting = Setting::create([
             'group' => 'site',
             'key' => 'site_name',
-            'title' => '站点名称',
+            'title' => '绔欑偣鍚嶇О',
             'type' => 'string',
             'value' => 'Lartrix Admin',
             'default_value' => 'Admin',
-            'description' => '网站名称',
+            'description' => '缃戠珯鍚嶇О',
             'sort' => 1,
         ]);
 
@@ -36,7 +36,7 @@ class SettingTest extends TestCase
         Setting::create([
             'group' => 'site',
             'key' => 'site_name',
-            'title' => '站点名称',
+            'title' => '绔欑偣鍚嶇О',
             'type' => 'string',
             'value' => 'Lartrix Admin',
         ]);
@@ -60,7 +60,7 @@ class SettingTest extends TestCase
         Setting::create([
             'group' => 'site',
             'key' => 'site_name',
-            'title' => '站点名称',
+            'title' => '绔欑偣鍚嶇О',
             'type' => 'string',
             'value' => 'Old Name',
         ]);
@@ -76,7 +76,7 @@ class SettingTest extends TestCase
         Setting::create([
             'group' => 'site',
             'key' => 'site_name',
-            'title' => '站点名称',
+            'title' => '绔欑偣鍚嶇О',
             'type' => 'string',
             'value' => 'Lartrix',
         ]);
@@ -84,7 +84,7 @@ class SettingTest extends TestCase
         Setting::create([
             'group' => 'site',
             'key' => 'site_logo',
-            'title' => '站点Logo',
+            'title' => '绔欑偣Logo',
             'type' => 'string',
             'value' => '/logo.png',
         ]);
@@ -92,7 +92,7 @@ class SettingTest extends TestCase
         Setting::create([
             'group' => 'email',
             'key' => 'smtp_host',
-            'title' => 'SMTP主机',
+            'title' => 'SMTP涓绘満',
             'type' => 'string',
             'value' => 'smtp.example.com',
         ]);

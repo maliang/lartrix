@@ -12,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('admin_menus')) {
+            return;
+        }
+
         Schema::create('admin_menus', function (Blueprint $table) {
             $table->id();
             $table->string('guard_name')->default('admin')->comment('Guard名称');
@@ -25,6 +29,7 @@ return new class extends Migration
             
             // meta 字段（展开为独立列）
             $table->string('title')->nullable()->comment('页面标题');
+            $table->string('module')->nullable()->index()->comment('所属模块');
             $table->string('icon')->nullable()->comment('图标');
             $table->integer('order')->default(100)->comment('排序');
             $table->boolean('hide_in_menu')->default(false)->comment('是否在菜单中隐藏');

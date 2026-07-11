@@ -2,13 +2,15 @@
 
 namespace Lartrix\Tests\Feature;
 
-use Lartrix\Tests\TestCase;
-use Lartrix\Models\AdminUser;
-use Lartrix\Models\Role;
-use Lartrix\Models\Permission;
-use Lartrix\Models\Module;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Lartrix\Models\AdminUser;
+use Lartrix\Models\Module;
+use Lartrix\Models\Permission;
+use Lartrix\Models\Role;
+use Lartrix\Tests\TestCase;
 
 class ModuleControllerTest extends TestCase
 {
@@ -30,7 +32,7 @@ class ModuleControllerTest extends TestCase
 
         $role = Role::create([
             'name' => 'super_admin',
-            'title' => '超级管理员',
+            'title' => 'Super Admin',
             'guard_name' => 'sanctum',
             'status' => 1,
             'is_system' => true,
@@ -38,7 +40,7 @@ class ModuleControllerTest extends TestCase
 
         $permission = Permission::create([
             'name' => 'modules.*',
-            'title' => '模块管理',
+            'title' => 'Modules',
             'guard_name' => 'sanctum',
         ]);
 
@@ -53,7 +55,7 @@ class ModuleControllerTest extends TestCase
     {
         Module::create([
             'name' => 'Blog',
-            'title' => '博客模块',
+            'title' => 'Blog',
             'enabled' => true,
         ]);
 
@@ -65,11 +67,124 @@ class ModuleControllerTest extends TestCase
     }
 
     /** @test */
+    public function installed_modules_page_has_module_market_entry(): void
+    {
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->getJson('/api/lartrix/modules?action_type=installed_ui');
+
+        $response->assertStatus(200)
+            ->assertJson(['code' => 0]);
+
+        $payload = json_encode($response->json('data'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        $this->assertStringContainsString('模块市场', $payload);
+        $this->assertStringContainsString('上传当前项目', $payload);
+        $this->assertStringContainsString('/modules/projects/publish', $payload);
+        $this->assertStringContainsString('搜索模块名称、ID 或描述', $payload);
+        $this->assertStringContainsString('搜索项目名称、ID 或描述', $payload);
+        $this->assertStringContainsString('/modules/market/modules', $payload);
+        $this->assertStringContainsString('/modules/market/projects', $payload);
+        $this->assertStringContainsString('marketModulePageSize', $payload);
+        $this->assertStringContainsString('marketProjectPageSize', $payload);
+        $this->assertStringContainsString('showMarketModuleDetail', $payload);
+        $this->assertStringContainsString('marketDetailVisible', $payload);
+    }
+
+    /** @test */
+    public function market_modules_mark_local_registry_modules_as_installed(): void
+    {
+        config(['lartrix.module_registry.url' => 'https://registry.example']);
+
+        Module::create([
+            'name' => 'User',
+            'title' => 'User',
+            'enabled' => true,
+            'config' => ['id' => 'official.user'],
+        ]);
+
+        Http::fake([
+            'https://registry.example/registry/modules*' => Http::response([
+                'data' => [
+                    'items' => [[
+                        'id' => 'official.user',
+                        'name' => '用户模块',
+                        'summary' => '用户与权限基础能力',
+                        'type' => 'core',
+                        'latest_version' => '1.0.0',
+                        'license' => 'MIT',
+                    ]],
+                ],
+            ]),
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->getJson('/api/lartrix/modules/market/modules?type=core');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.items.0.id', 'official.user')
+            ->assertJsonPath('data.items.0.type', 'core')
+            ->assertJsonPath('data.items.0.installed', true)
+            ->assertJsonPath('data.items.0.install_status', 'installed')
+            ->assertJsonPath('data.items.0.version', '1.0.0')
+            ->assertJsonPath('data.page_size', 16);
+
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://registry.example/registry/modules?type=core&language=php&framework=laravel&page=1&page_size=16');
+    }
+
+    /** @test */
+    public function it_can_publish_the_current_project_from_module_management(): void
+    {
+        config([
+            'lartrix.module_registry.url' => 'https://registry.example',
+            'lartrix.module_registry.auth_key' => 'trx_test',
+        ]);
+
+        $manifestPath = base_path('trix-project.json');
+        File::put($manifestPath, json_encode([
+            'schema_version' => 'trix.project.v1',
+            'id' => 'demo.project',
+            'name' => 'Demo Project',
+            'version' => '1.0.0',
+            'author' => 'Demo Author',
+            'modules' => [],
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+        Http::fake([
+            'https://registry.example/registry/auth/me' => Http::response([
+                'code' => 200,
+                'data' => ['user' => ['name' => 'Demo Author', 'email' => 'demo@example.test']],
+            ]),
+            'https://registry.example/registry/projects/demo.project/versions*' => Http::response([
+                'code' => 200,
+                'data' => ['items' => [['version' => '0.9.0']]],
+            ]),
+            'https://registry.example/registry/publish/projects' => Http::response([
+                'code' => 200,
+                'msg' => 'success',
+                'data' => ['project' => 'demo.project', 'status' => 'pending'],
+            ]),
+        ]);
+
+        try {
+            $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+                ->postJson('/api/lartrix/modules/projects/publish');
+
+            $response->assertStatus(200)
+                ->assertJsonPath('code', 0)
+                ->assertJsonPath('data.project', 'demo.project');
+
+            Http::assertSent(fn ($request): bool => $request->url() === 'https://registry.example/registry/publish/projects');
+        } finally {
+            File::delete($manifestPath);
+        }
+    }
+
+    /** @test */
     public function it_can_enable_module(): void
     {
         $module = Module::create([
             'name' => 'Blog',
-            'title' => '博客模块',
+            'title' => 'Blog',
             'enabled' => false,
         ]);
 
@@ -87,7 +202,7 @@ class ModuleControllerTest extends TestCase
     {
         $module = Module::create([
             'name' => 'Blog',
-            'title' => '博客模块',
+            'title' => 'Blog',
             'enabled' => true,
         ]);
 

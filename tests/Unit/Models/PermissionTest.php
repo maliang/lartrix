@@ -15,16 +15,16 @@ class PermissionTest extends TestCase
     {
         $permission = Permission::create([
             'name' => 'users.view',
-            'title' => '查看用户',
+            'title' => '鏌ョ湅鐢ㄦ埛',
             'guard_name' => 'sanctum',
             'module' => 'users',
-            'description' => '查看用户列表权限',
+            'description' => '鏌ョ湅鐢ㄦ埛鍒楄〃鏉冮檺',
             'sort' => 1,
         ]);
 
         $this->assertDatabaseHas('permissions', [
             'name' => 'users.view',
-            'title' => '查看用户',
+            'title' => '鏌ョ湅鐢ㄦ埛',
             'module' => 'users',
         ]);
     }
@@ -34,14 +34,14 @@ class PermissionTest extends TestCase
     {
         $parent = Permission::create([
             'name' => 'users',
-            'title' => '用户管理',
+            'title' => '鐢ㄦ埛绠＄悊',
             'guard_name' => 'sanctum',
             'module' => 'users',
         ]);
 
         $child = Permission::create([
             'name' => 'users.create',
-            'title' => '创建用户',
+            'title' => '鍒涘缓鐢ㄦ埛',
             'guard_name' => 'sanctum',
             'module' => 'users',
             'parent_id' => $parent->id,
@@ -55,20 +55,20 @@ class PermissionTest extends TestCase
     {
         $parent = Permission::create([
             'name' => 'users',
-            'title' => '用户管理',
+            'title' => '鐢ㄦ埛绠＄悊',
             'guard_name' => 'sanctum',
         ]);
 
         Permission::create([
             'name' => 'users.view',
-            'title' => '查看用户',
+            'title' => '鏌ョ湅鐢ㄦ埛',
             'guard_name' => 'sanctum',
             'parent_id' => $parent->id,
         ]);
 
         Permission::create([
             'name' => 'users.create',
-            'title' => '创建用户',
+            'title' => '鍒涘缓鐢ㄦ埛',
             'guard_name' => 'sanctum',
             'parent_id' => $parent->id,
         ]);
@@ -81,13 +81,13 @@ class PermissionTest extends TestCase
     {
         $parent = Permission::create([
             'name' => 'users',
-            'title' => '用户管理',
+            'title' => '鐢ㄦ埛绠＄悊',
             'guard_name' => 'sanctum',
         ]);
 
         $child = Permission::create([
             'name' => 'users.view',
-            'title' => '查看用户',
+            'title' => '鏌ョ湅鐢ㄦ埛',
             'guard_name' => 'sanctum',
             'parent_id' => $parent->id,
         ]);
@@ -100,13 +100,13 @@ class PermissionTest extends TestCase
     {
         $parent = Permission::create([
             'name' => 'users',
-            'title' => '用户管理',
+            'title' => '鐢ㄦ埛绠＄悊',
             'guard_name' => 'sanctum',
         ]);
 
         Permission::create([
             'name' => 'users.view',
-            'title' => '查看用户',
+            'title' => '鏌ョ湅鐢ㄦ埛',
             'guard_name' => 'sanctum',
             'parent_id' => $parent->id,
         ]);

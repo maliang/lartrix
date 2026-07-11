@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('admin_settings')) {
+            return;
+        }
+
         Schema::create('admin_settings', function (Blueprint $table) {
             $table->id();
             $table->string('group')->comment('配置分组');

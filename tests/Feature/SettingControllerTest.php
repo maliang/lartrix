@@ -30,7 +30,7 @@ class SettingControllerTest extends TestCase
 
         $role = Role::create([
             'name' => 'super_admin',
-            'title' => '超级管理员',
+            'title' => '瓒呯骇绠＄悊鍛?,
             'guard_name' => 'sanctum',
             'status' => 1,
             'is_system' => true,
@@ -38,7 +38,7 @@ class SettingControllerTest extends TestCase
 
         $permission = Permission::create([
             'name' => 'settings.*',
-            'title' => '设置管理',
+            'title' => '璁剧疆绠＄悊',
             'guard_name' => 'sanctum',
         ]);
 
@@ -54,7 +54,7 @@ class SettingControllerTest extends TestCase
         Setting::create([
             'group' => 'site',
             'key' => 'site_name',
-            'title' => '站点名称',
+            'title' => '绔欑偣鍚嶇О',
             'type' => 'string',
             'value' => 'Lartrix',
         ]);
@@ -72,7 +72,7 @@ class SettingControllerTest extends TestCase
         Setting::create([
             'group' => 'site',
             'key' => 'site_name',
-            'title' => '站点名称',
+            'title' => '绔欑偣鍚嶇О',
             'type' => 'string',
             'value' => 'Lartrix',
         ]);
@@ -80,7 +80,7 @@ class SettingControllerTest extends TestCase
         Setting::create([
             'group' => 'email',
             'key' => 'smtp_host',
-            'title' => 'SMTP主机',
+            'title' => 'SMTP涓绘満',
             'type' => 'string',
             'value' => 'smtp.example.com',
         ]);
@@ -98,7 +98,7 @@ class SettingControllerTest extends TestCase
         Setting::create([
             'group' => 'site',
             'key' => 'site_name',
-            'title' => '站点名称',
+            'title' => '绔欑偣鍚嶇О',
             'type' => 'string',
             'value' => 'Old Name',
         ]);
@@ -106,7 +106,7 @@ class SettingControllerTest extends TestCase
         Setting::create([
             'group' => 'site',
             'key' => 'site_logo',
-            'title' => '站点Logo',
+            'title' => '绔欑偣Logo',
             'type' => 'string',
             'value' => '/old-logo.png',
         ]);

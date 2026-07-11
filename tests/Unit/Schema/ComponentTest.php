@@ -39,21 +39,21 @@ class ComponentTest extends TestCase
     /** @test */
     public function it_can_set_children(): void
     {
-        $button = NButton::make()->text('点击我');
+        $button = NButton::make()->text('鐐瑰嚮鎴?);
         $array = $button->toArray();
 
-        $this->assertEquals('点击我', $array['children']);
+        $this->assertEquals('鐐瑰嚮鎴?, $array['children']);
     }
 
     /** @test */
     public function it_can_nest_components(): void
     {
         $card = NCard::make()
-            ->title('表单')
+            ->title('琛ㄥ崟')
             ->children([
                 NForm::make()->children([
-                    NFormItem::make()->label('用户名')->children([
-                        NInput::make()->placeholder('请输入用户名'),
+                    NFormItem::make()->label('鐢ㄦ埛鍚?)->children([
+                        NInput::make()->placeholder('璇疯緭鍏ョ敤鎴峰悕'),
                     ]),
                 ]),
             ]);
@@ -143,8 +143,8 @@ class ComponentTest extends TestCase
     public function it_can_set_slots(): void
     {
         $card = NCard::make()
-            ->slot('header', [NButton::make()->text('操作')])
-            ->slot('footer', [NButton::make()->text('提交')], 'slotProps');
+            ->slot('header', [NButton::make()->text('鎿嶄綔')])
+            ->slot('footer', [NButton::make()->text('鎻愪氦')], 'slotProps');
 
         $array = $card->toArray();
 
@@ -158,7 +158,7 @@ class ComponentTest extends TestCase
     {
         $button = NButton::make()
             ->type('primary')
-            ->text('提交');
+            ->text('鎻愪氦');
 
         $json = $button->toJson();
 
@@ -182,19 +182,19 @@ class ComponentTest extends TestCase
         foreach ($components as $component) {
             $array = $component->toArray();
             $this->assertStringStartsWith('N', $array['com'], 
-                'Naive UI 组件的 com 字段应以 "N" 开头');
+                'Naive UI 缁勪欢鐨?com 瀛楁搴斾互 "N" 寮€澶?);
         }
     }
 
     /** @test */
     public function children_normalization_returns_array(): void
     {
-        // 单个子组件
+        // 鍗曚釜瀛愮粍浠?
         $card1 = NCard::make()->children(NButton::make());
         $array1 = $card1->toArray();
         $this->assertIsArray($array1['children']);
 
-        // 多个子组件
+        // 澶氫釜瀛愮粍浠?
         $card2 = NCard::make()->children([
             NButton::make(),
             NInput::make(),

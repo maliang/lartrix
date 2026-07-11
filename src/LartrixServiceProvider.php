@@ -10,6 +10,7 @@ use Lartrix\Services\PermissionService;
 use Lartrix\Services\RealtimeService;
 use Lartrix\Services\TranslationService;
 
+/** 注册并启动 Lartrix 服务、路由、资源及模块贡献。 */
 class LartrixServiceProvider extends ServiceProvider
 {
     /**
@@ -68,9 +69,14 @@ class LartrixServiceProvider extends ServiceProvider
                 Commands\PublishAssetsCommand::class,
                 Commands\UninstallCommand::class,
                 Commands\MakeBackendCommand::class,
+                Commands\ModuleMakeCommand::class,
                 Commands\RemoveBackendCommand::class,
                 Commands\ModuleInstallCommand::class,
+                Commands\ModuleUpdateCommand::class,
                 Commands\ModuleUninstallCommand::class,
+                Commands\ProjectMakeCommand::class,
+                Commands\ProjectInstallCommand::class,
+                Commands\ProjectPublishCommand::class,
             ]);
         }
     }

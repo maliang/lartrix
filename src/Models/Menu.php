@@ -3,7 +3,9 @@
 namespace Lartrix\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
+/** 表示后台菜单，并负责权限、模块状态与前端路由转换。 */
 class Menu extends Model
 {
     /**
@@ -22,6 +24,7 @@ class Menu extends Model
         'component',
         'redirect',
         'title',
+        'module',
         'icon',
         'order',
         'hide_in_menu',
@@ -161,6 +164,7 @@ class Menu extends Model
         // 使用 getActivePermissions 方法，超级管理员会自动获得所有权限
         $userPermissions = $user->getActivePermissions()->pluck('name')->toArray();
         $guard = $guard ?? config('lartrix.guard', 'admin');
+        $disabledModuleKeys = static::disabledModuleKeys();
 
         return static::query()
             ->forGuard($guard)
@@ -168,10 +172,79 @@ class Menu extends Model
             ->with('allChildren')
             ->orderBy('order')
             ->get()
-            ->filter(fn($menu) => $menu->canAccess($userPermissions))
-            ->map(fn($menu) => $menu->toMenuRoute($userPermissions))
+            ->filter(fn($menu) => $menu->canAccess($userPermissions) && $menu->moduleIsEnabled($disabledModuleKeys))
+            ->map(fn($menu) => $menu->toMenuRouteForEnabledModules($userPermissions, $disabledModuleKeys))
             ->values()
             ->toArray();
+    }
+
+        /** 将当前对象转换为目标结构。 */
+    protected function toMenuRouteForEnabledModules(array $userPermissions, array $disabledModuleKeys): array
+    {
+        $route = $this->toMenuRoute(null);
+        $childrenRelation = $this->relationLoaded('allChildren') ? 'allChildren' : 'children';
+
+        if ($this->relationLoaded($childrenRelation)) {
+            $children = $this->$childrenRelation
+                ->filter(fn($child) => $child->canAccess($userPermissions) && $child->moduleIsEnabled($disabledModuleKeys))
+                ->map(fn($child) => $child->toMenuRouteForEnabledModules($userPermissions, $disabledModuleKeys))
+                ->values()
+                ->toArray();
+
+            if (!empty($children)) {
+                $route['children'] = $children;
+            } else {
+                unset($route['children']);
+            }
+        }
+
+        return $route;
+    }
+
+        /** 执行 moduleIsEnabled 方法对应的具体职责。 */
+    protected function moduleIsEnabled(array $disabledModuleKeys): bool
+    {
+        if (!Schema::hasColumn($this->getTable(), 'module')) {
+            return true;
+        }
+
+        $module = trim((string) ($this->module ?? ''));
+        if ($module === '' || $module === 'system') {
+            return true;
+        }
+
+        return !isset($disabledModuleKeys[static::normalizeModuleKey($module)]);
+    }
+
+        /** 禁用指定模块及其运行状态。 */
+    protected static function disabledModuleKeys(): array
+    {
+        if (!Schema::hasTable('modules')) {
+            return [];
+        }
+
+        return \Lartrix\Models\Module::query()
+            ->where('enabled', false)
+            ->get(['name', 'config'])
+            ->flatMap(function ($module): array {
+                $config = is_array($module->config) ? $module->config : [];
+
+                return [
+                    $module->name,
+                    $config['id'] ?? null,
+                    $config['registry_id'] ?? null,
+                    data_get($config, 'trix_manifest.id'),
+                ];
+            })
+            ->filter(fn($value): bool => is_string($value) && trim($value) !== '')
+            ->mapWithKeys(fn($value): array => [static::normalizeModuleKey($value) => true])
+            ->all();
+    }
+
+        /** 将输入值归一化为内部标准格式。 */
+    protected static function normalizeModuleKey(string $value): string
+    {
+        return preg_replace('/[^a-z0-9]+/', '', strtolower($value)) ?? '';
     }
 
     /**

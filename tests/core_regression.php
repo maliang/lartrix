@@ -109,7 +109,129 @@ check(
     'AuthController config must read merged theme config.'
 );
 
+$moduleController = source('src/Controllers/ModuleController.php');
+$moduleService = source('src/Services/ModuleService.php');
+check(
+    str_contains($moduleController, "->props(['src' => '{{ slotData.row.logo }}', 'size' => 32, 'objectFit' => 'contain'])")
+        && !str_contains($moduleController, 'routePrefix + "/modules/" + slotData.row.name + "/logo"'),
+    'ModuleController installed module list must use the stored static logo URL directly instead of routing through /api/admin/modules/{name}/logo.'
+);
+check(
+    str_contains($moduleService, 'protected function moduleLogoUrl')
+        && str_contains($moduleService, "config('lartrix.api_prefix', 'api/admin')")
+        && str_contains($moduleService, "rawurlencode(\$name) . '/logo'"),
+    'ModuleService must convert module-local relative logo paths into public module logo URLs during sync.'
+);
+check(
+    str_contains($moduleService, 'resolveModuleEnabledState')
+        && str_contains($moduleService, 'hasEnabledLegacyModuleStatus')
+        && str_contains($moduleService, "config('modules.activators.file.statuses-file'")
+        && str_contains($moduleService, "preg_replace('/(?<!^)[A-Z]/', ' \$0', \$alias)"),
+    'ModuleService must migrate legacy nwidart status keys such as "Module Market" to the current standard module key during sync.'
+);
+check(
+    str_contains($moduleController, 'public function publishLocal')
+        && str_contains($moduleController, 'public function installMarketModule')
+        && str_contains($moduleController, 'public function installMarketProject')
+        && str_contains($moduleController, 'protected function saveProjectInstallPlan')
+        && str_contains($moduleController, 'protected function registryPublisher')
+        && str_contains($moduleController, 'protected function registryPublisherOrNull')
+        && str_contains($moduleController, 'protected function validateLocalAuthor')
+        && str_contains($moduleController, 'protected function validatePublishVersion')
+        && str_contains($moduleController, 'registryLatestModuleVersion')
+        && str_contains($moduleController, "'can_publish'")
+        && str_contains($moduleController, "->if('slotData.row.can_publish')")
+        && str_contains($moduleController, "/registry/auth/me")
+        && str_contains($moduleController, "'handlePublishModule'")
+        && str_contains($moduleController, "'handleInstallMarketModule'")
+        && str_contains($moduleController, "'handleInstallMarketProject'"),
+    'ModuleController installed module UI must expose upload and market module/project install actions while checking Auth Key ownership.'
+);
+$projectMakeCommand = source('src/Commands/ProjectMakeCommand.php');
+$projectInstallCommand = source('src/Commands/ProjectInstallCommand.php');
+$projectPublishCommand = source('src/Commands/ProjectPublishCommand.php');
+$projectInstallPlanStore = source('src/Modules/Project/ProjectInstallPlanStore.php');
+$serviceProvider = source('src/LartrixServiceProvider.php');
+check(
+    str_contains($projectMakeCommand, "protected \$signature = 'lartrix:project-make")
+        && str_contains($projectMakeCommand, "base_path('trix-project.json')")
+        && str_contains($projectMakeCommand, "'schema_version' => 'trix.project.v1'")
+        && str_contains($projectMakeCommand, "'adapter' => [")
+        && str_contains($projectMakeCommand, 'ModuleFacade::all()'),
+    'ProjectMakeCommand must create the root trix-project.json manifest and sync installed modules.'
+);
+check(
+    str_contains($projectPublishCommand, "protected \$signature = 'lartrix:project-publish")
+        && str_contains($projectPublishCommand, '/registry/auth/me')
+        && str_contains($projectPublishCommand, '/registry/publish/projects')
+        && str_contains($projectPublishCommand, 'validateAuthor')
+        && str_contains($projectPublishCommand, 'validateVersion'),
+    'ProjectPublishCommand must validate Auth Key author ownership/version before publishing trix-project.json.'
+);
+check(
+    str_contains($serviceProvider, 'Commands\\ProjectMakeCommand::class')
+        && str_contains($serviceProvider, 'Commands\\ProjectInstallCommand::class')
+        && str_contains($serviceProvider, 'Commands\\ProjectPublishCommand::class'),
+    'LartrixServiceProvider must register project make/install/publish commands.'
+);
+check(
+    str_contains($projectInstallCommand, "protected \$signature = 'lartrix:project-install")
+        && str_contains($projectInstallCommand, '{--plan= : Existing install-plan.json path}')
+        && str_contains($projectInstallCommand, '{--execute : Download, stage, verify and copy missing modules}')
+        && str_contains($projectInstallCommand, 'RegistryPackageDownloader')
+        && str_contains($projectInstallCommand, 'RegistryStagedPackageInstaller')
+        && str_contains($projectInstallCommand, 'writeAudit'),
+    'ProjectInstallCommand must support conservative project install execution from registry or local install-plan.'
+);
+check(
+    str_contains($projectInstallPlanStore, 'class ProjectInstallPlanStore')
+        && str_contains($projectInstallPlanStore, 'project-config.json')
+        && str_contains($projectInstallPlanStore, 'contract-bindings.json')
+        && str_contains($projectInstallPlanStore, 'setup.json')
+        && str_contains($projectInstallPlanStore, 'moduleConfig')
+        && str_contains($moduleController, 'ProjectInstallPlanStore'),
+    'Project install plans must be stored with stable project/module config and contract binding artifacts.'
+);
+$moduleMakeCommand = source('src/Commands/ModuleMakeCommand.php');
+$moduleManifestStub = source('stubs/module/module.json.stub');
+check(
+    str_contains($moduleMakeCommand, '{--author= : Module author')
+        && str_contains($moduleMakeCommand, '{--author-url= : Module author URL}')
+        && str_contains($moduleMakeCommand, "'{{AUTHOR}}' => \$author")
+        && str_contains($moduleManifestStub, '"author": "{{AUTHOR}}"')
+        && str_contains($moduleManifestStub, '"author_url": "{{AUTHOR_URL}}"'),
+    'ModuleMakeCommand must allow generated standard modules to include publishable author metadata.'
+);
+$routes = source('routes/api.php');
+check(
+    str_contains($routes, "market/modules/{id}/install")
+        && str_contains($routes, "market/projects/{id}/install")
+        && str_contains($routes, "{name}/publish"),
+    'Lartrix module routes must expose upload and market install endpoints.'
+);
+check(
+    str_contains($moduleController, "'marketModuleType' => 'all'")
+        && str_contains($moduleController, "'marketProjectType' => 'all'")
+        && str_contains($moduleController, "['label' => '全部', 'value' => 'all']")
+        && str_contains($moduleController, "'language' => 'php', 'framework' => 'laravel'")
+        && str_contains($moduleController, 'normalizeMarketType'),
+    'ModuleController market modal must default category selects to selected "all" and send php/laravel adapter params.'
+);
+
+check(
+    str_contains($moduleController, "'marketModulePageSize' => 16")
+        && str_contains($moduleController, "'marketProjectPageSize' => 16")
+        && str_contains($moduleController, "page_size' => 16")
+        && str_contains($moduleController, 'marketCardGrid')
+        && str_contains($moduleController, 'marketDetailModal')
+        && str_contains($moduleController, "'content-style' => ['height' => '682px'")
+        && str_contains($moduleController, "'flex' => '0 0 48px'")
+        && str_contains($moduleController, 'type_label'),
+    'ModuleController market modal must use card grid, fixed 16-item pagination, internal footer pagination, translated type labels and a detail modal.'
+);
+
 $installCommand = source('src/Commands/InstallCommand.php');
+$moduleInstallCommand = source('src/Commands/ModuleInstallCommand.php');
 check(
     str_contains($installCommand, "'name' => 'system.module'")
         && !str_contains($installCommand, "'path' => '/module'")
@@ -122,6 +244,13 @@ check(
         && str_contains($installCommand, "'admins' => [")
         && str_contains($installCommand, "'model' => \\Lartrix\\Models\\AdminUser::class"),
     'InstallCommand must robustly fill auth.php providers.admins for the Lartrix admin guard.'
+);
+check(
+    str_contains($moduleInstallCommand, 'protected function registryAuthKey')
+        && str_contains($moduleInstallCommand, "config('lartrix.module_registry.auth_key', '')")
+        && str_contains($moduleInstallCommand, '->withToken($authKey)')
+        && str_contains($moduleInstallCommand, 'RegistryPackageDownloader(signatureKey: $this->registrySignatureKey(), fetcher: $fetcher)'),
+    'ModuleInstallCommand registry downloads must pass the configured Auth Key to protected package URLs.'
 );
 
 foreach (['zh-CN.php', 'en-US.php', 'zh-CN/lartrix.php', 'en-US/lartrix.php'] as $langFile) {

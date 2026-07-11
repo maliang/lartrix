@@ -59,7 +59,7 @@ class AuthServiceTest extends TestCase
             'name' => 'testuser',
             'email' => 'test@example.com',
             'password' => Hash::make('password'),
-            'status' => 0, // 禁用状态
+            'status' => 0, // 绂佺敤鐘舵€?
         ]);
 
         $this->expectException(\Lartrix\Exceptions\ApiException::class);
@@ -77,15 +77,15 @@ class AuthServiceTest extends TestCase
             'status' => 1,
         ]);
 
-        // 创建 token
+        // 鍒涘缓 token
         $token = $user->createToken('test-token');
         
-        // 模拟认证
+        // 妯℃嫙璁よ瘉
         $this->actingAs($user, 'sanctum');
 
         $this->authService->logout($user);
 
-        // 验证 token 已被撤销
+        // 楠岃瘉 token 宸茶鎾ら攢
         $this->assertCount(0, $user->tokens);
     }
 

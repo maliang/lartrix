@@ -20,7 +20,7 @@ class UserControllerTest extends TestCase
     {
         parent::setUp();
 
-        // 创建管理员用户
+        // 鍒涘缓绠＄悊鍛樼敤鎴?
         $this->admin = AdminUser::create([
             'name' => 'admin',
             'email' => 'admin@example.com',
@@ -28,10 +28,10 @@ class UserControllerTest extends TestCase
             'status' => 1,
         ]);
 
-        // 创建角色和权限
+        // 鍒涘缓瑙掕壊鍜屾潈闄?
         $role = Role::create([
             'name' => 'super_admin',
-            'title' => '超级管理员',
+            'title' => '瓒呯骇绠＄悊鍛?,
             'guard_name' => 'sanctum',
             'status' => 1,
             'is_system' => true,
@@ -39,7 +39,7 @@ class UserControllerTest extends TestCase
 
         $permission = Permission::create([
             'name' => 'users.*',
-            'title' => '用户管理',
+            'title' => '鐢ㄦ埛绠＄悊',
             'guard_name' => 'sanctum',
         ]);
 
@@ -171,7 +171,7 @@ class UserControllerTest extends TestCase
             'status' => 1,
         ]);
 
-        // 创建用户的 token
+        // 鍒涘缓鐢ㄦ埛鐨?token
         $user->createToken('user-token');
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
@@ -182,10 +182,10 @@ class UserControllerTest extends TestCase
         $response->assertStatus(200)
             ->assertJson(['code' => 0]);
 
-        // 验证状态已更新
+        // 楠岃瘉鐘舵€佸凡鏇存柊
         $this->assertEquals(0, $user->fresh()->status);
 
-        // 验证 token 已被撤销
+        // 楠岃瘉 token 宸茶鎾ら攢
         $this->assertCount(0, $user->fresh()->tokens);
     }
 
@@ -207,7 +207,7 @@ class UserControllerTest extends TestCase
         $response->assertStatus(200)
             ->assertJson(['code' => 0]);
 
-        // 验证新密码可以使用
+        // 楠岃瘉鏂板瘑鐮佸彲浠ヤ娇鐢?
         $this->assertTrue(Hash::check('newpassword123', $user->fresh()->password));
     }
 }

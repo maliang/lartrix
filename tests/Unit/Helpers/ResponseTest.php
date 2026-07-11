@@ -9,12 +9,12 @@ class ResponseTest extends TestCase
     /** @test */
     public function success_with_message_only(): void
     {
-        $response = success('操作成功');
+        $response = success('鎿嶄綔鎴愬姛');
         $content = $response->getContent();
         $data = json_decode($content, true);
 
         $this->assertEquals(0, $data['code']);
-        $this->assertEquals('操作成功', $data['msg']);
+        $this->assertEquals('鎿嶄綔鎴愬姛', $data['msg']);
         $this->assertNull($data['data']);
     }
 
@@ -33,19 +33,19 @@ class ResponseTest extends TestCase
     /** @test */
     public function success_with_message_and_data(): void
     {
-        $response = success('获取成功', ['id' => 1]);
+        $response = success('鑾峰彇鎴愬姛', ['id' => 1]);
         $content = $response->getContent();
         $data = json_decode($content, true);
 
         $this->assertEquals(0, $data['code']);
-        $this->assertEquals('获取成功', $data['msg']);
+        $this->assertEquals('鑾峰彇鎴愬姛', $data['msg']);
         $this->assertEquals(['id' => 1], $data['data']);
     }
 
     /** @test */
     public function success_with_custom_code(): void
     {
-        $response = success('操作成功', null, 200);
+        $response = success('鎿嶄綔鎴愬姛', null, 200);
         $content = $response->getContent();
         $data = json_decode($content, true);
 
@@ -55,31 +55,31 @@ class ResponseTest extends TestCase
     /** @test */
     public function error_with_message_only(): void
     {
-        $response = error('操作失败');
+        $response = error('鎿嶄綔澶辫触');
         $content = $response->getContent();
         $data = json_decode($content, true);
 
         $this->assertEquals(1, $data['code']);
-        $this->assertEquals('操作失败', $data['msg']);
+        $this->assertEquals('鎿嶄綔澶辫触', $data['msg']);
         $this->assertNull($data['data']);
     }
 
     /** @test */
     public function error_with_message_and_data(): void
     {
-        $response = error('验证失败', ['name' => '名称不能为空']);
+        $response = error('楠岃瘉澶辫触', ['name' => '鍚嶇О涓嶈兘涓虹┖']);
         $content = $response->getContent();
         $data = json_decode($content, true);
 
         $this->assertEquals(1, $data['code']);
-        $this->assertEquals('验证失败', $data['msg']);
-        $this->assertEquals(['name' => '名称不能为空'], $data['data']);
+        $this->assertEquals('楠岃瘉澶辫触', $data['msg']);
+        $this->assertEquals(['name' => '鍚嶇О涓嶈兘涓虹┖'], $data['data']);
     }
 
     /** @test */
     public function error_with_custom_code(): void
     {
-        $response = error('未授权', null, 401);
+        $response = error('鏈巿鏉?, null, 401);
         $content = $response->getContent();
         $data = json_decode($content, true);
 

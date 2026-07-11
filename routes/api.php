@@ -106,10 +106,16 @@ Route::prefix($prefix)->group(function () use (
         // 模块管理
         Route::prefix('modules')->group(function () use ($moduleController) {
             Route::get('/', [$moduleController, 'index']);
+            Route::get('market/modules', [$moduleController, 'marketModules']);
+            Route::get('market/projects', [$moduleController, 'marketProjects']);
+            Route::post('market/modules/{id}/install', [$moduleController, 'installMarketModule'])->where('id', '[A-Za-z0-9._-]+');
+            Route::post('market/projects/{id}/install', [$moduleController, 'installMarketProject'])->where('id', '[A-Za-z0-9._-]+');
+            Route::post('projects/publish', [$moduleController, 'publishLocalProject']);
             Route::put('{name}/enable', [$moduleController, 'enable']);
             Route::put('{name}/disable', [$moduleController, 'disable']);
             Route::put('{name}/install', [$moduleController, 'install']);
             Route::put('{name}/uninstall', [$moduleController, 'uninstall']);
+            Route::post('{name}/publish', [$moduleController, 'publishLocal']);
         });
 
         // 设置管理

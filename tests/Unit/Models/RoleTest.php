@@ -15,16 +15,16 @@ class RoleTest extends TestCase
     {
         $role = Role::create([
             'name' => 'admin',
-            'title' => '管理员',
+            'title' => '绠＄悊鍛?,
             'guard_name' => 'sanctum',
-            'description' => '系统管理员角色',
+            'description' => '绯荤粺绠＄悊鍛樿鑹?,
             'status' => 1,
             'is_system' => true,
         ]);
 
         $this->assertDatabaseHas('roles', [
             'name' => 'admin',
-            'title' => '管理员',
+            'title' => '绠＄悊鍛?,
             'is_system' => true,
         ]);
     }
@@ -34,14 +34,14 @@ class RoleTest extends TestCase
     {
         $systemRole = Role::create([
             'name' => 'super_admin',
-            'title' => '超级管理员',
+            'title' => '瓒呯骇绠＄悊鍛?,
             'guard_name' => 'sanctum',
             'is_system' => true,
         ]);
 
         $normalRole = Role::create([
             'name' => 'editor',
-            'title' => '编辑',
+            'title' => '缂栬緫',
             'guard_name' => 'sanctum',
             'is_system' => false,
         ]);
@@ -55,14 +55,14 @@ class RoleTest extends TestCase
     {
         $activeRole = Role::create([
             'name' => 'active_role',
-            'title' => '启用角色',
+            'title' => '鍚敤瑙掕壊',
             'guard_name' => 'sanctum',
             'status' => 1,
         ]);
 
         $inactiveRole = Role::create([
             'name' => 'inactive_role',
-            'title' => '禁用角色',
+            'title' => '绂佺敤瑙掕壊',
             'guard_name' => 'sanctum',
             'status' => 0,
         ]);

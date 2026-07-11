@@ -5,11 +5,13 @@ namespace Lartrix\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Lartrix\Models\AdminUser;
 use Lartrix\Models\Menu;
 use Lartrix\Models\Permission;
 use Lartrix\Models\Role;
 
+/** 安装并初始化后台所需的资源、数据和认证配置。 */
 class InstallCommand extends Command
 {
     /**
@@ -262,11 +264,13 @@ PHP;
         file_put_contents($authPath, $content);
     }
 
+    /** 判断认证配置中是否已经存在指定驱动条目。 */
     protected function authConfigHasEntry(string $content, string $key, string $driver): bool
     {
         return preg_match("/'{$key}'\s*=>\s*\[\s*'driver'\s*=>\s*'{$driver}'/s", $content) === 1;
     }
 
+        /** 执行 insertAuthConfigEntry 方法对应的具体职责。 */
     protected function insertAuthConfigEntry(string $content, string $section, string $afterKey, string $entry, string $label): string
     {
         $pattern = "/('{$section}'\s*=>\s*\[.*?'{$afterKey}'\s*=>\s*\[[^\]]*\],?)/s";
@@ -366,6 +370,10 @@ PHP;
         $baseTime = time() + 2; // 确保在 spatie/sanctum 迁移之后
 
         foreach ($migrations as $index => $migration) {
+            if ($this->migrationTargetAlreadyExists($migration)) {
+                continue;
+            }
+
             $timestamp = date('Y_m_d_His', $baseTime + $index);
             $filename = "{$timestamp}_{$migration}.php";
             $targetPath = database_path("migrations/{$filename}");
@@ -390,6 +398,38 @@ PHP;
 
             copy($stubFile, $targetPath);
         }
+    }
+
+    /** 判断目标迁移对应的数据表或字段是否已经存在。 */
+    protected function migrationTargetAlreadyExists(string $migration): bool
+    {
+        return match ($migration) {
+            'create_admin_users_table' => Schema::hasTable('admin_users'),
+            'create_admin_menus_table' => Schema::hasTable('admin_menus'),
+            'create_admin_settings_table' => Schema::hasTable('admin_settings'),
+            'create_modules_table' => Schema::hasTable('modules'),
+            'add_badge_to_admin_menus_table' => Schema::hasColumn('admin_menus', 'badge'),
+            'add_fields_to_permission_tables' => $this->permissionFieldsAlreadyExist(),
+            default => false,
+        };
+    }
+
+    /** 判断权限相关扩展字段是否已经完成迁移。 */
+    protected function permissionFieldsAlreadyExist(): bool
+    {
+        $tableNames = config('permission.table_names', []);
+        $permissionsTable = $tableNames['permissions'] ?? 'permissions';
+        $rolesTable = $tableNames['roles'] ?? 'roles';
+
+        return Schema::hasColumn($permissionsTable, 'parent_id')
+            && Schema::hasColumn($permissionsTable, 'title')
+            && Schema::hasColumn($permissionsTable, 'module')
+            && Schema::hasColumn($permissionsTable, 'description')
+            && Schema::hasColumn($permissionsTable, 'sort')
+            && Schema::hasColumn($rolesTable, 'title')
+            && Schema::hasColumn($rolesTable, 'description')
+            && Schema::hasColumn($rolesTable, 'status')
+            && Schema::hasColumn($rolesTable, 'is_system');
     }
 
     /**
@@ -715,10 +755,11 @@ PHP;
     /**
      * 递归创建菜单
      */
-    protected function createMenu(array $menuData, ?int $parentId = null): void
+    protected function createMenu(array $menuData, ?int $parentId = null, ?string $module = null): void
     {
         $children = $menuData['children'] ?? [];
         unset($menuData['children']);
+        $module = $menuData['module'] ?? $module;
 
         // 提取 meta 数据
         $meta = $menuData['meta'] ?? [];
@@ -732,6 +773,7 @@ PHP;
             'component' => $menuData['component'] ?? null,
             'redirect' => $menuData['redirect'] ?? null,
             'title' => $meta['title'] ?? null,
+            'module' => $module,
             'icon' => $meta['icon'] ?? null,
             'order' => $meta['order'] ?? 0,
             'hide_in_menu' => $meta['hideInMenu'] ?? false,
@@ -756,7 +798,7 @@ PHP;
 
         // 递归创建子菜单
         foreach ($children as $child) {
-            $this->createMenu($child, $menu->id);
+            $this->createMenu($child, $menu->id, $module);
         }
     }
 

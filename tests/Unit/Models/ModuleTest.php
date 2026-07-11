@@ -15,8 +15,8 @@ class ModuleTest extends TestCase
     {
         $module = Module::create([
             'name' => 'Blog',
-            'title' => '博客模块',
-            'description' => '博客管理模块',
+            'title' => '鍗氬妯″潡',
+            'description' => '鍗氬绠＄悊妯″潡',
             'version' => '1.0.0',
             'author' => 'Lartrix',
             'enabled' => true,
@@ -24,7 +24,7 @@ class ModuleTest extends TestCase
 
         $this->assertDatabaseHas('modules', [
             'name' => 'Blog',
-            'title' => '博客模块',
+            'title' => '鍗氬妯″潡',
             'enabled' => true,
         ]);
     }
@@ -34,7 +34,7 @@ class ModuleTest extends TestCase
     {
         $module = Module::create([
             'name' => 'Blog',
-            'title' => '博客模块',
+            'title' => '鍗氬妯″潡',
             'enabled' => false,
         ]);
 
@@ -55,7 +55,7 @@ class ModuleTest extends TestCase
 
         $module = Module::create([
             'name' => 'Blog',
-            'title' => '博客模块',
+            'title' => '鍗氬妯″潡',
             'config' => $config,
         ]);
 

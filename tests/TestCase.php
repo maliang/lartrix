@@ -16,7 +16,7 @@ abstract class TestCase extends BaseTestCase
 
     protected function getEnvironmentSetUp($app): void
     {
-        // 使用 SQLite 内存数据库进行测试
+        // 浣跨敤 SQLite 鍐呭瓨鏁版嵁搴撹繘琛屾祴璇?
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [
             'driver' => 'sqlite',
@@ -24,7 +24,7 @@ abstract class TestCase extends BaseTestCase
             'prefix' => '',
         ]);
 
-        // 配置 Sanctum
+        // 閰嶇疆 Sanctum
         $app['config']->set('sanctum.stateful', []);
     }
 
@@ -32,7 +32,7 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
         
-        // 运行迁移
+        // 杩愯杩佺Щ
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
     }
 }

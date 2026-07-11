@@ -1,0 +1,38 @@
+{
+    "schema_version": "trix.module.v1",
+    "id": "{{REGISTRY_ID}}",
+    "name": "{{MODULE_NAME}}",
+    "alias": "{{LOWER_NAME}}",
+    "version": "1.0.0",
+    "type": "{{TYPE}}",
+    "description": "{{DESCRIPTION}}",
+    "logo": "resources/module/logo.svg",
+    "thumbnail": "resources/module/thumbnail.svg",
+    "author": "{{AUTHOR}}",
+    "author_url": "{{AUTHOR_URL}}",
+    "keywords": [],
+    "license": "MIT",
+    "adapter": {
+        "language": "php",
+        "language_version": "^8.2",
+        "framework": "laravel",
+        "framework_version": "^12.0",
+        "status": "stable",
+        "package_type": "path",
+        "package_name": "modules/{{LOWER_NAME}}",
+        "install": {
+            "providers": [
+                "Modules\\{{MODULE_NAME}}\\Providers\\{{MODULE_NAME}}ServiceProvider"
+            ]
+        }
+    },
+    "providers": [
+        "Modules\\{{MODULE_NAME}}\\Providers\\{{MODULE_NAME}}ServiceProvider"
+    ],
+    "files": [],
+    "requires": [],
+    "menus": [],
+    "permissions": [],
+    "contracts": [],
+    "contract_usages": []
+}

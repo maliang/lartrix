@@ -24,13 +24,13 @@ class ModuleServiceTest extends TestCase
     {
         Module::create([
             'name' => 'Blog',
-            'title' => '博客模块',
+            'title' => '鍗氬妯″潡',
             'enabled' => true,
         ]);
 
         Module::create([
             'name' => 'Shop',
-            'title' => '商城模块',
+            'title' => '鍟嗗煄妯″潡',
             'enabled' => false,
         ]);
 
@@ -44,7 +44,7 @@ class ModuleServiceTest extends TestCase
     {
         $module = Module::create([
             'name' => 'Blog',
-            'title' => '博客模块',
+            'title' => '鍗氬妯″潡',
             'enabled' => false,
         ]);
 
@@ -58,7 +58,7 @@ class ModuleServiceTest extends TestCase
     {
         $module = Module::create([
             'name' => 'Blog',
-            'title' => '博客模块',
+            'title' => '鍗氬妯″潡',
             'enabled' => true,
         ]);
 
@@ -72,11 +72,11 @@ class ModuleServiceTest extends TestCase
     {
         Module::create([
             'name' => 'Blog',
-            'title' => '博客模块',
+            'title' => '鍗氬妯″潡',
             'enabled' => true,
         ]);
 
-        // 同步操作应该不会抛出异常
+        // 鍚屾鎿嶄綔搴旇涓嶄細鎶涘嚭寮傚父
         $this->moduleService->sync();
 
         $this->assertTrue(true);

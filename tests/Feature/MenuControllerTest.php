@@ -30,7 +30,7 @@ class MenuControllerTest extends TestCase
 
         $role = Role::create([
             'name' => 'super_admin',
-            'title' => '超级管理员',
+            'title' => '瓒呯骇绠＄悊鍛?,
             'guard_name' => 'sanctum',
             'status' => 1,
             'is_system' => true,
@@ -38,7 +38,7 @@ class MenuControllerTest extends TestCase
 
         $permission = Permission::create([
             'name' => 'menus.*',
-            'title' => '菜单管理',
+            'title' => '鑿滃崟绠＄悊',
             'guard_name' => 'sanctum',
         ]);
 
@@ -54,7 +54,7 @@ class MenuControllerTest extends TestCase
         Menu::create([
             'name' => 'dashboard',
             'path' => '/dashboard',
-            'title' => '仪表盘',
+            'title' => '浠〃鐩?,
             'component' => 'layout.base',
             'icon' => 'mdi:view-dashboard',
             'sort' => 1,
@@ -83,7 +83,7 @@ class MenuControllerTest extends TestCase
         Menu::create([
             'name' => 'dashboard',
             'path' => '/dashboard',
-            'title' => '仪表盘',
+            'title' => '浠〃鐩?,
             'component' => 'layout.base',
             'sort' => 1,
             'status' => 1,
@@ -103,7 +103,7 @@ class MenuControllerTest extends TestCase
             ->postJson('/api/lartrix/menus', [
                 'name' => 'new_menu',
                 'path' => '/new-menu',
-                'title' => '新菜单',
+                'title' => '鏂拌彍鍗?,
                 'component' => 'view.new_menu',
                 'sort' => 1,
                 'status' => 1,
@@ -124,7 +124,7 @@ class MenuControllerTest extends TestCase
         $menu = Menu::create([
             'name' => 'old_menu',
             'path' => '/old-menu',
-            'title' => '旧菜单',
+            'title' => '鏃ц彍鍗?,
             'component' => 'view.old_menu',
             'sort' => 1,
             'status' => 1,
@@ -132,13 +132,13 @@ class MenuControllerTest extends TestCase
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->putJson('/api/lartrix/menus/' . $menu->id, [
-                'title' => '更新后的菜单',
+                'title' => '鏇存柊鍚庣殑鑿滃崟',
             ]);
 
         $response->assertStatus(200)
             ->assertJson(['code' => 0]);
 
-        $this->assertEquals('更新后的菜单', $menu->fresh()->title);
+        $this->assertEquals('鏇存柊鍚庣殑鑿滃崟', $menu->fresh()->title);
     }
 
     /** @test */
@@ -147,7 +147,7 @@ class MenuControllerTest extends TestCase
         $menu = Menu::create([
             'name' => 'to_delete',
             'path' => '/to-delete',
-            'title' => '待删除',
+            'title' => '寰呭垹闄?,
             'component' => 'view.to_delete',
             'sort' => 1,
             'status' => 1,
@@ -170,7 +170,7 @@ class MenuControllerTest extends TestCase
         $menu1 = Menu::create([
             'name' => 'menu1',
             'path' => '/menu1',
-            'title' => '菜单1',
+            'title' => '鑿滃崟1',
             'component' => 'view.menu1',
             'sort' => 1,
             'status' => 1,
@@ -179,7 +179,7 @@ class MenuControllerTest extends TestCase
         $menu2 = Menu::create([
             'name' => 'menu2',
             'path' => '/menu2',
-            'title' => '菜单2',
+            'title' => '鑿滃崟2',
             'component' => 'view.menu2',
             'sort' => 2,
             'status' => 1,

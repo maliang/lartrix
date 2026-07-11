@@ -26,14 +26,14 @@ class PermissionServiceTest extends TestCase
     {
         $parent = Permission::create([
             'name' => 'users',
-            'title' => '用户管理',
+            'title' => '鐢ㄦ埛绠＄悊',
             'guard_name' => 'sanctum',
             'module' => 'system',
         ]);
 
         Permission::create([
             'name' => 'users.view',
-            'title' => '查看用户',
+            'title' => '鏌ョ湅鐢ㄦ埛',
             'guard_name' => 'sanctum',
             'module' => 'system',
             'parent_id' => $parent->id,
@@ -50,14 +50,14 @@ class PermissionServiceTest extends TestCase
     {
         Permission::create([
             'name' => 'users.view',
-            'title' => '查看用户',
+            'title' => '鏌ョ湅鐢ㄦ埛',
             'guard_name' => 'sanctum',
             'module' => 'system',
         ]);
 
         Permission::create([
             'name' => 'posts.view',
-            'title' => '查看文章',
+            'title' => '鏌ョ湅鏂囩珷',
             'guard_name' => 'sanctum',
             'module' => 'blog',
         ]);
@@ -80,27 +80,27 @@ class PermissionServiceTest extends TestCase
 
         $activeRole = Role::create([
             'name' => 'active_role',
-            'title' => '启用角色',
+            'title' => '鍚敤瑙掕壊',
             'guard_name' => 'sanctum',
             'status' => 1,
         ]);
 
         $disabledRole = Role::create([
             'name' => 'disabled_role',
-            'title' => '禁用角色',
+            'title' => '绂佺敤瑙掕壊',
             'guard_name' => 'sanctum',
             'status' => 0,
         ]);
 
         $permission1 = Permission::create([
             'name' => 'permission1',
-            'title' => '权限1',
+            'title' => '鏉冮檺1',
             'guard_name' => 'sanctum',
         ]);
 
         $permission2 = Permission::create([
             'name' => 'permission2',
-            'title' => '权限2',
+            'title' => '鏉冮檺2',
             'guard_name' => 'sanctum',
         ]);
 
@@ -112,7 +112,7 @@ class PermissionServiceTest extends TestCase
 
         $permissions = $this->permissionService->getUserPermissions($user);
 
-        // 只应该包含启用角色的权限
+        // 鍙簲璇ュ寘鍚惎鐢ㄨ鑹茬殑鏉冮檺
         $this->assertTrue($permissions->contains('name', 'permission1'));
         $this->assertFalse($permissions->contains('name', 'permission2'));
     }

@@ -2,6 +2,125 @@
 
 Lartrix 基于 nwidart/laravel-modules 支持模块化开发。
 
+## Trix 模块协议
+
+Lartrix 模块继续基于 `nwidart/laravel-modules`，同时支持新的 Trix `module.json` 协议。旧项目原有的框架 `module.json` 会被归一化为 Trix manifest，新模块也应使用同一个 `module.json` 文件。
+
+1. 新模块统一使用根目录 `module.json`。
+2. 旧框架 `module.json` 不包含 `schema_version=trix.module.v1` 时，会按 Lartrix 原生模块元数据归一化。
+3. 包内 manifest 只声明当前发布包的 adapter；跨语言、跨框架支持矩阵由 Registry 数据库维护。
+
+模块市场方向是 Trix Module Registry：市场数据库保存模块在不同语言/框架上的整体支持矩阵；包内 `module.json` 只声明当前包自己的 `adapter`，例如 `language=php`、`framework=laravel`、最低语言/框架版本和安装入口。
+
+### 从 Registry 解析模块
+
+Lartrix 安装命令支持通过 `--registry` 查询 Trix Module Registry：
+
+```bash
+php artisan lartrix:module-install official.cms --registry=https://registry.example.com
+```
+
+也可以在项目环境变量中配置默认 Registry。命令行未传 `--registry` 时会读取 `LARTRIX_MODULE_REGISTRY_URL`，未传 `--signature-key` 时会读取 `LARTRIX_MODULE_REGISTRY_SIGNATURE_KEY`：
+
+```env
+LARTRIX_MODULE_REGISTRY_URL=https://registry.example.com
+LARTRIX_MODULE_REGISTRY_SIGNATURE_KEY=your-signature-key
+```
+
+默认行为只解析模块版本和 Laravel adapter，不下载、不解压、不安装远端包。如果确认要把 adapter 包缓存到本机，可以显式增加 `--download`：
+
+```bash
+php artisan lartrix:module-install official.cms --registry=https://registry.example.com --download
+```
+
+如果 Registry 返回 `signature`，并且本地传入 `--signature-key`，命令还会校验 `hmac-sha256:{base64}` 签名，签名载荷为 adapter checksum 字符串：
+
+```bash
+php artisan lartrix:module-install official.cms \
+  --registry=https://registry.example.com \
+  --download \
+  --signature-key="${TRIX_REGISTRY_SIGNATURE_KEY}"
+```
+
+下载会先校验 `sha256:` checksum，成功后只写入本地缓存目录。缓存包仍需再通过 Laravel 原生模块流程安装或启用，避免远端包直接修改项目。
+
+缓存完成后 Lartrix 会进行 zip 预检：检查包内路径是否包含 `../`、绝对路径或 Windows 盘符路径，并确认存在 `module.json`。预检通过后，包会解压到隔离 staging 目录，供后续人工审阅或本地模块流程使用；不会直接移动到正式模块目录，也不会执行包内脚本。
+
+staging 完成后，Lartrix 会重新读取包内 manifest，核对模块 `id`、`version` 和 `php/laravel` adapter 状态是否与 Registry 返回一致。若不一致，流程会停止。
+
+确认 staging 内容后，可以显式复制到本地模块目录：
+
+```bash
+php artisan lartrix:module-install official.cms \
+  --from-stage=/tmp/lartrix-registry-staging/official.cms-1.0.0 \
+  --manifest=official.cms/module.json \
+  --version=1.0.0 \
+  --target-dir=/app/Modules/OfficialCms
+```
+
+该命令只复制文件。目标目录已存在时会拒绝，不会启用模块、不会执行迁移或 Seeder。
+
+复制完成后，命令会扫描模块中的 `composer.json`、ServiceProvider、migration、Seeder，并输出人工待办清单和建议命令。这些命令只作为提示，不会自动执行。
+
+如果 manifest 的 `security` 声明包含 `writes_files`、`runs_commands`、`external_network` 或 `requires_secrets`，命令会输出安全审阅提示。第一阶段只提示风险，不自动执行包内脚本，也不自动批准高风险操作。
+
+## 模块版本更新
+
+模块更新必须先生成更新计划，再复用 Registry 安装器的下载、校验、staging 和 manifest 复核链路。第一阶段默认只允许升级，不允许降级，也不会自动覆盖正式模块目录。
+
+确认新版本目录后，推荐先使用专用更新命令做 dry-run：
+
+```bash
+php artisan lartrix:module-update official.cms \
+  --current-dir=/app/Modules/OfficialCms \
+  --source-dir=/app/Modules/OfficialCmsNext \
+  --manifest=module.json \
+  --version=1.1.0 \
+  --dry-run \
+  --strict-security \
+  --audit-log=/app/storage/trix-module-updates.jsonl
+```
+
+`--dry-run` 只输出更新计划，不要求备份目录，也不会移动任何文件。`--strict-security` 会在 manifest 声明写文件、运行命令、访问外网、需要密钥或使用 eval 时直接拒绝。`--audit-log` 会追加写入 JSON Lines 审计记录。确认计划无误后，再显式替换正式目录：
+
+```bash
+php artisan lartrix:module-update official.cms \
+  --current-dir=/app/Modules/OfficialCms \
+  --source-dir=/app/Modules/OfficialCmsNext \
+  --manifest=module.json \
+  --version=1.1.0 \
+  --backup-dir=/app/Modules/.backup/OfficialCms-1.0.0 \
+  --strict-security \
+  --audit-log=/app/storage/trix-module-updates.jsonl \
+  --confirm-replace
+```
+
+更新命令会先读取当前目录的 manifest 判断当前版本，默认只允许目标版本更高时继续；随后把旧目录移动到备份目录，再把新目录移动到正式目录。它仍不会自动执行 migration、Seeder、autoload 或包内脚本。
+
+如果确实需要降级，必须显式增加 `--allow-downgrade`。降级前先 dry-run，正式替换时仍必须提供备份目录和确认参数：
+
+```bash
+php artisan lartrix:module-update official.cms \
+  --current-dir=/app/Modules/OfficialCms \
+  --source-dir=/app/Modules/OfficialCmsPrev \
+  --manifest=module.json \
+  --version=1.0.0 \
+  --dry-run \
+  --allow-downgrade \
+  --strict-security \
+  --audit-log=/app/storage/trix-module-updates.jsonl
+```
+
+更新流程说明见工作区文档：
+
+- `docs/ecosystem/module-version-update-flow.md`
+
+详细协议见工作区文档：
+
+- `docs/protocol/trix-module-manifest-v1.md`
+- `docs/ecosystem/runtime-support-matrix.md`
+- `docs/ecosystem/migrating-legacy-module-json.md`
+
 ## 创建模块
 
 ```bash

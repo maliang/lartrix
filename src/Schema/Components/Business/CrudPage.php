@@ -86,11 +86,13 @@ class CrudPage
     protected array $extraData = [];
     protected array $extraMethods = [];
 
+    /** 初始化当前对象及其依赖。 */
     public function __construct(string $title = '')
     {
         $this->title = $title;
     }
 
+    /** 创建当前组件实例。 */
     public static function make(string $title = ''): static
     {
         return new static($title);
@@ -98,12 +100,14 @@ class CrudPage
 
     // === 基础配置 ===
 
+    /** 设置 CRUD 页面标题。 */
     public function title(string $title): static
     {
         $this->title = $title;
         return $this;
     }
 
+    /** 设置 CRUD 请求使用的 API 前缀。 */
     public function apiPrefix(string $prefix): static
     {
         $this->apiPrefix = $prefix;
@@ -121,6 +125,7 @@ class CrudPage
         return $this;
     }
 
+    /** 设置表格行数据的唯一键字段。 */
     public function rowKey(string $key): static
     {
         $this->rowKey = $key;
@@ -158,18 +163,21 @@ class CrudPage
         return $this;
     }
 
+    /** 设置表格横向滚动宽度。 */
     public function scrollX(int $width): static
     {
         $this->scrollX = $width;
         return $this;
     }
 
+    /** 设置是否启用分页。 */
     public function pagination(bool $enabled = true): static
     {
         $this->paginated = $enabled;
         return $this;
     }
 
+    /** 设置分页的默认每页条数。 */
     public function defaultPageSize(int $size): static
     {
         $this->defaultPageSize = $size;
@@ -320,6 +328,7 @@ class CrudPage
         return $this;
     }
 
+        /** 将当前对象转换为目标结构。 */
     public function toolbarRight(array $items): static
     {
         $this->toolbarRight = $items;
@@ -373,18 +382,21 @@ class CrudPage
 
     // === 额外配置 ===
 
+    /** 合并 CRUD 页面运行时初始数据。 */
     public function data(array $data): static
     {
         $this->extraData = array_merge($this->extraData, $data);
         return $this;
     }
 
+    /** 注册单个前端行为方法。 */
     public function method(string $name, array $actions): static
     {
         $this->extraMethods[$name] = $actions;
         return $this;
     }
 
+    /** 批量注册前端行为方法。 */
     public function methods(array $methods): static
     {
         $this->extraMethods = array_merge($this->extraMethods, $methods);
@@ -393,6 +405,7 @@ class CrudPage
 
     // === 构建方法 ===
 
+        /** 构建当前流程使用的数据结构。 */
     public function build(): array
     {
         $schema = Card::make()
@@ -419,6 +432,7 @@ class CrudPage
         return $schema->toArray();
     }
 
+        /** 构建当前流程使用的数据结构。 */
     protected function buildData(): array
     {
         $data = [
@@ -472,6 +486,7 @@ class CrudPage
         return array_merge($data, $this->extraData);
     }
 
+        /** 构建当前流程使用的数据结构。 */
     protected function buildSearchFormData(): array
     {
         $data = [];
@@ -492,6 +507,7 @@ class CrudPage
         return $data;
     }
 
+        /** 构建当前流程使用的数据结构。 */
     protected function buildColumnChecks(): array
     {
         return array_map(fn($col) => array_merge($col, [
@@ -501,6 +517,7 @@ class CrudPage
         ]), $this->columns);
     }
 
+        /** 构建当前流程使用的数据结构。 */
     protected function buildMethods(): array
     {
         $methods = [
@@ -622,6 +639,7 @@ class CrudPage
         return array_merge($methods, $this->extraMethods);
     }
 
+        /** 构建当前流程使用的数据结构。 */
     protected function buildLoadDataMethod(): array
     {
         $params = [];
@@ -649,13 +667,11 @@ class CrudPage
                 IfAction::make('!$response.data || typeof $response.data !== "object"')
                     ->then([
                         CallAction::make('$message.error', ['数据格式错误：分页模式下接口应返回 { list: [], total: number } 格式']),
-                        CallAction::make('console.error', ['期望格式: { data: { list: [], total: number } }, 实际返回:', '{{ $response }}']),
                     ])
                     ->else([
                         IfAction::make('!Array.isArray($response.data.list)')
                             ->then([
                                 CallAction::make('$message.error', ['数据格式错误：data.list 应为数组']),
-                                CallAction::make('console.error', ['期望 data.list 为数组, 实际返回:', '{{ $response.data }}']),
                                 SetAction::make('tableData', []),
                             ])
                             ->else([
@@ -664,7 +680,6 @@ class CrudPage
                         IfAction::make('typeof $response.data.total !== "number"')
                             ->then([
                                 CallAction::make('$message.warning', ['数据格式警告：data.total 应为数字，已自动转换']),
-                                CallAction::make('console.warn', ['期望 data.total 为数字, 实际返回:', '{{ $response.data.total }}']),
                                 SetAction::make('pagination.total', '{{ parseInt($response.data.total) || 0 }}'),
                             ])
                             ->else([
@@ -678,7 +693,6 @@ class CrudPage
                 IfAction::make('!Array.isArray($response.data)')
                     ->then([
                         CallAction::make('$message.error', ['数据格式错误：非分页模式下接口应直接返回数组']),
-                        CallAction::make('console.error', ['期望格式: { data: [] }, 实际返回:', '{{ $response }}']),
                         SetAction::make('tableData', []),
                     ])
                     ->else([
@@ -701,6 +715,7 @@ class CrudPage
         ];
     }
 
+        /** 构建当前流程使用的数据结构。 */
     protected function buildSearchMethod(): array
     {
         $actions = [];
@@ -711,6 +726,7 @@ class CrudPage
         return $actions;
     }
 
+        /** 构建当前流程使用的数据结构。 */
     protected function buildResetSearchMethod(): array
     {
         $actions = [];
@@ -723,6 +739,7 @@ class CrudPage
         return $actions;
     }
 
+        /** 构建当前流程使用的数据结构。 */
     protected function buildChildren(): array
     {
         $spaceChildren = [];
@@ -772,6 +789,7 @@ class CrudPage
         return $children;
     }
 
+        /** 构建当前流程使用的数据结构。 */
     protected function buildSearchForm(): Component
     {
         $formItems = [];
@@ -803,6 +821,7 @@ class CrudPage
             ->children($formItems);
     }
 
+        /** 构建当前流程使用的数据结构。 */
     protected function buildToolbar(): ?Component
     {
         $leftComponents = $this->buildToolbarItems($this->toolbarLeft);
@@ -828,6 +847,7 @@ class CrudPage
             ]);
     }
 
+        /** 构建当前流程使用的数据结构。 */
     protected function buildToolbarItems(array $items): array
     {
         $components = [];
@@ -846,6 +866,7 @@ class CrudPage
         return $components;
     }
 
+        /** 构建当前流程使用的数据结构。 */
     protected function buildBuiltinToolbarItem(string $type): ?Component
     {
         return match ($type) {
@@ -874,6 +895,7 @@ class CrudPage
         };
     }
 
+        /** 构建当前流程使用的数据结构。 */
     protected function buildDataTable(): Component
     {
         $tableProps = [
@@ -975,6 +997,7 @@ class CrudPage
         ]);
     }
 
+        /** 构建当前流程使用的数据结构。 */
     protected function buildModal(string $name, array $config): Component
     {
         $content = $config['content'];
@@ -1002,6 +1025,7 @@ class CrudPage
             ->children($children);
     }
 
+        /** 构建当前流程使用的数据结构。 */
     protected function buildDrawer(string $name, array $config): Component
     {
         $content = $config['content'];

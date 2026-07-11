@@ -29,7 +29,7 @@ class PermissionControllerTest extends TestCase
 
         $role = Role::create([
             'name' => 'super_admin',
-            'title' => '超级管理员',
+            'title' => '瓒呯骇绠＄悊鍛?,
             'guard_name' => 'sanctum',
             'status' => 1,
             'is_system' => true,
@@ -37,7 +37,7 @@ class PermissionControllerTest extends TestCase
 
         $permission = Permission::create([
             'name' => 'permissions.*',
-            'title' => '权限管理',
+            'title' => '鏉冮檺绠＄悊',
             'guard_name' => 'sanctum',
         ]);
 
@@ -62,13 +62,13 @@ class PermissionControllerTest extends TestCase
     {
         $parent = Permission::create([
             'name' => 'users',
-            'title' => '用户管理',
+            'title' => '鐢ㄦ埛绠＄悊',
             'guard_name' => 'sanctum',
         ]);
 
         Permission::create([
             'name' => 'users.view',
-            'title' => '查看用户',
+            'title' => '鏌ョ湅鐢ㄦ埛',
             'guard_name' => 'sanctum',
             'parent_id' => $parent->id,
         ]);
@@ -86,9 +86,9 @@ class PermissionControllerTest extends TestCase
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->postJson('/api/lartrix/permissions', [
                 'name' => 'posts.view',
-                'title' => '查看文章',
+                'title' => '鏌ョ湅鏂囩珷',
                 'module' => 'blog',
-                'description' => '查看文章列表权限',
+                'description' => '鏌ョ湅鏂囩珷鍒楄〃鏉冮檺',
             ]);
 
         $response->assertStatus(200)
@@ -96,7 +96,7 @@ class PermissionControllerTest extends TestCase
 
         $this->assertDatabaseHas('permissions', [
             'name' => 'posts.view',
-            'title' => '查看文章',
+            'title' => '鏌ョ湅鏂囩珷',
         ]);
     }
 
@@ -105,20 +105,20 @@ class PermissionControllerTest extends TestCase
     {
         $permission = Permission::create([
             'name' => 'test.permission',
-            'title' => '测试权限',
+            'title' => '娴嬭瘯鏉冮檺',
             'guard_name' => 'sanctum',
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->putJson('/api/lartrix/permissions/' . $permission->id, [
-                'title' => '更新后的权限',
-                'description' => '更新后的描述',
+                'title' => '鏇存柊鍚庣殑鏉冮檺',
+                'description' => '鏇存柊鍚庣殑鎻忚堪',
             ]);
 
         $response->assertStatus(200)
             ->assertJson(['code' => 0]);
 
-        $this->assertEquals('更新后的权限', $permission->fresh()->title);
+        $this->assertEquals('鏇存柊鍚庣殑鏉冮檺', $permission->fresh()->title);
     }
 
     /** @test */
@@ -126,7 +126,7 @@ class PermissionControllerTest extends TestCase
     {
         $permission = Permission::create([
             'name' => 'deletable.permission',
-            'title' => '可删除权限',
+            'title' => '鍙垹闄ゆ潈闄?,
             'guard_name' => 'sanctum',
         ]);
 
