@@ -6,7 +6,7 @@
 
 ## 全局原则
 
-1. 本次是破坏性升级，不保留 `module_registry`、旧 `module.json` 和旧项目 JSON 存储的兼容读取。
+1. 本次是破坏性升级，不保留 `module_registry`、旧 Trix 平铺字段和旧项目 JSON 存储的兼容读取。
 2. 不为了抽象而增加接口或父类；只有具备独立职责和多个真实调用者的流程才提取公共组件。
 3. 安全流程不可因精简而弱化：checksum、签名、路径预检、staging、显式目标目录、默认不覆盖、更新备份和失败回滚必须保留。
 4. Lartrix 先完成改造；Thinkrix 在 Lartrix 协议稳定后按相同公开协议单独迁移。
@@ -30,40 +30,56 @@
 
 ## 二、模块清单
 
-只接受根目录 `module.json`，并要求：
+Lartrix 模块继续使用 Nwidart 约定的根目录 `module.json`。根字段归 Nwidart 管理，Trix 生态协议固定放在 `trix` 节点：
 
 ```json
 {
-  "schema_version": "trix.module.v1",
-  "id": "official.member",
   "name": "Member",
-  "version": "1.0.0",
-  "type": "native",
-  "adapter": {
-    "language": "php",
-    "framework": "laravel"
+  "alias": "member",
+  "description": "会员模块",
+  "keywords": [],
+  "priority": 0,
+  "providers": [
+    "Modules\\Member\\Providers\\MemberServiceProvider"
+  ],
+  "files": [],
+  "trix": {
+    "schema_version": "trix.module.v1",
+    "id": "official.member",
+    "name": "会员",
+    "version": "1.0.0",
+    "type": "native",
+    "adapter": {
+      "language": "php",
+      "framework": "laravel",
+      "package_type": "nwidart"
+    }
   }
 }
 ```
 
-删除旧格式归一化和 `legacy.*` ID 生成逻辑。Loader 必须按固定顺序执行：读取、JSON 解析、Schema 校验、构造 `ModuleManifest`。任何字段错误都直接失败。
+Nwidart 根字段不是旧格式，也不由 Trix Loader 重写；它负责模块发现、Provider 注册、加载顺序和辅助文件加载。删除旧 Trix 平铺格式归一化和 `legacy.*` ID 生成逻辑。
 
-`ModuleManifest::fromArray()` 不再作为可绕过校验的公共入口。生产代码获取到 `ModuleManifest` 即代表清单已合法。
+Loader 必须按固定顺序执行：读取 JSON、校验 Nwidart 必需字段、提取 `trix` 节点、校验 Trix Schema、构造 `ModuleManifest`。任何字段错误都直接失败。
+
+`ModuleManifest` 只包装 `trix` 节点，不包装整个 Nwidart JSON。`ModuleManifest::fromArray()` 不再作为可绕过校验的公共入口。生产代码获取到 `ModuleManifest` 即代表 Trix 清单已合法。
+
+`lartrix:module-make` 先使用 Nwidart 生成模块，再通过 JSON 结构化写入补充标准 `trix` 节点，不创建第二个清单文件，也不覆盖 `providers`、`priority` 和 `files`。
 
 ## 三、唯一模块标识
 
 只保留：
 
-- `name`：本地 Nwidart 模块名称和目录名称，例如 `Member`。
-- `id`：Trix 生态唯一 ID，例如 `official.member`。
+- 根 `name`：本地 Nwidart 模块名称和目录名称，例如 `Member`。
+- `trix.id`：Trix 生态唯一 ID，例如 `official.member`。
 
-同步模块时将 `module.json.id` 明确投影为数据库 `registry_id`。Registry 查询、发布、更新和项目依赖只使用 `registry_id`。缺少生态 ID 时拒绝市场操作，不再从 title、alias、目录名或本地模块名猜测。
+同步模块时将 `module.json.trix.id` 明确投影为数据库 `registry_id`。Registry 查询、发布、更新和项目依赖只使用 `registry_id`。缺少生态 ID 时拒绝市场操作，不再从 title、alias、目录名或本地模块名猜测。
 
-数据库 `config` 不再同时保存平铺 Manifest 和 `trix_manifest` 副本。数据库只保存后台展示和生命周期需要的明确投影字段；完整协议始终从模块目录的 `module.json` 读取。
+数据库 `config` 不再同时保存平铺 Manifest 和 `trix_manifest` 副本。数据库只保存后台展示和生命周期需要的明确投影字段；完整 Trix 协议始终从模块目录的 `module.json.trix` 读取，Nwidart 运行元数据继续由 Nwidart 自己读取根字段。
 
 ## 四、Adapter 权威边界
 
-包内 `module.json.adapter` 只声明不可变技术信息：
+包内 `module.json.trix.adapter` 只声明不可变技术信息：
 
 - language
 - language_version
@@ -177,7 +193,7 @@ Nwidart Activator 是模块启用状态的唯一权威来源。数据库 `enable
 
 - `lartrix.module_registry` 配置。
 - `module_market.api_url` 旧字段。
-- 旧 `module.json` 归一化。
+- 旧 Trix 平铺字段和原生 module.json 自动归一化。
 - `legacy.*` 自动 ID。
 - `config.trix_manifest` Manifest 副本。
 - Adapter 包内发布状态。
@@ -200,18 +216,19 @@ Nwidart Activator 是模块启用状态的唯一权威来源。数据库 `enable
 
 必须覆盖：
 
-1. 旧 module.json 被拒绝。
-2. 新 module.json 任一关键字段非法时 Loader 失败。
-3. Registry ID 不再从本地名称猜测。
-4. 全部代码只读取 `module_market`。
-5. 项目安装只写 `config/trix-project.php`，不生成派生 JSON。
-6. PHP 配置能够被 Laravel 正常加载，并保留模块配置、契约绑定和 setup。
-7. CLI 与 HTTP 发布共用 Project Manifest 校验。
-8. 三个安装入口共用 Registry Pipeline。
-9. Adapter 发布状态只来自市场响应。
-10. 模块列表请求不隐式启用模块。
-11. 模块更新不再构造伪 Registry payload。
-12. 原有 checksum、签名、路径预检、staging、备份和回滚测试继续通过。
+1. 只有 Nwidart 根字段、没有 `trix` 节点的模块仍可被 Nwidart 运行，但不能参与 Trix 市场操作。
+2. `trix` 节点任一关键字段非法时 Loader 失败。
+3. Nwidart 的 `name/providers/priority/files` 在生成和更新 Trix 元数据后保持不变。
+4. Registry ID 不再从本地名称猜测。
+5. 全部代码只读取 `module_market`。
+6. 项目安装只写 `config/trix-project.php`，不生成派生 JSON。
+7. PHP 配置能够被 Laravel 正常加载，并保留模块配置、契约绑定和 setup。
+8. CLI 与 HTTP 发布共用 Project Manifest 校验。
+9. 三个安装入口共用 Registry Pipeline。
+10. Adapter 发布状态只来自市场响应。
+11. 模块列表请求不隐式启用模块。
+12. 模块更新不再构造伪 Registry payload。
+13. 原有 checksum、签名、路径预检、staging、备份和回滚测试继续通过。
 
 ## 十五、非目标
 
