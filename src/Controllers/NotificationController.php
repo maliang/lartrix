@@ -6,6 +6,7 @@ use Lartrix\Models\NotificationMessage;
 use Lartrix\Models\NotificationCategory;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use Lartrix\Schema\Components\NaiveUI\{Input, SwitchC, Button, Space, Select, Tag, DataTable};
 use Lartrix\Schema\Components\Business\{CrudPage, OptForm};
 use Lartrix\Schema\Actions\{SetAction, CallAction, FetchAction, IfAction};
@@ -77,7 +78,7 @@ class NotificationController extends CrudController
 
         // 按已读状态筛选
         if ($request->filled('is_read')) {
-            $query->where('is_read', $request->boolean('is_read'));
+            $this->applyReadFilter($query, (int) $user->id, $request->boolean('is_read'));
         }
 
         // 按标题搜索
@@ -114,14 +115,20 @@ class NotificationController extends CrudController
 
         // 按已读状态筛选
         if ($request->filled('is_read')) {
-            $query->where('is_read', $request->boolean('is_read'));
+            $this->applyReadFilter($query, (int) $user->id, $request->boolean('is_read'));
         }
 
         $perPage = $request->input('page_size', $request->input('pageSize', 15));
         $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         return success([
-            'list' => collect($paginator->items())->map(function($item) {
+            'list' => collect($paginator->items())->map(function($item) use ($user) {
+                if ($item->user_id === null) {
+                    $readAt = DB::table('notification_message_reads')
+                        ->where('notification_id', $item->id)->where('user_id', $user->id)->value('read_at');
+                    $item->is_read = $readAt !== null;
+                    $item->read_at = $readAt;
+                }
                 return $item->toArray();
             })->values()->all(),
             'total' => $paginator->total(),
@@ -285,9 +292,14 @@ class NotificationController extends CrudController
             })
             ->findOrFail($id);
 
-        $message->is_read = true;
-        $message->read_at = now();
-        $message->save();
+        if ($message->user_id === null) {
+            DB::table('notification_message_reads')->updateOrInsert(
+                ['notification_id' => $message->id, 'user_id' => $user->id],
+                ['read_at' => now()]
+            );
+        } else {
+            $message->forceFill(['is_read' => true, 'read_at' => now()])->save();
+        }
 
         return success(__t('notification.marked_read'));
     }
@@ -300,21 +312,48 @@ class NotificationController extends CrudController
         $user = $request->user();
         $guard = config('lartrix.guard', 'admin');
 
-        NotificationMessage::query()
+        $query = NotificationMessage::query()
             ->where('guard_name', $guard)
             ->where(function($q) use ($user) {
                 $q->whereNull('user_id')->orWhere('user_id', $user->id);
             })
-            ->where('is_read', false)
             ->when(!empty($types = $this->normalizeTypes($request->input('types'))), function ($q) use ($types) {
                 $q->whereIn('type', $types);
-            })
+            });
+
+        $broadcastIds = (clone $query)->whereNull('user_id')->pluck('id');
+        foreach ($broadcastIds as $notificationId) {
+            DB::table('notification_message_reads')->updateOrInsert(
+                ['notification_id' => $notificationId, 'user_id' => $user->id],
+                ['read_at' => now()]
+            );
+        }
+
+        (clone $query)->where('user_id', $user->id)->where('is_read', false)
             ->update([
                 'is_read' => true,
                 'read_at' => now(),
             ]);
 
         return success(__t('notification.all_marked_read'));
+    }
+
+    /** 按当前用户筛选定向通知字段和广播通知回执。 */
+    protected function applyReadFilter(Builder $query, int $userId, bool $read): void
+    {
+        $query->where(function (Builder $scope) use ($userId, $read): void {
+            $scope->where(function (Builder $direct) use ($read): void {
+                $direct->whereNotNull('user_id')->where('is_read', $read);
+            })->orWhere(function (Builder $broadcast) use ($userId, $read): void {
+                $broadcast->whereNull('user_id');
+                $method = $read ? 'whereExists' : 'whereNotExists';
+                $broadcast->{$method}(function ($receipt) use ($userId): void {
+                    $receipt->selectRaw('1')->from('notification_message_reads')
+                        ->whereColumn('notification_message_reads.notification_id', 'notification_messages.id')
+                        ->where('notification_message_reads.user_id', $userId);
+                });
+            });
+        });
     }
 
     /**

@@ -4,7 +4,8 @@ namespace Lartrix\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Http;
+use Lartrix\Modules\Registry\RegistryClient;
+use Lartrix\Modules\Project\ProjectManifest;
 
 /** 校验并打包项目清单及其覆盖配置，生成可上传到模块市场的发布包。 */
 class ProjectPublishCommand extends Command
@@ -27,16 +28,10 @@ class ProjectPublishCommand extends Command
             return self::FAILURE;
         }
 
-        $manifest = json_decode((string) File::get($manifestPath), true);
-        if (!is_array($manifest)) {
-            $this->error('Project manifest is not valid JSON.');
-
-            return self::FAILURE;
-        }
-
-        $error = $this->validateManifest($manifest);
-        if ($error !== null) {
-            $this->error($error);
+        try {
+            $manifest = ProjectManifest::load($manifestPath)->toArray();
+        } catch (\InvalidArgumentException $e) {
+            $this->error($e->getMessage());
 
             return self::FAILURE;
         }
@@ -74,9 +69,7 @@ class ProjectPublishCommand extends Command
             return self::SUCCESS;
         }
 
-        $response = Http::acceptJson()
-            ->timeout(60)
-            ->withToken($authKey)
+        $response = (new RegistryClient($registry, $authKey, 60))->request()
             ->post($registry . '/registry/publish/projects', [
                 'manifest' => json_encode($manifest, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             ]);
@@ -92,31 +85,12 @@ class ProjectPublishCommand extends Command
         return self::SUCCESS;
     }
 
-    /**
-     * 校验输入数据是否满足当前约束。
-     * @param array<string, mixed> $manifest
-     */
-    private function validateManifest(array $manifest): ?string
-    {
-        foreach (['schema_version', 'id', 'name', 'version', 'author'] as $field) {
-            if (!is_string($manifest[$field] ?? null) || trim($manifest[$field]) === '') {
-                return "{$field} is required.";
-            }
-        }
-
-        if ($manifest['schema_version'] !== 'trix.project.v1') {
-            return 'schema_version must be trix.project.v1.';
-        }
-
-        return null;
-    }
-
         /** 处理 Registry 地址、认证或请求。 */
     private function registryUrl(): string
     {
         $option = trim((string) ($this->option('registry') ?? ''));
 
-        return rtrim($option !== '' ? $option : (string) config('lartrix.module_registry.url', ''), '/');
+        return rtrim($option !== '' ? $option : (string) config('lartrix.module_market.url', ''), '/');
     }
 
     /** 读取项目发布使用的 Auth Key。 */
@@ -124,7 +98,7 @@ class ProjectPublishCommand extends Command
     {
         $option = trim((string) ($this->option('auth-key') ?? ''));
 
-        return $option !== '' ? $option : trim((string) config('lartrix.module_registry.auth_key', ''));
+        return $option !== '' ? $option : trim((string) config('lartrix.module_market.auth_key', ''));
     }
 
     /**
@@ -133,7 +107,7 @@ class ProjectPublishCommand extends Command
      */
     private function publisher(string $registry, string $authKey): ?array
     {
-        $response = Http::acceptJson()->timeout(30)->withToken($authKey)->get($registry . '/registry/auth/me');
+        $response = (new RegistryClient($registry, $authKey, 30))->request()->get($registry . '/registry/auth/me');
         if (!$response->successful()) {
             $this->error($response->json('msg') ?: 'Auth Key is invalid or has no publish permission.');
 
@@ -168,9 +142,7 @@ class ProjectPublishCommand extends Command
      */
     private function validateVersion(string $registry, string $authKey, array $manifest): ?string
     {
-        $response = Http::acceptJson()
-            ->timeout(30)
-            ->withToken($authKey)
+        $response = (new RegistryClient($registry, $authKey, 30))->request()
             ->get($registry . '/registry/projects/' . rawurlencode((string) $manifest['id']) . '/versions', [
                 'page_size' => 1,
                 'language' => 'php',

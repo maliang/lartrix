@@ -15,16 +15,16 @@ class RoleTest extends TestCase
     {
         $role = Role::create([
             'name' => 'admin',
-            'title' => '绠＄悊鍛?,
+            'title' => '绠＄悊鍛?',
             'guard_name' => 'sanctum',
-            'description' => '绯荤粺绠＄悊鍛樿鑹?,
+            'description' => '绯荤粺绠＄悊鍛樿鑹?',
             'status' => 1,
             'is_system' => true,
         ]);
 
         $this->assertDatabaseHas('roles', [
             'name' => 'admin',
-            'title' => '绠＄悊鍛?,
+            'title' => '绠＄悊鍛?',
             'is_system' => true,
         ]);
     }
@@ -34,7 +34,7 @@ class RoleTest extends TestCase
     {
         $systemRole = Role::create([
             'name' => 'super_admin',
-            'title' => '瓒呯骇绠＄悊鍛?,
+            'title' => '瓒呯骇绠＄悊鍛?',
             'guard_name' => 'sanctum',
             'is_system' => true,
         ]);

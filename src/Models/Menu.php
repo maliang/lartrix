@@ -225,15 +225,11 @@ class Menu extends Model
 
         return \Lartrix\Models\Module::query()
             ->where('enabled', false)
-            ->get(['name', 'config'])
+            ->get(['name', 'registry_id'])
             ->flatMap(function ($module): array {
-                $config = is_array($module->config) ? $module->config : [];
-
                 return [
                     $module->name,
-                    $config['id'] ?? null,
-                    $config['registry_id'] ?? null,
-                    data_get($config, 'trix_manifest.id'),
+                    $module->registry_id,
                 ];
             })
             ->filter(fn($value): bool => is_string($value) && trim($value) !== '')

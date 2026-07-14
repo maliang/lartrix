@@ -54,6 +54,11 @@ return [
         'setting' => \Lartrix\Controllers\SettingController::class,
         'system' => \Lartrix\Controllers\SystemController::class,
         'home' => \Lartrix\Controllers\HomeController::class,
+        'module' => \Lartrix\Controllers\ModuleController::class,
+        'module_market' => \Lartrix\Controllers\ModuleMarketController::class,
+        'module_publish' => \Lartrix\Controllers\ModulePublishController::class,
+        'dict' => \Lartrix\Controllers\DictController::class,
+        'upload' => \Lartrix\Controllers\UploadController::class,
     ],
 
     /*
@@ -154,29 +159,12 @@ return [
     |--------------------------------------------------------------------------
     */
     'module_market' => [
-        // 是否启用模块市场
         'enabled' => env('LARTRIX_MODULE_MARKET_ENABLED', true),
-
-        // 模块市场 API 地址
-        'api_url' => env('LARTRIX_MODULE_MARKET_URL', 'https://market.lartrix.com/api/market'),
-
-        // API 超时时间（秒）
-        'timeout' => env('LARTRIX_MODULE_MARKET_TIMEOUT', 30),
-
-        // 缓存时间（秒）
-        'cache_ttl' => env('LARTRIX_MODULE_MARKET_CACHE_TTL', 3600),
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Trix 模块注册表配置
-    | 用于 lartrix:module-install 的 registry 适配器解析、下载和签名校验
-    |--------------------------------------------------------------------------
-    */
-    'module_registry' => [
-        'url' => env('LARTRIX_MODULE_REGISTRY_URL', ''),
+        'url' => env('LARTRIX_MODULE_MARKET_URL', ''),
         'auth_key' => env('TRIX_AUTH_KEY', ''),
-        'signature_key' => env('LARTRIX_MODULE_REGISTRY_SIGNATURE_KEY', ''),
+        'signature_key' => env('LARTRIX_MODULE_MARKET_SIGNATURE_KEY', ''),
+        'timeout' => env('LARTRIX_MODULE_MARKET_TIMEOUT', 30),
+        'cache_ttl' => env('LARTRIX_MODULE_MARKET_CACHE_TTL', 3600),
     ],
 
     /*

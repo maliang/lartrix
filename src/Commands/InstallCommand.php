@@ -66,7 +66,9 @@ class InstallCommand extends Command
         if ($migrateResult === 0) {
             $this->info('   迁移完成。');
         } else {
-            $this->warn('   迁移可能已执行过，继续安装...');
+            $this->error('   数据库迁移失败，安装已停止。请修复迁移错误后重新执行命令。');
+            $this->line(Artisan::output());
+            return self::FAILURE;
         }
 
         // 创建超级管理员角色
@@ -562,6 +564,8 @@ PHP;
                             ['name' => 'module.installed.list', 'title' => '模块列表', 'sort' => 1],
                             ['name' => 'module.installed.enable', 'title' => '启用模块', 'sort' => 2],
                             ['name' => 'module.installed.disable', 'title' => '禁用模块', 'sort' => 3],
+                            ['name' => 'module.installed.install', 'title' => '安装模块', 'sort' => 4],
+                            ['name' => 'module.installed.uninstall', 'title' => '卸载模块', 'sort' => 5],
                         ],
                     ],
                     // 模块市场
@@ -572,6 +576,7 @@ PHP;
                         'children' => [
                             ['name' => 'module.market.list', 'title' => '市场列表', 'sort' => 1],
                             ['name' => 'module.market.install', 'title' => '安装模块', 'sort' => 2],
+                            ['name' => 'module.market.publish', 'title' => '发布模块或项目', 'sort' => 3],
                         ],
                     ],
                 ],

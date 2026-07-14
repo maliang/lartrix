@@ -48,19 +48,19 @@ class ActionTest extends TestCase
     /** @test */
     public function fetch_action_has_correct_format(): void
     {
-        $action = new FetchAction('/api/users', 'GET');
+        $action = new FetchAction('/api/users');
         $array = $action->toArray();
 
         $this->assertArrayHasKey('fetch', $array);
-        $this->assertArrayHasKey('method', $array);
         $this->assertEquals('/api/users', $array['fetch']);
-        $this->assertEquals('GET', $array['method']);
+        $this->assertArrayNotHasKey('method', $array);
     }
 
     /** @test */
     public function fetch_action_with_body_and_callbacks(): void
     {
-        $action = (new FetchAction('/api/users', 'POST'))
+        $action = (new FetchAction('/api/users'))
+            ->method('POST')
             ->body(['name' => '{{ formData.name }}'])
             ->then(new SetAction('users', '{{ $response.data }}'))
             ->catch(new CallAction('handleError'))
@@ -77,11 +77,9 @@ class ActionTest extends TestCase
     /** @test */
     public function if_action_has_correct_format(): void
     {
-        $action = new IfAction(
-            'isValid',
-            new CallAction('submit'),
-            new CallAction('showError')
-        );
+        $action = (new IfAction('isValid'))
+            ->then(new CallAction('submit'))
+            ->else(new CallAction('showError'));
         $array = $action->toArray();
 
         $this->assertArrayHasKey('if', $array);
@@ -93,7 +91,7 @@ class ActionTest extends TestCase
     /** @test */
     public function if_action_without_else(): void
     {
-        $action = new IfAction('isValid', new CallAction('submit'));
+        $action = (new IfAction('isValid'))->then(new CallAction('submit'));
         $array = $action->toArray();
 
         $this->assertArrayHasKey('if', $array);

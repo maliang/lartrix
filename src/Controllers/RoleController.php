@@ -91,7 +91,7 @@ class RoleController extends CrudController
             'description' => 'nullable|string',
             'status' => 'boolean',
             'permissions' => 'nullable|array',
-            'permissions.*' => 'string|exists:permissions,name',
+            'permissions.*' => 'required',
         ];
     }
 
@@ -103,7 +103,7 @@ class RoleController extends CrudController
             'description' => 'nullable|string',
             'status' => 'boolean',
             'permissions' => 'nullable|array',
-            'permissions.*' => 'string|exists:permissions,name',
+            'permissions.*' => 'required',
         ];
     }
 
@@ -153,7 +153,7 @@ class RoleController extends CrudController
 
         $validated = $request->validate([
             'permissions' => 'required|array',
-            'permissions.*' => 'string|exists:permissions,name',
+            'permissions.*' => 'required',
         ]);
 
         $this->permissionService->syncRolePermissions($model, $validated['permissions']);

@@ -4,13 +4,12 @@ namespace Lartrix\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Http;
 use Lartrix\Modules\Project\ProjectInstallPlanStore;
 use Lartrix\Modules\Registry\RegistryInstalledPackageChecklist;
-use Lartrix\Modules\Registry\RegistryPackageDownloader;
-use Lartrix\Modules\Registry\RegistryPackageStager;
-use Lartrix\Modules\Registry\RegistryStagedManifestVerifier;
+use Lartrix\Modules\Registry\RegistryClient;
+use Lartrix\Modules\Registry\RegistryPackagePipeline;
 use Lartrix\Modules\Registry\RegistryStagedPackageInstaller;
+use Lartrix\Services\ModuleService;
 
 /** 按项目清单安装依赖模块，并落地项目配置与契约绑定。 */
 class ProjectInstallCommand extends Command
@@ -26,7 +25,7 @@ class ProjectInstallCommand extends Command
                             {--target-root=Modules : Directory where modules will be copied when --execute is set}
                             {--audit-log= : Optional JSONL audit log path}
                             {--execute : Download, stage, verify and copy missing modules}
-                            {--dry-run : Resolve and save the plan without downloading modules}';
+                            {--dry-run : Resolve and display the plan without changing project files}';
 
     protected $description = 'Install a Trix project plan by downloading and staging its module dependencies.';
 
@@ -40,12 +39,6 @@ class ProjectInstallCommand extends Command
 
         $projectId = (string) ($plan['project'] ?? $this->argument('project') ?? 'project');
         $version = (string) ($plan['version'] ?? $this->option('version') ?? 'version');
-        $paths = (new ProjectInstallPlanStore())->save($projectId, $version, $plan);
-
-        // install-plan、项目覆盖配置、契约绑定分别落地，运行时可按需读取其中一部分。
-        $this->info('Project install plan saved: ' . $paths['install_plan']);
-        $this->line('Project config: ' . $paths['project_config']);
-        $this->line('Contract bindings: ' . $paths['contract_bindings']);
 
         if (($plan['install']['allowed'] ?? false) !== true) {
             $message = (string) ($plan['install']['reason'] ?? 'Project install plan is not allowed.');
@@ -58,7 +51,7 @@ class ProjectInstallCommand extends Command
         $this->printTasks($tasks);
 
         if (!$this->option('execute') || $this->option('dry-run')) {
-            $this->warn('Dry run only. Re-run with --execute to download and copy missing modules.');
+            $this->warn('Dry run only. config/trix-project.php was not changed.');
             return self::SUCCESS;
         }
 
@@ -69,7 +62,14 @@ class ProjectInstallCommand extends Command
             $failed = $failed || !($result['ok'] ?? false);
         }
 
-        return $failed ? self::FAILURE : self::SUCCESS;
+        if ($failed) {
+            return self::FAILURE;
+        }
+
+        $configPath = (new ProjectInstallPlanStore())->apply($plan);
+        $this->info('Project runtime config applied: ' . $configPath);
+
+        return self::SUCCESS;
     }
 
     /**
@@ -208,38 +208,32 @@ class ProjectInstallCommand extends Command
     private function executeTask(array $task): array
     {
         if (!$task['allowed']) {
-            $this->error("Skipped blocked module: {$task['id']}");
-            return ['ok' => false, 'reason' => 'blocked'];
+            $required = (bool) ($task['required'] ?? true);
+            $required ? $this->error("Skipped blocked module: {$task['id']}") : $this->warn("Skipped optional blocked module: {$task['id']}");
+            return ['ok' => !$required, 'reason' => $required ? 'blocked' : 'optional_blocked'];
         }
 
         if (File::exists((string) $task['target'])) {
             // 一键项目安装默认不覆盖旧模块，升级必须走 module-update 的备份/审计流程。
-            $this->warn("Target exists, skipped without overwrite: {$task['target']}");
-            return ['ok' => true, 'reason' => 'target_exists'];
+            $this->warn("Target exists, files were not overwritten: {$task['target']}");
+            $service = app(ModuleService::class);
+            $service->syncModules();
+            return $service->install(basename((string) $task['target']))
+                ? ['ok' => true, 'reason' => 'target_exists_lifecycle_verified']
+                : ['ok' => false, 'reason' => 'target_exists_lifecycle_failed'];
         }
 
-        $download = (new RegistryPackageDownloader(fetcher: fn (string $url): ?string => $this->fetchPackage($url)))
-            ->download($task['adapter'], (string) $task['id'], (string) $task['version']);
-
-        if (!($download['downloaded'] ?? false)) {
-            $this->error((string) ($download['message'] ?? 'Package download failed.'));
-            return ['ok' => false, 'reason' => $download['reason'] ?? 'download_failed'];
+        $prepared = (new RegistryPackagePipeline(
+            new RegistryClient($this->registryUrl(), $this->registryAuthKey()),
+            (string) $this->option('language'),
+            (string) $this->option('framework'),
+        ))->prepare($task['adapter'], (string) $task['id'], (string) $task['version']);
+        if (!$prepared['ok']) {
+            $this->error((string) $prepared['message']);
+            return ['ok' => false, 'reason' => $prepared['reason']];
         }
 
-        $stage = (new RegistryPackageStager())->stage((string) $download['path'], (string) $task['id'], (string) $task['version']);
-        if (!($stage['staged'] ?? false)) {
-            $this->error((string) ($stage['message'] ?? 'Package staging failed.'));
-            return ['ok' => false, 'reason' => $stage['reason'] ?? 'stage_failed'];
-        }
-
-        $verify = (new RegistryStagedManifestVerifier((string) $this->option('language'), (string) $this->option('framework')))
-            ->verify((string) $stage['path'], (string) $stage['manifest'], (string) $task['id'], (string) $task['version']);
-        if (!($verify['ok'] ?? false)) {
-            $this->error((string) ($verify['message'] ?? 'Staged manifest verification failed.'));
-            return ['ok' => false, 'reason' => $verify['reason'] ?? 'verify_failed'];
-        }
-
-        $install = (new RegistryStagedPackageInstaller())->install((string) $stage['path'], (string) $stage['manifest'], (string) $task['target']);
+        $install = (new RegistryStagedPackageInstaller())->install((string) $prepared['path'], (string) $prepared['manifest'], (string) $task['target']);
         if (!($install['installed'] ?? false)) {
             $this->error((string) ($install['message'] ?? 'Staged package copy failed.'));
             return ['ok' => false, 'reason' => $install['reason'] ?? 'install_failed'];
@@ -250,15 +244,15 @@ class ProjectInstallCommand extends Command
             $this->line('- ' . $todo);
         }
 
+        $service = app(ModuleService::class);
+        $service->syncModules();
+        $moduleName = basename((string) $task['target']);
+        if (!$service->install($moduleName)) {
+            $this->error('Module lifecycle installation failed: ' . $moduleName);
+            return ['ok' => false, 'reason' => 'lifecycle_install_failed'];
+        }
+
         return ['ok' => true, 'reason' => null];
-    }
-
-        /** 从远端服务获取并解析数据。 */
-    private function fetchPackage(string $url): ?string
-    {
-        $response = $this->registryRequest()->get($url);
-
-        return $response->successful() ? $response->body() : null;
     }
 
         /** 处理 Registry 地址、认证或请求。 */
@@ -266,7 +260,7 @@ class ProjectInstallCommand extends Command
     {
         $option = trim((string) ($this->option('registry') ?? ''));
 
-        return rtrim($option !== '' ? $option : (string) config('lartrix.module_registry.url', ''), '/');
+        return rtrim($option !== '' ? $option : (string) config('lartrix.module_market.url', ''), '/');
     }
 
         /** 处理 Registry 地址、认证或请求。 */
@@ -274,16 +268,13 @@ class ProjectInstallCommand extends Command
     {
         $option = trim((string) ($this->option('auth-key') ?? ''));
 
-        return $option !== '' ? $option : trim((string) config('lartrix.module_registry.auth_key', ''));
+        return $option !== '' ? $option : trim((string) config('lartrix.module_market.auth_key', ''));
     }
 
         /** 处理 Registry 地址、认证或请求。 */
     private function registryRequest(): \Illuminate\Http\Client\PendingRequest
     {
-        $request = Http::acceptJson()->timeout(60);
-        $authKey = $this->registryAuthKey();
-
-        return $authKey === '' ? $request : $request->withToken($authKey);
+        return (new RegistryClient($this->registryUrl(), $this->registryAuthKey(), 60))->request();
     }
 
     /**

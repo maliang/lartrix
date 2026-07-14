@@ -19,6 +19,10 @@ class RegistryModuleReplacer
             return $this->failure('source_missing', 'Source module directory does not exist.');
         }
 
+        if ($this->containsSymbolicLink($sourcePath)) {
+            return $this->failure('symbolic_link_blocked', 'Source module directory contains a symbolic link.');
+        }
+
         if (!is_dir($targetPath)) {
             return $this->failure('target_missing', 'Target module directory does not exist.');
         }
@@ -28,8 +32,8 @@ class RegistryModuleReplacer
         }
 
         $backupParent = dirname($backupPath);
-        if (!is_dir($backupParent)) {
-            mkdir($backupParent, 0775, true);
+        if (!is_dir($backupParent) && !mkdir($backupParent, 0775, true) && !is_dir($backupParent)) {
+            return $this->failure('backup_parent_create_failed', 'Backup parent directory could not be created.');
         }
 
         if (!rename($targetPath, $backupPath)) {
@@ -38,7 +42,9 @@ class RegistryModuleReplacer
 
         if (!rename($sourcePath, $targetPath)) {
             if (is_dir($backupPath) && !file_exists($targetPath)) {
-                rename($backupPath, $targetPath);
+                if (!rename($backupPath, $targetPath)) {
+                    return $this->failure('rollback_failed', 'Replacement failed and the previous module could not be restored from backup.');
+                }
             }
 
             return $this->failure('replace_failed', 'Source module directory could not replace target directory; rollback was attempted.');
@@ -66,5 +72,21 @@ class RegistryModuleReplacer
             'target_path' => null,
             'backup_path' => null,
         ];
+    }
+
+    /** 递归检查待替换目录，拒绝任何符号链接。 */
+    private function containsSymbolicLink(string $directory): bool
+    {
+        foreach (scandir($directory) ?: [] as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+            $path = $directory . DIRECTORY_SEPARATOR . $item;
+            if (is_link($path) || (is_dir($path) && $this->containsSymbolicLink($path))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

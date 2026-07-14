@@ -2,7 +2,6 @@
 
 namespace Lartrix\Modules\Registry;
 
-use JsonException;
 use Lartrix\Modules\Manifest\ModuleManifestLoader;
 
 /** 串联更新预览、暂存包校验和目录替换，并确保高风险动作满足执行条件。 */
@@ -43,7 +42,8 @@ class RegistryModuleUpdateExecutor
         }
 
         // 只有 preview 明确允许后才替换目录；替换动作仍要求调用方传入确认和备份目录。
-        $replace = (new RegistryModuleReplacer())->replace($sourceDir, $currentDir, $backupDir, $confirmed);
+        $moduleSourceDir = dirname($sourceDir . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $manifest));
+        $replace = (new RegistryModuleReplacer())->replace($moduleSourceDir, $currentDir, $backupDir, $confirmed);
         if (!$replace['replaced']) {
             return $this->failure((string) $replace['reason'], (string) $replace['message'], $preview['plan'], null, $replace);
         }
@@ -84,20 +84,12 @@ class RegistryModuleUpdateExecutor
             return $this->previewFailure((string) $verify['reason'], (string) $verify['message'], null, $verify);
         }
 
-        $targetManifest = $this->readManifest($sourceDir, $manifest);
-        if ($targetManifest === []) {
+        $targetManifest = $verify['manifest_object'] ?? null;
+        if (!$targetManifest instanceof \Lartrix\Modules\Manifest\ModuleManifest) {
             return $this->previewFailure('target_manifest_invalid', 'Target module manifest could not be read.', null, $verify);
         }
 
-        $plan = (new RegistryModuleUpdatePlanner($this->language, $this->framework))->plan(
-            $current->toArray(),
-            [
-                'version' => $targetVersion,
-                'manifest' => $targetManifest,
-                'adapters' => [$this->adapterFromManifest($targetManifest)],
-            ],
-            $allowDowngrade
-        );
+        $plan = (new RegistryModuleUpdatePlanner())->plan($current, $targetManifest, $allowDowngrade);
 
         if (!$plan['allowed']) {
             return $this->previewFailure((string) $plan['action'], (string) $plan['message'], $plan, $verify);
@@ -112,36 +104,6 @@ class RegistryModuleUpdateExecutor
             'security' => $verify['security'] ?? [],
             'plan' => $plan,
         ];
-    }
-
-    /**
-     * 从指定来源读取数据。
-     * @return array<string, mixed>
-     */
-    private function readManifest(string $sourceDir, string $manifest): array
-    {
-        $path = rtrim($sourceDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $manifest);
-        if (!is_file($path)) {
-            return [];
-        }
-
-        try {
-            $data = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
-        } catch (JsonException) {
-            return [];
-        }
-
-        return is_array($data) ? $data : [];
-    }
-
-    /**
-     * 执行 adapterFromManifest 方法对应的具体职责。
-     * @param array<string, mixed> $manifest
-     * @return array<string, mixed>
-     */
-    private function adapterFromManifest(array $manifest): array
-    {
-        return is_array($manifest['adapter'] ?? null) ? $manifest['adapter'] : [];
     }
 
     /**

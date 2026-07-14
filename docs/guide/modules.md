@@ -4,11 +4,12 @@ Lartrix 基于 nwidart/laravel-modules 支持模块化开发。
 
 ## Trix 模块协议
 
-Lartrix 模块继续基于 `nwidart/laravel-modules`，同时支持新的 Trix `module.json` 协议。旧项目原有的框架 `module.json` 会被归一化为 Trix manifest，新模块也应使用同一个 `module.json` 文件。
+Lartrix 模块继续基于 `nwidart/laravel-modules`，并在同一个 `module.json` 中使用独立的 `trix` 子节点承载生态元数据。
 
-1. 新模块统一使用根目录 `module.json`。
-2. 旧框架 `module.json` 不包含 `schema_version=trix.module.v1` 时，会按 Lartrix 原生模块元数据归一化。
-3. 包内 manifest 只声明当前发布包的 adapter；跨语言、跨框架支持矩阵由 Registry 数据库维护。
+1. 根节点 `name`、`alias`、`providers`、`priority` 等字段由 Nwidart 负责模块运行。
+2. `trix.schema_version=trix.module.v1` 时，该模块才参与 Trix 市场、发布和项目组合流程。
+3. Lartrix 不再归一化旧的扁平 Trix 清单；这是一次明确的破坏性协议升级。
+4. 包内 `trix.adapter` 只声明当前发布包的技术适配器；完整支持矩阵和发布状态由 Registry 数据库维护。
 
 模块市场方向是 Trix Module Registry：市场数据库保存模块在不同语言/框架上的整体支持矩阵；包内 `module.json` 只声明当前包自己的 `adapter`，例如 `language=php`、`framework=laravel`、最低语言/框架版本和安装入口。
 
@@ -20,12 +21,15 @@ Lartrix 安装命令支持通过 `--registry` 查询 Trix Module Registry：
 php artisan lartrix:module-install official.cms --registry=https://registry.example.com
 ```
 
-也可以在项目环境变量中配置默认 Registry。命令行未传 `--registry` 时会读取 `LARTRIX_MODULE_REGISTRY_URL`，未传 `--signature-key` 时会读取 `LARTRIX_MODULE_REGISTRY_SIGNATURE_KEY`：
+也可以在项目环境变量中配置默认模块市场。命令行未传 `--registry` 时读取 `module_market.url`，未传 `--signature-key` 时读取 `module_market.signature_key`：
 
 ```env
-LARTRIX_MODULE_REGISTRY_URL=https://registry.example.com
-LARTRIX_MODULE_REGISTRY_SIGNATURE_KEY=your-signature-key
+LARTRIX_MODULE_MARKET_URL=https://registry.example.com
+LARTRIX_MODULE_MARKET_SIGNATURE_KEY=your-signature-key
+TRIX_AUTH_KEY=your-auth-key
 ```
+
+完整配置键为 `enabled/url/auth_key/signature_key/timeout/cache_ttl`。Lartrix 不再读取 `module_registry` 或 `module_market.api_url`。
 
 默认行为只解析模块版本和 Laravel adapter，不下载、不解压、不安装远端包。如果确认要把 adapter 包缓存到本机，可以显式增加 `--download`：
 
@@ -46,7 +50,7 @@ php artisan lartrix:module-install official.cms \
 
 缓存完成后 Lartrix 会进行 zip 预检：检查包内路径是否包含 `../`、绝对路径或 Windows 盘符路径，并确认存在 `module.json`。预检通过后，包会解压到隔离 staging 目录，供后续人工审阅或本地模块流程使用；不会直接移动到正式模块目录，也不会执行包内脚本。
 
-staging 完成后，Lartrix 会重新读取包内 manifest，核对模块 `id`、`version` 和 `php/laravel` adapter 状态是否与 Registry 返回一致。若不一致，流程会停止。
+staging 完成后，Lartrix 会重新读取包内 `module.json.trix`，核对模块 `id`、`version` 和 `php/laravel` 技术适配器是否与 Registry 返回一致。若不一致，流程会停止。
 
 确认 staging 内容后，可以显式复制到本地模块目录：
 
@@ -163,11 +167,28 @@ Modules/Blog/
     ],
     "aliases": {},
     "files": [],
-    "requires": []
+    "requires": [],
+    "trix": {
+        "schema_version": "trix.module.v1",
+        "id": "official.blog",
+        "version": "1.0.0",
+        "title": "博客",
+        "description": "博客模块",
+        "author": "Trix 官方",
+        "adapter": {
+            "language": "php",
+            "language_version": "^8.2",
+            "framework": "laravel",
+            "framework_version": "^12.0",
+            "package_type": "nwidart"
+        }
+    }
 }
 ```
 
-`nwidart/laravel-modules` 以 `module.json` 和模块 ServiceProvider 为核心。Lartrix 会优先利用 Laravel 原生能力：路由注册、配置合并、语言加载、迁移、Seeder 都应放在模块自身目录中维护。
+`nwidart/laravel-modules` 以根字段和模块 ServiceProvider 驱动模块运行；Lartrix 只读取已经完整校验的 `trix` 子节点。路由注册、配置合并、语言加载、迁移、Seeder 都应放在模块自身目录中维护。
+
+项目安装计划执行成功后只写入 `config/trix-project.php`。模块通过 `config('trix-project.modules.<模块 ID>.config')` 读取覆盖配置，通过 `config('trix-project.contract_bindings')` 读取契约绑定；运行时不读取 `install-plan.json` 或模块级派生配置 JSON。
 
 ### 路由
 

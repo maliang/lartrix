@@ -22,8 +22,17 @@ class RealtimeService
                 $q->where('user_id', $userId)->orWhereNull('user_id');
             })
             ->where('id', '>', $sinceId)
-            // 轮询只提示未读消息：已读消息（可能在其他会话/设备已读）不应再次弹窗/触发 behaviors
-            ->where('is_read', false);
+            ->where(function ($scope) use ($userId) {
+                $scope->where(function ($direct) {
+                    $direct->whereNotNull('user_id')->where('is_read', false);
+                })->orWhere(function ($broadcast) use ($userId) {
+                    $broadcast->whereNull('user_id')->whereNotExists(function ($receipt) use ($userId) {
+                        $receipt->selectRaw('1')->from('notification_message_reads')
+                            ->whereColumn('notification_message_reads.notification_id', 'notification_messages.id')
+                            ->where('notification_message_reads.user_id', $userId);
+                    });
+                });
+            });
 
         if ($type && $type !== 'all') {
             $query->where('category_key', $type);
@@ -41,7 +50,17 @@ class RealtimeService
             ->where(function ($q) use ($userId) {
                 $q->where('user_id', $userId)->orWhereNull('user_id');
             })
-            ->where('is_read', false)
+            ->where(function ($scope) use ($userId) {
+                $scope->where(function ($direct) {
+                    $direct->whereNotNull('user_id')->where('is_read', false);
+                })->orWhere(function ($broadcast) use ($userId) {
+                    $broadcast->whereNull('user_id')->whereNotExists(function ($receipt) use ($userId) {
+                        $receipt->selectRaw('1')->from('notification_message_reads')
+                            ->whereColumn('notification_message_reads.notification_id', 'notification_messages.id')
+                            ->where('notification_message_reads.user_id', $userId);
+                    });
+                });
+            })
             ->count();
     }
 
@@ -54,7 +73,17 @@ class RealtimeService
             ->where(function ($q) use ($userId) {
                 $q->where('user_id', $userId)->orWhereNull('user_id');
             })
-            ->where('is_read', false)
+            ->where(function ($scope) use ($userId) {
+                $scope->where(function ($direct) {
+                    $direct->whereNotNull('user_id')->where('is_read', false);
+                })->orWhere(function ($broadcast) use ($userId) {
+                    $broadcast->whereNull('user_id')->whereNotExists(function ($receipt) use ($userId) {
+                        $receipt->selectRaw('1')->from('notification_message_reads')
+                            ->whereColumn('notification_message_reads.notification_id', 'notification_messages.id')
+                            ->where('notification_message_reads.user_id', $userId);
+                    });
+                });
+            })
             ->selectRaw('type, COUNT(*) as aggregate')
             ->groupBy('type')
             ->pluck('aggregate', 'type')

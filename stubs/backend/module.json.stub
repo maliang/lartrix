@@ -1,36 +1,35 @@
 {
-    "schema_version": "trix.module.v1",
-    "id": "{{LOWER_NAME}}",
     "name": "{{MODULE_NAME}}",
     "alias": "{{LOWER_NAME}}",
-    "version": "1.0.0",
-    "type": "native",
     "description": "{{APP_TITLE}}后台模块",
-    "logo": "",
-    "thumbnail": "",
-    "author": "",
-    "author_url": "",
     "keywords": [],
-    "license": "MIT",
-    "adapter": {
-        "language": "php",
-        "language_version": "^8.2",
-        "framework": "laravel",
-        "framework_version": "^12.0",
-        "status": "stable",
-        "package_type": "path",
-        "package_name": "modules/{{LOWER_NAME}}",
-        "install": {
-            "providers": [
-                "Modules\\{{MODULE_NAME}}\\Providers\\{{MODULE_NAME}}ServiceProvider",
-                "Modules\\{{MODULE_NAME}}\\Providers\\RouteServiceProvider"
-            ]
-        }
-    },
     "priority": 0,
     "providers": [
         "Modules\\{{MODULE_NAME}}\\Providers\\{{MODULE_NAME}}ServiceProvider",
         "Modules\\{{MODULE_NAME}}\\Providers\\RouteServiceProvider"
     ],
-    "files": []
+    "files": [],
+    "trix": {
+        "schema_version": "trix.module.v1",
+        "id": "{{LOWER_NAME}}",
+        "name": "{{MODULE_NAME}}",
+        "version": "1.0.0",
+        "type": "native",
+        "description": "{{APP_TITLE}}后台模块",
+        "logo": "",
+        "thumbnail": "",
+        "author": "",
+        "author_url": "",
+        "license": "MIT",
+        "adapter": {
+            "language": "php",
+            "language_version": "^8.2",
+            "framework": "laravel",
+            "framework_version": "^12.0",
+            "package_type": "nwidart"
+        },
+        "menus": [],
+        "permissions": [],
+        "schemas": []
+    }
 }

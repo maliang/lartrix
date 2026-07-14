@@ -13,6 +13,8 @@ $roleController = config('lartrix.controllers.role', \Lartrix\Controllers\RoleCo
 $permissionController = config('lartrix.controllers.permission', \Lartrix\Controllers\PermissionController::class);
 $menuController = config('lartrix.controllers.menu', \Lartrix\Controllers\MenuController::class);
 $moduleController = config('lartrix.controllers.module', \Lartrix\Controllers\ModuleController::class);
+$moduleMarketController = config('lartrix.controllers.module_market', \Lartrix\Controllers\ModuleMarketController::class);
+$modulePublishController = config('lartrix.controllers.module_publish', \Lartrix\Controllers\ModulePublishController::class);
 $settingController = config('lartrix.controllers.setting', \Lartrix\Controllers\SettingController::class);
 $systemController = config('lartrix.controllers.system', \Lartrix\Controllers\SystemController::class);
 $homeController = config('lartrix.controllers.home', \Lartrix\Controllers\HomeController::class);
@@ -32,6 +34,8 @@ Route::prefix($prefix)->group(function () use (
     $permissionController,
     $menuController,
     $moduleController,
+    $moduleMarketController,
+    $modulePublishController,
     $settingController,
     $systemController,
     $homeController,
@@ -55,6 +59,8 @@ Route::prefix($prefix)->group(function () use (
         $permissionController,
         $menuController,
         $moduleController,
+        $moduleMarketController,
+        $modulePublishController,
         $settingController,
         $systemController,
         $homeController,
@@ -92,34 +98,40 @@ Route::prefix($prefix)->group(function () use (
         Route::get('dashboard', [$homeController, 'dashboard']);
 
         // 用户管理 - 使用 resource 路由
-        Route::resource('users', $userController)->parameters(['users' => 'id'])->except(['create', 'edit']);
+        Route::resource('users', $userController)->parameters(['users' => 'id'])->except(['create', 'edit'])
+            ->middleware(\Lartrix\Middleware\CheckPermission::class . ':index=system.user.list,show=system.user.list,store=system.user.create,update=system.user.update,destroy=system.user.delete,delete=system.user.delete,batch=system.user.delete,status=system.user.status,reset_password=system.user.password,*=system.user.list');
 
         // 角色管理 - 使用 resource 路由
-        Route::resource('roles', $roleController)->parameters(['roles' => 'id'])->except(['create', 'edit']);
+        Route::resource('roles', $roleController)->parameters(['roles' => 'id'])->except(['create', 'edit'])
+            ->middleware(\Lartrix\Middleware\CheckPermission::class . ':index=system.role.list,show=system.role.list,store=system.role.create,update=system.role.update,destroy=system.role.delete,permissions=system.role.permissions,*=system.role.list');
 
         // 权限管理 - 使用 resource 路由
-        Route::resource('permissions', $permissionController)->parameters(['permissions' => 'id'])->except(['create', 'edit']);
+        Route::resource('permissions', $permissionController)->parameters(['permissions' => 'id'])->except(['create', 'edit'])
+            ->middleware(\Lartrix\Middleware\CheckPermission::class . ':index=system.permission.list,show=system.permission.list,store=system.permission.create,update=system.permission.update,destroy=system.permission.delete,*=system.permission.list');
 
         // 菜单管理 - 使用 resource 路由
-        Route::resource('menus', $menuController)->parameters(['menus' => 'id'])->except(['create', 'edit']);
+        Route::resource('menus', $menuController)->parameters(['menus' => 'id'])->except(['create', 'edit'])
+            ->middleware(\Lartrix\Middleware\CheckPermission::class . ':index=system.menu.list,show=system.menu.list,store=system.menu.create,update=system.menu.update,destroy=system.menu.delete,sort=system.menu.sort,*=system.menu.list');
 
         // 模块管理
-        Route::prefix('modules')->group(function () use ($moduleController) {
-            Route::get('/', [$moduleController, 'index']);
-            Route::get('market/modules', [$moduleController, 'marketModules']);
-            Route::get('market/projects', [$moduleController, 'marketProjects']);
-            Route::post('market/modules/{id}/install', [$moduleController, 'installMarketModule'])->where('id', '[A-Za-z0-9._-]+');
-            Route::post('market/projects/{id}/install', [$moduleController, 'installMarketProject'])->where('id', '[A-Za-z0-9._-]+');
-            Route::post('projects/publish', [$moduleController, 'publishLocalProject']);
-            Route::put('{name}/enable', [$moduleController, 'enable']);
-            Route::put('{name}/disable', [$moduleController, 'disable']);
-            Route::put('{name}/install', [$moduleController, 'install']);
-            Route::put('{name}/uninstall', [$moduleController, 'uninstall']);
-            Route::post('{name}/publish', [$moduleController, 'publishLocal']);
+        Route::prefix('modules')->group(function () use ($moduleController, $moduleMarketController, $modulePublishController) {
+            $permission = \Lartrix\Middleware\CheckPermission::class . ':';
+            Route::get('/', [$moduleController, 'index'])->middleware($permission . 'module.installed.list,module.market.list');
+            Route::get('market/modules', [$moduleMarketController, 'modules'])->middleware($permission . 'module.market.list');
+            Route::get('market/ui', [$moduleMarketController, 'ui'])->middleware($permission . 'module.market.list');
+            Route::get('market/projects', [$moduleMarketController, 'projects'])->middleware($permission . 'module.market.list');
+            Route::post('market/modules/{id}/install', [$moduleMarketController, 'installModule'])->middleware($permission . 'module.market.install')->where('id', '[A-Za-z0-9._-]+');
+            Route::post('market/projects/{id}/install', [$moduleMarketController, 'installProject'])->middleware($permission . 'module.market.install')->where('id', '[A-Za-z0-9._-]+');
+            Route::post('projects/publish', [$modulePublishController, 'project'])->middleware($permission . 'module.market.publish');
+            Route::put('{name}/enable', [$moduleController, 'enable'])->middleware($permission . 'module.installed.enable');
+            Route::put('{name}/disable', [$moduleController, 'disable'])->middleware($permission . 'module.installed.disable');
+            Route::put('{name}/install', [$moduleController, 'install'])->middleware($permission . 'module.installed.install');
+            Route::put('{name}/uninstall', [$moduleController, 'uninstall'])->middleware($permission . 'module.installed.uninstall');
+            Route::post('{name}/publish', [$modulePublishController, 'module'])->middleware($permission . 'module.market.publish');
         });
 
         // 设置管理
-        Route::prefix('settings')->group(function () use ($settingController) {
+        Route::prefix('settings')->middleware(\Lartrix\Middleware\CheckPermission::class . ':index=system.setting.list,group=system.setting.list,update=system.setting.update,*=system.setting.list')->group(function () use ($settingController) {
             Route::get('/', [$settingController, 'index']);
             Route::get('{group}', [$settingController, 'group'])->where('group', '[a-zA-Z_]+');
             Route::put('/', [$settingController, 'update']);
@@ -129,7 +141,7 @@ Route::prefix($prefix)->group(function () use (
         Route::post('upload/image', [\Lartrix\Controllers\UploadController::class, 'image']);
 
         // 字典管理 - 注意路由顺序：具体路由在前，通用路由在后
-        Route::prefix('dicts')->group(function () use ($dictController) {
+        Route::prefix('dicts')->middleware(\Lartrix\Middleware\CheckPermission::class . ':*=' . 'system.dict.list')->group(function () use ($dictController) {
             // 字典选项（供前端 select 使用）
             Route::post('options/batch', [$dictController, 'batchOptions']);
             Route::get('options/{code}', [$dictController, 'options'])->where('code', '[a-zA-Z_]+');

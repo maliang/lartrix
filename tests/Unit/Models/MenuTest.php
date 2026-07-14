@@ -16,7 +16,7 @@ class MenuTest extends TestCase
         $menu = Menu::create([
             'name' => 'dashboard',
             'path' => '/dashboard',
-            'title' => '浠〃鐩?,
+            'title' => '浠〃鐩?',
             'component' => 'layout.base',
             'sort' => 1,
             'status' => 1,
@@ -34,7 +34,7 @@ class MenuTest extends TestCase
         $menu = Menu::create([
             'name' => 'dashboard',
             'path' => '/dashboard',
-            'title' => '浠〃鐩?,
+            'title' => '浠〃鐩?',
             'component' => 'layout.base',
             'icon' => 'mdi:view-dashboard',
             'sort' => 1,
@@ -47,7 +47,7 @@ class MenuTest extends TestCase
         $this->assertEquals('dashboard', $menuRoute['name']);
         $this->assertEquals('/dashboard', $menuRoute['path']);
         $this->assertArrayHasKey('meta', $menuRoute);
-        $this->assertEquals('浠〃鐩?, $menuRoute['meta']['title']);
+        $this->assertEquals('仪表盘', $menuRoute['meta']['title']);
     }
 
     /** @test */

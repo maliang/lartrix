@@ -3,13 +3,14 @@
 namespace Lartrix\Services;
 
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Artisan;
 use Lartrix\Models\Module;
 use Lartrix\Modules\Manifest\ModuleManifest;
 use Lartrix\Modules\Manifest\ModuleManifestLoader;
 use Nwidart\Modules\Facades\Module as ModuleFacade;
 
 /** 负责本地模块发现、同步、启停、安装和卸载。 */
-class ModuleService extends BaseService
+class ModuleService
 {
     /**
      * 获取所有模块列表
@@ -84,19 +85,20 @@ class ModuleService extends BaseService
         $laravelModules = ModuleFacade::all();
 
         foreach ($laravelModules as $name => $laravelModule) {
-            // 优先读取 Trix module.json；旧 nwidart module.json 会在 loader 中归一化。
+            // Nwidart 根字段负责模块运行，trix 节点只负责生态元数据。
             $moduleJson = $this->getModuleConfig($laravelModule);
 
             Module::updateOrCreate(
                 ['name' => $name],
                 [
                     'title' => $moduleJson['title'] ?? $moduleJson['name'] ?? $name,
+                    'registry_id' => $moduleJson['registry_id'] ?? null,
                     'description' => $moduleJson['description'] ?? '',
                     'version' => $moduleJson['version'] ?? '',
                     'author' => $moduleJson['author'] ?? '',
                     'website' => $moduleJson['website'] ?? $moduleJson['url'] ?? '',
                     'logo' => $this->moduleLogoUrl($name, $laravelModule, (string) ($moduleJson['logo'] ?? '')),
-                    'enabled' => $this->resolveModuleEnabledState($name, $laravelModule, $moduleJson),
+                    'enabled' => $laravelModule->isEnabled(),
                     'config' => $moduleJson,
                 ]
             );
@@ -140,6 +142,7 @@ class ModuleService extends BaseService
             $moduleJson = $this->getModuleConfig($laravelModule);
             $module = Module::create([
                 'name' => $name,
+                'registry_id' => $moduleJson['registry_id'] ?? null,
                 'enabled' => false,
                 'title' => $moduleJson['title'] ?? $name,
                 'description' => $moduleJson['description'] ?? '',
@@ -165,8 +168,35 @@ class ModuleService extends BaseService
             $module->save();
 
             // 使用独立进程执行迁移和填充（避免类名冲突）
-            \Artisan::call('module:migrate', ['module' => $name]);
-            \Artisan::call('module:seed', ['module' => $name]);
+            $migrated = false;
+            try {
+                if (Artisan::call('module:migrate', ['module' => $name]) !== 0) {
+                    throw new \RuntimeException("模块 [{$name}] 的迁移失败");
+                }
+                $migrated = true;
+                if (Artisan::call('module:seed', ['module' => $name]) !== 0) {
+                    throw new \RuntimeException("模块 [{$name}] 的数据填充失败");
+                }
+            } catch (\Throwable $e) {
+                if ($migrated) {
+                    try {
+                        if (Artisan::call('module:migrate-rollback', ['module' => $name]) !== 0) {
+                            throw new \RuntimeException("模块 [{$name}] 安装失败后的迁移回滚也失败，请人工检查数据库");
+                        }
+                    } catch (\Throwable $rollbackError) {
+                        report($rollbackError);
+                        $config = is_array($module->config) ? $module->config : [];
+                        $config['lifecycle_error'] = 'install_rollback_failed';
+                        $module->config = $config;
+                        $module->save();
+                    }
+                }
+                $this->removeModuleContributions($name);
+                $laravelModule->disable();
+                $module->disable();
+                report($e);
+                return false;
+            }
         } else {
             $module->enable();
             $module->save();
@@ -186,21 +216,21 @@ class ModuleService extends BaseService
         if (!$module) { return false; }
         if (!$module->enabled) { return true; }
 
-        // 删除模块菜单
-        $menuModel = config('lartrix.models.menu', \Lartrix\Models\Menu::class);
-        $menuModel::where('module', $name)->delete();
-
-        // 删除模块权限
-        $permissionModel = config('lartrix.models.permission', \Lartrix\Models\Permission::class);
-        $permissionModel::where('module', $name)->delete();
-
-        // 回滚迁移并禁用
+        // 先回滚迁移；失败时保留模块注册信息和启用状态，避免半卸载。
         $laravelModule = \Nwidart\Modules\Facades\Module::find($name);
         if ($laravelModule) {
-            \Artisan::call('module:migrate-rollback', ['module' => $name]);
+            try {
+                if (Artisan::call('module:migrate-rollback', ['module' => $name]) !== 0) {
+                    return false;
+                }
+            } catch (\Throwable $e) {
+                report($e);
+                return false;
+            }
             $laravelModule->disable();
         }
 
+        $this->removeModuleContributions($name);
         $module->disable();
         Event::dispatch('lartrix.module.uninstalled', [$module]);
         return true;
@@ -253,40 +283,47 @@ class ModuleService extends BaseService
      */
     protected function getModuleConfig(object $laravelModule): array
     {
-        $legacyConfig = $laravelModule->json()->getAttributes();
+        $nwidart = $laravelModule->json()->getAttributes();
         $modulePath = method_exists($laravelModule, 'getPath') ? $laravelModule->getPath() : null;
 
         if (!is_string($modulePath) || $modulePath === '') {
-            return $legacyConfig;
+            return ['name' => $nwidart['name'] ?? '', 'title' => $nwidart['name'] ?? '', 'description' => $nwidart['description'] ?? ''];
         }
 
         $manifest = (new ModuleManifestLoader())->loadFromPath($modulePath);
 
         if (!$manifest) {
-            return $legacyConfig;
+            return ['name' => $nwidart['name'] ?? '', 'title' => $nwidart['name'] ?? '', 'description' => $nwidart['description'] ?? ''];
         }
 
-        // 保留旧 nwidart 字段，同时把 Trix manifest 放入 trix_manifest 供市场和中间件使用。
-        return $this->manifestToModuleConfig($manifest, $legacyConfig);
+        return $this->manifestToModuleConfig($manifest);
     }
 
     /**
      * 执行 manifestToModuleConfig 方法对应的具体职责。
-     * @param array<string, mixed> $legacyConfig
      * @return array<string, mixed>
      */
-    protected function manifestToModuleConfig(ModuleManifest $manifest, array $legacyConfig = []): array
+    protected function manifestToModuleConfig(ModuleManifest $manifest): array
     {
         $manifestData = $manifest->toArray();
 
-        return array_merge($legacyConfig, $manifestData, [
-            'title' => $manifest->name() ?: ($legacyConfig['title'] ?? $legacyConfig['name'] ?? ''),
-            'description' => $manifestData['description'] ?? $legacyConfig['description'] ?? '',
-            'version' => $manifest->version() ?: ($legacyConfig['version'] ?? ''),
+        return [
+            'registry_id' => $manifest->id(),
+            'name' => $manifest->name(),
+            'title' => $manifest->name(),
+            'description' => $manifestData['description'] ?? '',
+            'version' => $manifest->version(),
+            'type' => $manifest->type(),
+            'logo' => $manifest->logo(),
+            'thumbnail' => $manifest->thumbnail(),
+            'author' => $manifest->author(),
+            'author_url' => $manifest->authorUrl(),
+            'adapter' => $manifest->adapter(),
             'menus' => $manifest->menus(),
             'permissions' => $manifest->permissions(),
-            'trix_manifest' => $manifestData,
-        ]);
+            'schemas' => $manifest->schemas(),
+            'security' => $manifest->security(),
+        ];
     }
 
         /** 执行 moduleLogoUrl 方法对应的具体职责。 */
@@ -307,153 +344,22 @@ class ModuleService extends BaseService
         return '/' . $prefix . '/modules/' . rawurlencode($name) . '/logo';
     }
 
-    /**
-     * 解析并返回当前流程所需的目标值。
-     * @param object $laravelModule
-     * @param array<string, mixed> $moduleJson
-     */
-    protected function resolveModuleEnabledState(string $name, object $laravelModule, array $moduleJson): bool
+    /** 删除模块注册的菜单、权限及角色权限关联。 */
+    protected function removeModuleContributions(string $name): void
     {
-        if ($laravelModule->isEnabled()) {
-            return true;
+        $menuModel = config('lartrix.models.menu', \Lartrix\Models\Menu::class);
+        $permissionModel = config('lartrix.models.permission', \Lartrix\Models\Permission::class);
+        $permissionIds = $permissionModel::where('module', $name)->pluck('id');
+
+        if ($permissionIds->isNotEmpty()) {
+            \Illuminate\Support\Facades\DB::table('role_has_permissions')
+                ->whereIn('permission_id', $permissionIds)->delete();
+            \Illuminate\Support\Facades\DB::table('model_has_permissions')
+                ->whereIn('permission_id', $permissionIds)->delete();
         }
 
-        // 标准模块名可能从 "Module Market" 迁移为 "ModuleMarket"/"modulemarket"，这里承接旧状态键。
-        if (!$this->hasEnabledLegacyModuleStatus($name, $laravelModule, $moduleJson)) {
-            return false;
-        }
-
-        if (method_exists($laravelModule, 'enable')) {
-            $laravelModule->enable();
-        }
-
-        return true;
+        $menuModel::where('module', $name)->delete();
+        $permissionModel::where('module', $name)->delete();
     }
 
-    /**
-     * 判断当前业务条件是否成立。
-     * @param object $laravelModule
-     * @param array<string, mixed> $moduleJson
-     */
-    protected function hasEnabledLegacyModuleStatus(string $name, object $laravelModule, array $moduleJson): bool
-    {
-        $statuses = $this->moduleStatuses();
-        if ($statuses === []) {
-            return false;
-        }
-
-        $currentKeys = $this->currentModuleStatusKeys($name, $laravelModule);
-        foreach ($currentKeys as $key) {
-            if (array_key_exists($key, $statuses) && $statuses[$key] === false) {
-                return false;
-            }
-        }
-
-        foreach ($this->moduleStatusAliases($name, $laravelModule, $moduleJson) as $alias) {
-            if (!in_array($alias, $currentKeys, true) && ($statuses[$alias] ?? false) === true) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * 执行 moduleStatuses 方法对应的具体职责。
-     * @return array<string, bool>
-     */
-    protected function moduleStatuses(): array
-    {
-        $statusFile = config('modules.activators.file.statuses-file', base_path('modules_statuses.json'));
-        if (!is_string($statusFile) || $statusFile === '' || !is_file($statusFile)) {
-            return [];
-        }
-
-        $statuses = json_decode((string) file_get_contents($statusFile), true);
-        if (!is_array($statuses)) {
-            return [];
-        }
-
-        return array_filter($statuses, static fn ($enabled) => is_bool($enabled));
-    }
-
-    /**
-     * 执行 currentModuleStatusKeys 方法对应的具体职责。
-     * @param object $laravelModule
-     * @return array<int, string>
-     */
-    protected function currentModuleStatusKeys(string $name, object $laravelModule): array
-    {
-        $keys = [$name];
-        if (method_exists($laravelModule, 'getName')) {
-            $keys[] = (string) $laravelModule->getName();
-        }
-
-        $currentKeys = [];
-        foreach ($keys as $key) {
-            $key = trim($key);
-            if ($key === '') {
-                continue;
-            }
-
-            $currentKeys[] = $key;
-            $currentKeys[] = strtolower($key);
-        }
-
-        return array_values(array_unique($currentKeys));
-    }
-
-    /**
-     * 执行 moduleStatusAliases 方法对应的具体职责。
-     * @param object $laravelModule
-     * @param array<string, mixed> $moduleJson
-     * @return array<int, string>
-     */
-    protected function moduleStatusAliases(string $name, object $laravelModule, array $moduleJson): array
-    {
-        $aliases = $this->currentModuleStatusKeys($name, $laravelModule);
-
-        foreach (['name', 'alias', 'title', 'id'] as $key) {
-            if (isset($moduleJson[$key]) && is_string($moduleJson[$key])) {
-                $aliases[] = $moduleJson[$key];
-            }
-        }
-
-        if (isset($moduleJson['trix_manifest']) && is_array($moduleJson['trix_manifest'])) {
-            foreach (['name', 'alias', 'title', 'id'] as $key) {
-                if (isset($moduleJson['trix_manifest'][$key]) && is_string($moduleJson['trix_manifest'][$key])) {
-                    $aliases[] = $moduleJson['trix_manifest'][$key];
-                }
-            }
-        }
-
-        return $this->normalizeStatusAliases($aliases);
-    }
-
-    /**
-     * 将输入值归一化为内部标准格式。
-     * @param array<int, string> $aliases
-     * @return array<int, string>
-     */
-    protected function normalizeStatusAliases(array $aliases): array
-    {
-        $normalized = [];
-        foreach ($aliases as $alias) {
-            $alias = trim($alias);
-            if ($alias === '') {
-                continue;
-            }
-
-            $normalized[] = $alias;
-            $normalized[] = strtolower($alias);
-
-            $spaced = trim((string) preg_replace('/(?<!^)[A-Z]/', ' $0', $alias));
-            if ($spaced !== '') {
-                $normalized[] = $spaced;
-                $normalized[] = strtolower($spaced);
-            }
-        }
-
-        return array_values(array_unique($normalized));
-    }
 }

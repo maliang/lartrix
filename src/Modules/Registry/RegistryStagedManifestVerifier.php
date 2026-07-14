@@ -2,22 +2,20 @@
 
 namespace Lartrix\Modules\Registry;
 
-use JsonException;
+use InvalidArgumentException;
 use Lartrix\Modules\Manifest\ModuleManifest;
+use Lartrix\Modules\Manifest\ModuleManifestLoader;
 use Lartrix\Modules\Manifest\ModuleManifestValidator;
 
-/** 核对暂存包的模块 ID、版本和适配器，防止错误包被复制或用于更新。 */
-class RegistryStagedManifestVerifier
+/** 校验暂存包的模块 ID、版本和技术 Adapter 身份。 */
+final class RegistryStagedManifestVerifier
 {
-    /** 初始化当前对象及其依赖。 */
+    /** 初始化校验器。 */
     public function __construct(private readonly string $language, private readonly string $framework)
     {
     }
 
-    /**
-     * 校验数据或发布包的真实性与一致性。
-     * @return array<string, mixed>
-     */
+    /** 校验暂存包并返回合法 Manifest。 */
     public function verify(string $stagePath, string $manifest, string $expectedId, string $expectedVersion): array
     {
         $manifestPath = $stagePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $manifest);
@@ -26,34 +24,21 @@ class RegistryStagedManifestVerifier
         }
 
         try {
-            $data = json_decode((string) file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR);
-        } catch (JsonException) {
-            return $this->failure('manifest_json_invalid', 'Staged package manifest is not valid JSON.');
+            $manifestObject = (new ModuleManifestLoader())->loadFromPath(dirname($manifestPath));
+        } catch (InvalidArgumentException $e) {
+            return $this->failure('manifest_invalid', $e->getMessage());
+        }
+        if (!$manifestObject) {
+            return $this->failure('trix_node_missing', 'Staged package does not contain module.json.trix.');
         }
 
-        if (!is_array($data)) {
-            return $this->failure('manifest_json_invalid', 'Staged package manifest must be a JSON object.');
-        }
-
-        $errors = ModuleManifestValidator::validateForAdapter($data, $this->language, $this->framework);
+        $errors = ModuleManifestValidator::validateForAdapter($manifestObject->toArray(), $this->language, $this->framework);
         if ($errors !== []) {
-            return [
-                'ok' => false,
-                'reason' => 'manifest_adapter_invalid',
-                'message' => 'Staged package manifest does not support the current adapter.',
-                'manifest_id' => is_string($data['id'] ?? null) ? $data['id'] : null,
-                'manifest_version' => is_string($data['version'] ?? null) ? $data['version'] : null,
-                'adapter_status' => null,
-                'security' => is_array($data['security'] ?? null) ? $data['security'] : [],
-                'errors' => $errors,
-            ];
+            return $this->failure('manifest_adapter_invalid', 'Staged package manifest does not support the current adapter.', $manifestObject, $errors);
         }
-
-        $manifestObject = ModuleManifest::fromArray($data);
         if ($manifestObject->id() !== $expectedId) {
             return $this->failure('module_id_mismatch', 'Staged package manifest id does not match registry module id.', $manifestObject);
         }
-
         if ($manifestObject->version() !== $expectedVersion) {
             return $this->failure('module_version_mismatch', 'Staged package manifest version does not match registry version.', $manifestObject);
         }
@@ -64,17 +49,14 @@ class RegistryStagedManifestVerifier
             'message' => 'Staged package manifest matches registry metadata.',
             'manifest_id' => $manifestObject->id(),
             'manifest_version' => $manifestObject->version(),
-            'adapter_status' => $manifestObject->adapterStatus(),
+            'manifest_object' => $manifestObject,
             'security' => $manifestObject->security(),
             'errors' => [],
         ];
     }
 
-    /**
-     * 执行 failure 方法对应的具体职责。
-     * @return array<string, mixed>
-     */
-    private function failure(string $reason, string $message, ?ModuleManifest $manifest = null): array
+    /** 构造统一失败结果。 */
+    private function failure(string $reason, string $message, ?ModuleManifest $manifest = null, array $errors = []): array
     {
         return [
             'ok' => false,
@@ -82,9 +64,9 @@ class RegistryStagedManifestVerifier
             'message' => $message,
             'manifest_id' => $manifest?->id(),
             'manifest_version' => $manifest?->version(),
-            'adapter_status' => $manifest?->adapterStatus(),
+            'manifest_object' => $manifest,
             'security' => $manifest?->security() ?? [],
-            'errors' => [],
+            'errors' => $errors,
         ];
     }
 }

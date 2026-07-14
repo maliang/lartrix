@@ -26,17 +26,19 @@ class RegistryPackageDownloader
             return $this->failure('package_url_missing', 'Registry adapter does not provide package_url.');
         }
 
+        $checksum = (string) ($adapter['checksum'] ?? '');
+        if ($checksum === '') {
+            return $this->failure('checksum_missing', 'Registry adapter package must provide a sha256 checksum.');
+        }
+
         $content = $this->fetch($packageUrl);
         if ($content === null) {
             return $this->failure('package_fetch_failed', 'Registry adapter package could not be downloaded.');
         }
 
-        $checksum = (string) ($adapter['checksum'] ?? '');
-        if ($checksum !== '') {
-            $checksumResult = $this->verifyChecksum($content, $checksum);
-            if ($checksumResult !== null) {
-                return $checksumResult;
-            }
+        $checksumResult = $this->verifyChecksum($content, $checksum);
+        if ($checksumResult !== null) {
+            return $checksumResult;
         }
 
         $signatureReason = null;
@@ -55,15 +57,17 @@ class RegistryPackageDownloader
         }
 
         $cachePath = $this->cachePath();
-        if (!is_dir($cachePath)) {
-            mkdir($cachePath, 0775, true);
+        if (!is_dir($cachePath) && !mkdir($cachePath, 0775, true) && !is_dir($cachePath)) {
+            return $this->failure('cache_create_failed', 'Registry package cache directory could not be created.');
         }
 
         $language = (string) ($adapter['language'] ?? 'language');
         $framework = (string) ($adapter['framework'] ?? 'framework');
         $filename = $this->safeName($moduleId . '-' . $version . '-' . $language . '-' . $framework) . '.zip';
         $path = $cachePath . DIRECTORY_SEPARATOR . $filename;
-        file_put_contents($path, $content);
+        if (file_put_contents($path, $content, LOCK_EX) === false) {
+            return $this->failure('cache_write_failed', 'Registry package could not be written to cache.');
+        }
 
         return [
             'downloaded' => true,

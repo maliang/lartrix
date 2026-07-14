@@ -22,7 +22,7 @@ Modules/Blog/resources/module/logo.svg
 Modules/Blog/resources/module/thumbnail.svg
 ```
 
-生成的 `module.json` 使用 `schema_version=trix.module.v1`，默认声明当前包的 adapter 为：
+生成的 `module.json` 保留 Nwidart 根字段，并在 `trix.schema_version=trix.module.v1` 下声明生态元数据。默认 `trix.adapter` 为：
 
 ```json
 {
@@ -30,7 +30,7 @@ Modules/Blog/resources/module/thumbnail.svg
   "language_version": "^8.2",
   "framework": "laravel",
   "framework_version": "^12.0",
-  "status": "stable"
+  "package_type": "nwidart"
 }
 ```
 
@@ -124,16 +124,19 @@ php artisan lartrix:project-publish --dry-run
 
 ## 项目安装计划
 
-在 Lartrix 模块管理的模块市场弹窗中安装项目时，Lartrix 会从 Trixmore Registry 获取项目安装计划，并保存到：
+执行项目安装命令时，Lartrix 会从 Trixmore Registry 获取并执行项目安装计划。所有模块成功安装后，项目运行时配置统一写入：
 
 ```text
-storage/trix/projects/{project_id}/{version}/install-plan.json
+config/trix-project.php
 ```
 
-如果项目为模块定义了覆盖配置，还会额外生成：
+该文件是项目配置、模块版本与覆盖配置、契约绑定和安装后引导的唯一运行时事实来源，不再生成平行 JSON 副本。市场弹窗只负责获取安装计划，不会在尚未安装模块时提前应用配置。
 
-```text
-storage/trix/projects/{project_id}/{version}/{module_id}.config.json
+模块读取项目覆盖配置时统一使用 Laravel 配置仓库，例如：
+
+```php
+$moduleConfig = config('trix-project.modules.official.user.config', []);
+$binding = config('trix-project.contract_bindings.user.account');
 ```
 
-安装计划包含项目配置、模块版本选择、模块 adapter、模块覆盖配置、契约绑定结果和可安装性判断。后续真正安装模块时，应以安装计划为准，而不是直接使用模块原始默认配置。
+模块市场连接统一配置在 `config/lartrix.php` 的 `module_market` 下，包含 `enabled`、`url`、`auth_key`、`signature_key`、`timeout`、`cache_ttl`。对应环境变量使用 `LARTRIX_MODULE_MARKET_*`，认证密钥使用 `TRIX_AUTH_KEY`；不再使用 `module_registry` 或 `module_market.api_url`。

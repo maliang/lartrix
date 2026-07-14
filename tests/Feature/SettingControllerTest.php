@@ -30,7 +30,7 @@ class SettingControllerTest extends TestCase
 
         $role = Role::create([
             'name' => 'super_admin',
-            'title' => '瓒呯骇绠＄悊鍛?,
+            'title' => '瓒呯骇绠＄悊鍛?',
             'guard_name' => 'sanctum',
             'status' => 1,
             'is_system' => true,

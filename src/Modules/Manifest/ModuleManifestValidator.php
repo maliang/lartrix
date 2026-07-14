@@ -2,24 +2,38 @@
 
 namespace Lartrix\Modules\Manifest;
 
-/** 校验 Trix 清单结构、版本要求及当前框架适配器是否可安装。 */
+/** 校验 Nwidart 根清单以及嵌套的 Trix 生态清单。 */
 final class ModuleManifestValidator
 {
     public const SCHEMA_VERSION = 'trix.module.v1';
 
-    // type 描述模块的产品形态，不直接决定是否可安装。
     /** @var array<int, string> */
     private const MODULE_TYPES = ['pure_schema', 'contract', 'native'];
 
-    // 安装器只允许这些 adapter 状态落地，planned/unsupported 只用于市场展示。
-    /** @var array<int, string> */
-    private const INSTALLABLE_STATUSES = ['stable', 'compatible', 'experimental'];
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, string>
+     */
+    public static function validateNwidart(array $data): array
+    {
+        $errors = [];
 
-    /** @var array<int, string> */
-    private const ADAPTER_STATUSES = ['stable', 'compatible', 'experimental', 'planned', 'unsupported'];
+        foreach (['name', 'alias', 'description'] as $field) {
+            self::validateRequiredString($data, $field, $errors);
+        }
+
+        if (!array_key_exists('priority', $data) || !is_int($data['priority'])) {
+            $errors['priority'] = 'priority must be an integer.';
+        }
+
+        self::validateStringList($data, 'keywords', $errors);
+        self::validateStringList($data, 'providers', $errors);
+        self::validateStringList($data, 'files', $errors);
+
+        return $errors;
+    }
 
     /**
-     * 校验输入数据是否满足当前约束。
      * @param array<string, mixed> $data
      * @return array<string, string>
      */
@@ -27,36 +41,33 @@ final class ModuleManifestValidator
     {
         $errors = [];
 
-        self::validateRequiredString($data, 'schema_version', $errors);
-        self::validateRequiredString($data, 'id', $errors);
-        self::validateRequiredString($data, 'name', $errors);
-        self::validateRequiredString($data, 'version', $errors);
-        self::validateRequiredString($data, 'type', $errors);
+        foreach (['schema_version', 'id', 'name', 'version', 'type'] as $field) {
+            self::validateRequiredString($data, $field, $errors);
+        }
 
-        if (($data['schema_version'] ?? null) !== null && ($data['schema_version'] ?? null) !== self::SCHEMA_VERSION) {
+        if (isset($data['schema_version']) && $data['schema_version'] !== self::SCHEMA_VERSION) {
             $errors['schema_version'] = 'schema_version must be trix.module.v1.';
         }
 
-        if (($data['type'] ?? null) !== null && !in_array($data['type'], self::MODULE_TYPES, true)) {
+        if (isset($data['type']) && !in_array($data['type'], self::MODULE_TYPES, true)) {
             $errors['type'] = 'type must be pure_schema, contract, or native.';
         }
 
         foreach (['logo', 'thumbnail', 'author', 'author_url'] as $field) {
-            if (isset($data[$field]) && !is_string($data[$field])) {
+            if (array_key_exists($field, $data) && !is_string($data[$field])) {
                 $errors[$field] = "$field must be a string.";
             }
         }
 
         self::validateAdapter($data, $errors);
-        self::validateMenus($data, $errors);
-        self::validatePermissions($data, $errors);
-        self::validateSchemas($data, $errors);
+        self::validateListEntries($data, 'menus', ['key', 'title', 'path'], $errors);
+        self::validateListEntries($data, 'permissions', ['name', 'title'], $errors);
+        self::validateListEntries($data, 'schemas', ['key', 'title', 'path'], $errors);
 
         return $errors;
     }
 
     /**
-     * 校验输入数据是否满足当前约束。
      * @param array<string, mixed> $data
      * @return array<string, string>
      */
@@ -66,8 +77,6 @@ final class ModuleManifestValidator
         $adapter = $data['adapter'] ?? null;
 
         if (!is_array($adapter)) {
-            $errors['adapter'] = 'adapter is required.';
-
             return $errors;
         }
 
@@ -75,29 +84,21 @@ final class ModuleManifestValidator
             $errors['adapter.framework'] = "adapter $language/$framework is not declared.";
         }
 
-        // 即使 language/framework 匹配，也必须确认状态允许在当前框架安装。
-        $status = $adapter['status'] ?? null;
-        if (!is_string($status) || !in_array($status, self::INSTALLABLE_STATUSES, true)) {
-            $errors['adapter.status'] = "adapter $language/$framework is not installable.";
-        }
-
         return $errors;
     }
 
     /**
-     * 校验输入数据是否满足当前约束。
      * @param array<string, mixed> $data
      * @param array<string, string> $errors
      */
     private static function validateRequiredString(array $data, string $key, array &$errors): void
     {
-        if (!isset($data[$key]) || !is_string($data[$key]) || trim($data[$key]) === '') {
+        if (!array_key_exists($key, $data) || !is_string($data[$key]) || trim($data[$key]) === '') {
             $errors[$key] = "$key is required.";
         }
     }
 
     /**
-     * 校验输入数据是否满足当前约束。
      * @param array<string, mixed> $data
      * @param array<string, string> $errors
      */
@@ -107,60 +108,41 @@ final class ModuleManifestValidator
 
         if (!is_array($adapter)) {
             $errors['adapter'] = 'adapter is required.';
-
             return;
         }
 
-        foreach (['language', 'framework', 'status'] as $field) {
-            if (!isset($adapter[$field]) || !is_string($adapter[$field]) || trim($adapter[$field]) === '') {
+        foreach (['language', 'framework', 'package_type'] as $field) {
+            if (!array_key_exists($field, $adapter) || !is_string($adapter[$field]) || trim($adapter[$field]) === '') {
                 $errors["adapter.$field"] = "$field is required.";
             }
         }
 
-        $status = $adapter['status'] ?? null;
-        if (is_string($status) && !in_array($status, self::ADAPTER_STATUSES, true)) {
-            $errors['adapter.status'] = 'adapter status is invalid.';
-        }
-
         foreach (['language_version', 'framework_version'] as $field) {
-            if (isset($adapter[$field]) && !is_string($adapter[$field])) {
+            if (array_key_exists($field, $adapter) && !is_string($adapter[$field])) {
                 $errors["adapter.$field"] = "$field must be a string.";
             }
         }
     }
 
     /**
-     * 校验输入数据是否满足当前约束。
      * @param array<string, mixed> $data
      * @param array<string, string> $errors
      */
-    private static function validateMenus(array $data, array &$errors): void
+    private static function validateStringList(array $data, string $key, array &$errors): void
     {
-        self::validateListEntries($data, 'menus', ['key', 'title', 'path'], $errors);
+        if (!array_key_exists($key, $data) || !is_array($data[$key]) || !array_is_list($data[$key])) {
+            $errors[$key] = "$key must be an array.";
+            return;
+        }
+
+        foreach ($data[$key] as $index => $value) {
+            if (!is_string($value) || trim($value) === '') {
+                $errors["$key.$index"] = "$key entry must be a non-empty string.";
+            }
+        }
     }
 
     /**
-     * 校验输入数据是否满足当前约束。
-     * @param array<string, mixed> $data
-     * @param array<string, string> $errors
-     */
-    private static function validatePermissions(array $data, array &$errors): void
-    {
-        self::validateListEntries($data, 'permissions', ['name', 'title'], $errors);
-    }
-
-    /**
-     * 校验输入数据是否满足当前约束。
-     * @param array<string, mixed> $data
-     * @param array<string, string> $errors
-     */
-    private static function validateSchemas(array $data, array &$errors): void
-    {
-        self::validateListEntries($data, 'schemas', ['key', 'title', 'path'], $errors);
-    }
-
-    /**
-     * 校验输入数据是否满足当前约束。
      * @param array<string, mixed> $data
      * @param array<int, string> $requiredFields
      * @param array<string, string> $errors
@@ -171,9 +153,8 @@ final class ModuleManifestValidator
             return;
         }
 
-        if (!is_array($data[$listKey])) {
+        if (!is_array($data[$listKey]) || !array_is_list($data[$listKey])) {
             $errors[$listKey] = "$listKey must be an array.";
-
             return;
         }
 
@@ -184,7 +165,7 @@ final class ModuleManifestValidator
             }
 
             foreach ($requiredFields as $field) {
-                if (!isset($entry[$field]) || !is_string($entry[$field]) || trim($entry[$field]) === '') {
+                if (!array_key_exists($field, $entry) || !is_string($entry[$field]) || trim($entry[$field]) === '') {
                     $errors["$listKey.$index.$field"] = "$field is required.";
                 }
             }

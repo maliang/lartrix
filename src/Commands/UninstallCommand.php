@@ -17,6 +17,7 @@ class UninstallCommand extends Command
                             {--migrations : 仅删除迁移文件}
                             {--config : 仅删除配置文件}
                             {--assets : 仅删除前端资源}
+                            {--shared : 同时删除可能被其他业务使用的 Permission 和 Sanctum 表}
                             {--force : 跳过确认提示}';
 
     /**
@@ -101,8 +102,9 @@ class UninstallCommand extends Command
     {
         $this->warn('警告：此操作将删除以下内容：');
         $this->line('  - Lartrix 相关的数据表（admin_users, admin_menus, admin_settings, modules）');
-        $this->line('  - Spatie Permission 相关的数据表（permissions, roles 等）');
-        $this->line('  - Sanctum 相关的数据表（personal_access_tokens）');
+        if ($this->option('shared')) {
+            $this->line('  - 共享的 Spatie Permission 与 Sanctum 数据表');
+        }
         $this->line('  - 迁移文件');
         $this->line('  - 配置文件（config/lartrix.php）');
         $this->line('  - 前端资源（public/admin）');
@@ -171,8 +173,7 @@ class UninstallCommand extends Command
         }
 
         // 询问是否删除 Permission 表
-        $dropPermissionTables = $this->option('force') 
-            || $this->confirm('是否同时删除 Spatie Permission 相关表？', true);
+        $dropPermissionTables = (bool) $this->option('shared');
 
         if ($dropPermissionTables) {
             foreach ($this->permissionTables as $table) {
@@ -186,8 +187,7 @@ class UninstallCommand extends Command
         }
 
         // 询问是否删除 Sanctum 表
-        $dropSanctumTables = $this->option('force') 
-            || $this->confirm('是否同时删除 Sanctum 相关表？', true);
+        $dropSanctumTables = (bool) $this->option('shared');
 
         if ($dropSanctumTables) {
             foreach ($this->sanctumTables as $table) {
@@ -229,9 +229,12 @@ class UninstallCommand extends Command
             '%create_admin_menus_table%',
             '%create_admin_settings_table%',
             '%create_modules_table%',
-            '%create_permission_tables%',
-            '%create_personal_access_tokens_table%',
         ];
+
+        if ($this->option('shared')) {
+            $patterns[] = '%create_permission_tables%';
+            $patterns[] = '%create_personal_access_tokens_table%';
+        }
 
         foreach ($patterns as $pattern) {
             DB::table('migrations')->where('migration', 'like', $pattern)->delete();
@@ -251,9 +254,12 @@ class UninstallCommand extends Command
             '*_create_admin_menus_table.php',
             '*_create_admin_settings_table.php',
             '*_create_modules_table.php',
-            '*_create_permission_tables.php',
-            '*_create_personal_access_tokens_table.php',
         ];
+
+        if ($this->option('shared')) {
+            $patterns[] = '*_create_permission_tables.php';
+            $patterns[] = '*_create_personal_access_tokens_table.php';
+        }
 
         foreach ($patterns as $pattern) {
             $files = glob("{$migrationsPath}/{$pattern}");

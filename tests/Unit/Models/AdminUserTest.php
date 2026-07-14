@@ -34,7 +34,7 @@ class AdminUserTest extends TestCase
         
         $this->assertTrue(
             method_exists($user, 'createToken'),
-            'AdminUser 搴旇鏈?createToken 鏂规硶锛圚asApiTokens trait锛?
+            'AdminUser 搴旇鏈?createToken 鏂规硶锛圚asApiTokens trait锛?'
         );
     }
 
@@ -45,12 +45,12 @@ class AdminUserTest extends TestCase
         
         $this->assertTrue(
             method_exists($user, 'assignRole'),
-            'AdminUser 搴旇鏈?assignRole 鏂规硶锛圚asRoles trait锛?
+            'AdminUser 搴旇鏈?assignRole 鏂规硶锛圚asRoles trait锛?'
         );
         
         $this->assertTrue(
             method_exists($user, 'hasRole'),
-            'AdminUser 搴旇鏈?hasRole 鏂规硶锛圚asRoles trait锛?
+            'AdminUser 搴旇鏈?hasRole 鏂规硶锛圚asRoles trait锛?'
         );
     }
 

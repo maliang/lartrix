@@ -4,6 +4,9 @@ namespace Lartrix\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use Lartrix\Modules\Manifest\ModuleManifest;
+use Lartrix\Modules\Manifest\ModuleManifestLoader;
+use Lartrix\Modules\Project\ProjectManifestValidator;
 use Nwidart\Modules\Facades\Module as ModuleFacade;
 
 /** 根据当前应用中的模块与配置生成可编辑的 Trix 项目清单。 */
@@ -72,7 +75,7 @@ class ProjectMakeCommand extends Command
     private function newManifest(array $existing): array
     {
         return [
-            'schema_version' => 'trix.project.v1',
+            'schema_version' => ProjectManifestValidator::SCHEMA_VERSION,
             'id' => $this->value('id', $existing['id'] ?? 'local.project'),
             'name' => $this->value('name', $existing['name'] ?? 'Local Project'),
             'version' => $this->value('version', $existing['version'] ?? '1.0.0'),
@@ -136,14 +139,12 @@ class ProjectMakeCommand extends Command
 
         foreach (ModuleFacade::all() as $name => $module) {
             $manifest = $this->moduleManifest($module);
-            $id = $manifest['id'] ?? $manifest['registry_id'] ?? $name;
-            if (!is_string($id) || trim($id) === '') {
+            if (!$manifest) {
                 continue;
             }
+            $id = $manifest->id();
 
-            $version = is_string($manifest['version'] ?? null) && trim($manifest['version']) !== ''
-                ? trim($manifest['version'])
-                : '1.0.0';
+            $version = $manifest->version() ?? '1.0.0';
 
             $byId[$id] = array_merge([
                 'id' => $id,
@@ -160,17 +161,19 @@ class ProjectMakeCommand extends Command
      * 执行 moduleManifest 方法对应的具体职责。
      * @return array<string, mixed>
      */
-    private function moduleManifest(object $module): array
+    private function moduleManifest(object $module): ?ModuleManifest
     {
-        $path = method_exists($module, 'getPath') ? $module->getPath() . DIRECTORY_SEPARATOR . 'module.json' : '';
-        if ($path !== '' && File::exists($path)) {
-            $decoded = json_decode((string) File::get($path), true);
-            if (is_array($decoded)) {
-                return $decoded;
-            }
+        if (!method_exists($module, 'getPath')) {
+            return null;
         }
 
-        return method_exists($module, 'json') ? $module->json()->getAttributes() : [];
+        try {
+            return (new ModuleManifestLoader())->loadFromPath($module->getPath());
+        } catch (\InvalidArgumentException $e) {
+            $this->warn($e->getMessage());
+
+            return null;
+        }
     }
 
     /** 将具体版本号转换为兼容的插入符版本约束。 */

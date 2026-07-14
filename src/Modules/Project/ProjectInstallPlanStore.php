@@ -2,136 +2,90 @@
 
 namespace Lartrix\Modules\Project;
 
-/** 负责持久化项目安装计划、项目覆盖配置与契约绑定，供安装器和运行时分别读取。 */
-class ProjectInstallPlanStore
+use RuntimeException;
+
+/** 将项目安装计划应用为 Laravel 唯一运行时配置。 */
+final class ProjectInstallPlanStore
 {
-    /** 初始化当前对象及其依赖。 */
-    public function __construct(private readonly ?string $rootPath = null)
+    /** 初始化项目配置存储。 */
+    public function __construct(private readonly ?string $configPath = null)
     {
     }
 
-    /**
-     * 保存当前业务数据。
-     * @param array<string, mixed> $plan
-     * @return array<string, string>
-     */
-    public function save(string $projectId, string $version, array $plan): array
+    /** 原子写入 config/trix-project.php，并返回目标路径。 */
+    public function apply(array $plan): string
     {
-        $directory = $this->directory($projectId, $version);
-        if (!is_dir($directory)) {
-            mkdir($directory, 0775, true);
+        $path = $this->path();
+        $directory = dirname($path);
+        if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+            throw new RuntimeException("无法创建项目配置目录：{$directory}");
         }
 
-        $paths = [
-            'directory' => $directory,
-            'install_plan' => $this->writeJson($directory . DIRECTORY_SEPARATOR . 'install-plan.json', $plan),
-            'project_config' => $this->writeJson($directory . DIRECTORY_SEPARATOR . 'project-config.json', $this->arrayValue($plan['project_config'] ?? [])),
-            'contract_bindings' => $this->writeJson($directory . DIRECTORY_SEPARATOR . 'contract-bindings.json', $this->arrayValue($plan['contract_bindings'] ?? [])),
-            'setup' => $this->writeJson($directory . DIRECTORY_SEPARATOR . 'setup.json', $this->arrayValue($plan['setup'] ?? [])),
-        ];
-
-        foreach (($plan['modules'] ?? []) as $module) {
-            if (!is_array($module) || !is_string($module['id'] ?? null)) {
-                continue;
-            }
-
-            $config = $module['config'] ?? [];
-            if (!is_array($config)) {
-                continue;
-            }
-
-            $paths['module_config:' . $module['id']] = $this->writeJson(
-                $directory . DIRECTORY_SEPARATOR . $this->safeName($module['id']) . '.config.json',
-                $config
-            );
+        $config = $this->normalize($plan);
+        $contents = "<?php\n\nreturn " . var_export($config, true) . ";\n";
+        $temporary = $path . '.tmp-' . bin2hex(random_bytes(6));
+        if (file_put_contents($temporary, $contents, LOCK_EX) === false) {
+            throw new RuntimeException("无法写入项目临时配置：{$temporary}");
+        }
+        if (!rename($temporary, $path)) {
+            @unlink($temporary);
+            throw new RuntimeException("无法应用项目配置：{$path}");
         }
 
-        return $paths;
-    }
-
-    /**
-     * 执行 projectConfig 方法对应的具体职责。
-     * @return array<string, mixed>
-     */
-    public function projectConfig(string $projectId, string $version): array
-    {
-        return $this->readJson($this->directory($projectId, $version) . DIRECTORY_SEPARATOR . 'project-config.json');
-    }
-
-    /**
-     * 执行 moduleConfig 方法对应的具体职责。
-     * @return array<string, mixed>
-     */
-    public function moduleConfig(string $projectId, string $version, string $moduleId): array
-    {
-        return $this->readJson($this->directory($projectId, $version) . DIRECTORY_SEPARATOR . $this->safeName($moduleId) . '.config.json');
-    }
-
-    /**
-     * 执行 contractBindings 方法对应的具体职责。
-     * @return array<string, mixed>
-     */
-    public function contractBindings(string $projectId, string $version): array
-    {
-        return $this->readJson($this->directory($projectId, $version) . DIRECTORY_SEPARATOR . 'contract-bindings.json');
-    }
-
-    /** 解析指定项目版本的存储目录。 */
-    public function directory(string $projectId, string $version): string
-    {
-        return $this->root() . DIRECTORY_SEPARATOR . $this->safeName($projectId) . DIRECTORY_SEPARATOR . $this->safeName($version);
-    }
-
-    /** 解析数据存储根目录。 */
-    private function root(): string
-    {
-        if ($this->rootPath !== null) {
-            return $this->rootPath;
+        // 同步当前 Laravel 进程，模块可立即通过 config('trix-project.*') 读取覆盖配置。
+        if (function_exists('config')
+            && \Illuminate\Container\Container::getInstance()->bound('config')) {
+            config(['trix-project' => $config]);
         }
-
-        return function_exists('storage_path')
-            ? storage_path('trix/projects')
-            : sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'trix-projects';
-    }
-
-    /**
-     * 将数据写入指定存储位置。
-     * @param array<string, mixed>|array<int, mixed> $payload
-     */
-    private function writeJson(string $path, array $payload): string
-    {
-        file_put_contents($path, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL);
 
         return $path;
     }
 
-    /**
-     * 从指定来源读取数据。
-     * @return array<string, mixed>
-     */
-    private function readJson(string $path): array
+    /** 读取当前项目运行时配置。 */
+    public function read(): array
     {
+        $path = $this->path();
         if (!is_file($path)) {
             return [];
         }
 
-        $decoded = json_decode((string) file_get_contents($path), true);
+        $config = require $path;
 
-        return is_array($decoded) ? $decoded : [];
+        return is_array($config) ? $config : [];
     }
 
-    /**
-     * 执行 arrayValue 方法对应的具体职责。
-     * @return array<string, mixed>
-     */
-    private function arrayValue(mixed $value): array
+    /** 返回唯一项目配置路径。 */
+    public function path(): string
     {
-        return is_array($value) ? $value : [];
+        return $this->configPath ?? (function_exists('config_path')
+            ? config_path('trix-project.php')
+            : sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'trix-project.php');
     }
 
-        /** 生成可安全用于文件系统的名称。 */
-    private function safeName(string $value): string
+    /** 将 Registry 安装计划投影为稳定的 Laravel 配置结构。 */
+    private function normalize(array $plan): array
     {
-        return preg_replace('/[^A-Za-z0-9._-]+/', '-', $value) ?: 'item';
+        $modules = [];
+        foreach ($plan['modules'] ?? [] as $module) {
+            if (!is_array($module) || !is_string($module['id'] ?? null) || trim($module['id']) === '') {
+                continue;
+            }
+            $modules[$module['id']] = [
+                'version' => (string) ($module['selected_version'] ?? $module['version'] ?? ''),
+                'required' => (bool) ($module['required'] ?? true),
+                'config' => is_array($module['config'] ?? null) ? $module['config'] : [],
+            ];
+        }
+
+        return [
+            'schema_version' => 'trix.project.v1',
+            'id' => (string) ($plan['project'] ?? $plan['id'] ?? ''),
+            'version' => (string) ($plan['version'] ?? ''),
+            'project_config' => is_array($plan['project_config'] ?? null) ? $plan['project_config'] : [],
+            'modules' => $modules,
+            'contract_bindings' => is_array($plan['contract_bindings'] ?? null) ? $plan['contract_bindings'] : [],
+            'setup' => is_array($plan['setup'] ?? null) ? $plan['setup'] : [],
+            'installed_at' => function_exists('now') ? now()->toIso8601String() : date(DATE_ATOM),
+        ];
     }
 }

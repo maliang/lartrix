@@ -29,8 +29,30 @@ class CheckPermission
             error(__t('auth.unauthenticated'), null, 40001);
         }
 
+        $mapped = [];
+        $fallback = [];
+        foreach ($permissions as $permission) {
+            if (str_contains($permission, '=')) {
+                [$action, $name] = explode('=', $permission, 2);
+                $mapped[$action][] = $name;
+            } else {
+                $fallback[] = $permission;
+            }
+        }
+
+        $routeAction = (string) $request->route()?->getActionMethod();
+        $requestedAction = (string) $request->input('action_type', '');
+        $allowedSubActions = [
+            'update' => ['update', 'status', 'reset_password', 'permissions', 'sort'],
+            'destroy' => ['delete', 'batch'],
+        ];
+        $action = isset($allowedSubActions[$routeAction]) && in_array($requestedAction, $allowedSubActions[$routeAction], true)
+            ? $requestedAction
+            : $routeAction;
+        $required = $mapped[$action] ?? $mapped[$routeAction] ?? $mapped['*'] ?? $fallback;
+
         // 检查用户是否有任一指定权限（排除禁用角色的权限）
-        if (!empty($permissions) && !$this->permissionService->userHasAnyPermission($user, $permissions)) {
+        if ($required !== [] && !$this->permissionService->userHasAnyPermission($user, $required)) {
             error(__t('system.forbidden'), null, 40003);
         }
 

@@ -2,6 +2,7 @@
 
 namespace Lartrix\Tests\Unit\Modules\Manifest;
 
+use InvalidArgumentException;
 use Lartrix\Modules\Manifest\ModuleManifestLoader;
 use PHPUnit\Framework\TestCase;
 
@@ -12,76 +13,78 @@ class ModuleManifestLoaderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
         $this->tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'lartrix-manifest-' . uniqid('', true);
         mkdir($this->tempPath, 0777, true);
     }
 
     protected function tearDown(): void
     {
-        $this->deleteDirectory($this->tempPath);
-
+        @unlink($this->tempPath . DIRECTORY_SEPARATOR . 'module.json');
+        @rmdir($this->tempPath);
         parent::tearDown();
     }
 
     /** @test */
-    public function it_loads_module_json_manifest_when_present(): void
+    public function it_loads_the_trix_node_from_a_valid_nwidart_manifest(): void
     {
-        $this->writeJson('module.json', [
-            'schema_version' => 'trix.module.v1',
-            'id' => 'official.cms',
-            'name' => 'CMS',
-            'version' => '1.0.0',
-            'type' => 'contract',
-            'adapter' => [
-                'language' => 'php',
-                'framework' => 'laravel',
-                'status' => 'stable',
-            ],
-        ]);
-
+        $this->writeJson($this->moduleManifest());
         $manifest = (new ModuleManifestLoader())->loadFromPath($this->tempPath);
 
         $this->assertNotNull($manifest);
         $this->assertSame('official.cms', $manifest->id());
-        $this->assertSame('stable', $manifest->adapterStatus());
+        $this->assertSame($this->moduleManifest()['trix'], $manifest->toArray());
     }
 
     /** @test */
-    public function it_normalizes_legacy_module_json(): void
+    public function it_returns_null_when_module_json_or_trix_node_is_missing(): void
     {
-        $this->writeJson('module.json', [
-            'name' => 'Blog',
-            'title' => 'Blog Module',
-            'description' => 'Post management',
-            'version' => '0.1.0',
-            'menus' => [
-                ['name' => 'blog.posts', 'title' => 'Posts', 'path' => '/blog/posts'],
-            ],
-            'permissions' => [
-                ['name' => 'blog.posts.view', 'title' => 'View posts'],
-            ],
+        $loader = new ModuleManifestLoader();
+        $this->assertNull($loader->loadFromPath($this->tempPath));
+
+        $manifest = $this->moduleManifest();
+        unset($manifest['trix']);
+        $this->writeJson($manifest);
+
+        $this->assertNull($loader->loadFromPath($this->tempPath));
+    }
+
+    /** @test */
+    public function it_does_not_normalize_a_legacy_flat_trix_manifest(): void
+    {
+        $this->writeJson([
+            'schema_version' => 'trix.module.v1',
+            'id' => 'official.cms',
+            'name' => 'CMS',
+            'version' => '1.0.0',
+            'type' => 'native',
+            'adapter' => ['language' => 'php', 'framework' => 'laravel'],
         ]);
 
-        $manifest = (new ModuleManifestLoader())->loadFromPath($this->tempPath);
-
-        $this->assertNotNull($manifest);
-        $this->assertSame('legacy.blog', $manifest->id());
-        $this->assertSame('Blog Module', $manifest->name());
-        $this->assertSame('0.1.0', $manifest->version());
-        $this->assertSame('native', $manifest->type());
-        $this->assertSame('compatible', $manifest->adapterStatus());
-        $this->assertSame('laravel', $manifest->adapterFramework());
-        $this->assertSame('Posts', $manifest->menus()[0]['title']);
-        $this->assertSame('blog.posts.view', $manifest->permissions()[0]['name']);
+        $this->assertNull((new ModuleManifestLoader())->loadFromPath($this->tempPath));
     }
 
     /** @test */
-    public function it_returns_null_when_no_manifest_file_exists(): void
+    public function it_rejects_invalid_nwidart_root_fields(): void
     {
-        $manifest = (new ModuleManifestLoader())->loadFromPath($this->tempPath);
+        $manifest = $this->moduleManifest();
+        unset($manifest['providers']);
+        $this->writeJson($manifest);
 
-        $this->assertNull($manifest);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('providers');
+        (new ModuleManifestLoader())->loadFromPath($this->tempPath);
+    }
+
+    /** @test */
+    public function it_rejects_invalid_trix_fields(): void
+    {
+        $manifest = $this->moduleManifest();
+        $manifest['trix']['id'] = '';
+        $this->writeJson($manifest);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('trix.id');
+        (new ModuleManifestLoader())->loadFromPath($this->tempPath);
     }
 
     /** @test */
@@ -89,75 +92,43 @@ class ModuleManifestLoaderTest extends TestCase
     {
         file_put_contents($this->tempPath . DIRECTORY_SEPARATOR . 'module.json', '{bad json');
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid JSON manifest');
-
         (new ModuleManifestLoader())->loadFromPath($this->tempPath);
     }
 
-    /** @test */
-    public function it_loads_shared_example_manifests(): void
+    /** @return array<string, mixed> */
+    private function moduleManifest(): array
     {
-        $examplesRoot = dirname(__DIR__, 5) . DIRECTORY_SEPARATOR . 'examples' . DIRECTORY_SEPARATOR . 'modules';
-        $loader = new ModuleManifestLoader();
-
-        $dashboard = $loader->loadFromPath($examplesRoot . DIRECTORY_SEPARATOR . 'pure-schema-dashboard');
-        $cms = $loader->loadFromPath($examplesRoot . DIRECTORY_SEPARATOR . 'contract-cms');
-        $audit = $loader->loadFromPath($examplesRoot . DIRECTORY_SEPARATOR . 'native-laravel-audit');
-
-        $this->assertNotNull($dashboard);
-        $this->assertSame('pure_schema', $dashboard->type());
-        $this->assertSame('stable', $dashboard->adapterStatus());
-
-        $this->assertNotNull($cms);
-        $this->assertSame('official.cms', $cms->id());
-        $this->assertSame('stable', $cms->adapterStatus());
-        $this->assertSame('laravel', $cms->adapterFramework());
-
-        $this->assertNotNull($audit);
-        $this->assertSame('official.laravel-audit', $audit->id());
-        $this->assertSame('stable', $audit->adapterStatus());
-        $this->assertSame('laravel', $audit->adapterFramework());
+        return [
+            'name' => 'Cms',
+            'alias' => 'cms',
+            'description' => 'Content management',
+            'keywords' => ['cms'],
+            'priority' => 0,
+            'providers' => ['Modules\\Cms\\Providers\\CmsServiceProvider'],
+            'files' => [],
+            'trix' => [
+                'schema_version' => 'trix.module.v1',
+                'id' => 'official.cms',
+                'name' => 'CMS',
+                'version' => '1.0.0',
+                'type' => 'native',
+                'adapter' => [
+                    'language' => 'php',
+                    'framework' => 'laravel',
+                    'package_type' => 'nwidart',
+                ],
+            ],
+        ];
     }
 
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function writeJson(string $filename, array $data): void
+    /** @param array<string, mixed> $data */
+    private function writeJson(array $data): void
     {
         file_put_contents(
-            $this->tempPath . DIRECTORY_SEPARATOR . $filename,
-            json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+            $this->tempPath . DIRECTORY_SEPARATOR . 'module.json',
+            json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)
         );
-    }
-
-    private function deleteDirectory(string $path): void
-    {
-        if (!is_dir($path)) {
-            return;
-        }
-
-        $items = scandir($path);
-
-        if ($items === false) {
-            return;
-        }
-
-        foreach ($items as $item) {
-            if ($item === '.' || $item === '..') {
-                continue;
-            }
-
-            $fullPath = $path . DIRECTORY_SEPARATOR . $item;
-
-            if (is_dir($fullPath)) {
-                $this->deleteDirectory($fullPath);
-                continue;
-            }
-
-            unlink($fullPath);
-        }
-
-        rmdir($path);
     }
 }

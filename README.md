@@ -47,12 +47,25 @@ php artisan lartrix:install
 
 ```php
 return [
-    'route_prefix' => 'api/admin',      // API 路由前缀
+    'api_prefix' => 'api/admin',        // API 路由前缀
     'guard' => 'sanctum',               // 认证守卫
     'super_admin_role' => 'super-admin', // 超级管理员角色名
     'models' => [...],                  // 模型类映射
     'controllers' => [...],             // 控制器类映射
 ];
+```
+
+模块市场只使用 `module_market` 配置，不再读取 `module_registry` 或 `module_market.api_url`：
+
+```php
+'module_market' => [
+    'enabled' => env('LARTRIX_MODULE_MARKET_ENABLED', true),
+    'url' => env('LARTRIX_MODULE_MARKET_URL', ''),
+    'auth_key' => env('TRIX_AUTH_KEY', ''),
+    'signature_key' => env('LARTRIX_MODULE_MARKET_SIGNATURE_KEY', ''),
+    'timeout' => env('LARTRIX_MODULE_MARKET_TIMEOUT', 30),
+    'cache_ttl' => env('LARTRIX_MODULE_MARKET_CACHE_TTL', 3600),
+],
 ```
 
 ### 多语言
@@ -88,6 +101,35 @@ Modules/Blog/Resources/lang/ja-JP/messages.php
 ```bash
 php artisan module:make Blog
 ```
+
+需要参与 Trix 市场、发布或项目组合的模块，使用同一个 `module.json`：Nwidart 拥有根字段，Trix 生态元数据严格放在 `trix` 子节点。旧的扁平 Trix 字段不再兼容。
+
+```json
+{
+  "name": "Blog",
+  "alias": "blog",
+  "priority": 0,
+  "providers": ["Modules\\Blog\\Providers\\BlogServiceProvider"],
+  "files": [],
+  "trix": {
+    "schema_version": "trix.module.v1",
+    "id": "official.blog",
+    "version": "1.0.0",
+    "title": "博客",
+    "description": "博客模块",
+    "author": "Trix 官方",
+    "adapter": {
+      "language": "php",
+      "language_version": "^8.2",
+      "framework": "laravel",
+      "framework_version": "^12.0",
+      "package_type": "nwidart"
+    }
+  }
+}
+```
+
+项目安装完成后，运行时配置只写入 `config/trix-project.php`；项目配置、模块版本和覆盖配置、契约绑定及安装后引导均从 Laravel 配置仓库读取，不生成并行的派生 JSON。
 
 ### 控制器开发
 

@@ -30,7 +30,7 @@ class MenuControllerTest extends TestCase
 
         $role = Role::create([
             'name' => 'super_admin',
-            'title' => '瓒呯骇绠＄悊鍛?,
+            'title' => '瓒呯骇绠＄悊鍛?',
             'guard_name' => 'sanctum',
             'status' => 1,
             'is_system' => true,
@@ -54,7 +54,7 @@ class MenuControllerTest extends TestCase
         Menu::create([
             'name' => 'dashboard',
             'path' => '/dashboard',
-            'title' => '浠〃鐩?,
+            'title' => '浠〃鐩?',
             'component' => 'layout.base',
             'icon' => 'mdi:view-dashboard',
             'sort' => 1,
@@ -83,7 +83,7 @@ class MenuControllerTest extends TestCase
         Menu::create([
             'name' => 'dashboard',
             'path' => '/dashboard',
-            'title' => '浠〃鐩?,
+            'title' => '浠〃鐩?',
             'component' => 'layout.base',
             'sort' => 1,
             'status' => 1,
@@ -103,7 +103,7 @@ class MenuControllerTest extends TestCase
             ->postJson('/api/lartrix/menus', [
                 'name' => 'new_menu',
                 'path' => '/new-menu',
-                'title' => '鏂拌彍鍗?,
+                'title' => '鏂拌彍鍗?',
                 'component' => 'view.new_menu',
                 'sort' => 1,
                 'status' => 1,
@@ -124,7 +124,7 @@ class MenuControllerTest extends TestCase
         $menu = Menu::create([
             'name' => 'old_menu',
             'path' => '/old-menu',
-            'title' => '鏃ц彍鍗?,
+            'title' => '鏃ц彍鍗?',
             'component' => 'view.old_menu',
             'sort' => 1,
             'status' => 1,
@@ -147,7 +147,7 @@ class MenuControllerTest extends TestCase
         $menu = Menu::create([
             'name' => 'to_delete',
             'path' => '/to-delete',
-            'title' => '寰呭垹闄?,
+            'title' => '寰呭垹闄?',
             'component' => 'view.to_delete',
             'sort' => 1,
             'status' => 1,

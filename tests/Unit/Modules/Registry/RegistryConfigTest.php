@@ -10,10 +10,10 @@ class RegistryConfigTest extends TestCase
     {
         $config = require __DIR__ . '/../../../../config/lartrix.php';
 
-        self::assertArrayHasKey('module_registry', $config);
-        self::assertArrayHasKey('url', $config['module_registry']);
-        self::assertArrayHasKey('signature_key', $config['module_registry']);
-        self::assertSame('', $config['module_registry']['url']);
-        self::assertSame('', $config['module_registry']['signature_key']);
+        self::assertArrayNotHasKey('module_registry', $config);
+        self::assertArrayHasKey('module_market', $config);
+        foreach (['enabled', 'url', 'auth_key', 'signature_key', 'timeout', 'cache_ttl'] as $key) {
+            self::assertArrayHasKey($key, $config['module_market']);
+        }
     }
 }

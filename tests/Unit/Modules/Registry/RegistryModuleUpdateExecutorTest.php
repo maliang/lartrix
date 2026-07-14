@@ -85,6 +85,24 @@ class RegistryModuleUpdateExecutorTest extends TestCase
         self::assertSame('downgrade_allowed', $result['action']);
     }
 
+    /** 验证带顶层目录的暂存包只替换真正的模块根目录。 */
+    public function testReplacesNestedPackageModuleRoot(): void
+    {
+        $paths = $this->makeUpdateFixture('1.0.0', '1.1.0');
+        $nested = $paths['source'] . DIRECTORY_SEPARATOR . 'package';
+        mkdir($nested);
+        rename($paths['source'] . DIRECTORY_SEPARATOR . 'module.json', $nested . DIRECTORY_SEPARATOR . 'module.json');
+        rename($paths['source'] . DIRECTORY_SEPARATOR . 'new.txt', $nested . DIRECTORY_SEPARATOR . 'new.txt');
+
+        $result = (new RegistryModuleUpdateExecutor('php', 'laravel'))->execute(
+            $paths['target'], $paths['source'], 'package/module.json', 'official.cms', '1.1.0', $paths['backup'], true
+        );
+
+        self::assertTrue($result['updated']);
+        self::assertFileExists($paths['target'] . DIRECTORY_SEPARATOR . 'module.json');
+        self::assertFileDoesNotExist($paths['target'] . DIRECTORY_SEPARATOR . 'package' . DIRECTORY_SEPARATOR . 'module.json');
+    }
+
     /**
      * @return array{source: string, target: string, backup: string}
      */
@@ -108,21 +126,29 @@ class RegistryModuleUpdateExecutorTest extends TestCase
     private function manifest(string $version): string
     {
         return json_encode([
-            'schema_version' => 'trix.module.v1',
-            'id' => 'official.cms',
             'name' => 'CMS',
-            'version' => $version,
-            'type' => 'contract',
-            'adapter' => [
-                'language' => 'php',
-                'framework' => 'laravel',
-                'status' => 'stable',
-                'package_type' => 'composer',
-            ],
-            'security' => [
-                'writes_files' => true,
-                'runs_commands' => false,
-                'external_network' => false,
+            'alias' => 'cms',
+            'description' => 'CMS module',
+            'keywords' => [],
+            'priority' => 0,
+            'providers' => [],
+            'files' => [],
+            'trix' => [
+                'schema_version' => 'trix.module.v1',
+                'id' => 'official.cms',
+                'name' => 'CMS',
+                'version' => $version,
+                'type' => 'contract',
+                'adapter' => [
+                    'language' => 'php',
+                    'framework' => 'laravel',
+                    'package_type' => 'composer',
+                ],
+                'security' => [
+                    'writes_files' => true,
+                    'runs_commands' => false,
+                    'external_network' => false,
+                ],
             ],
         ], JSON_THROW_ON_ERROR);
     }

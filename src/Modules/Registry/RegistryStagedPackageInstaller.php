@@ -26,11 +26,14 @@ class RegistryStagedPackageInstaller
         }
 
         $targetParent = dirname($targetPath);
-        if (!is_dir($targetParent)) {
-            mkdir($targetParent, 0775, true);
+        if (!is_dir($targetParent) && !mkdir($targetParent, 0775, true) && !is_dir($targetParent)) {
+            return $this->failure('target_parent_create_failed', 'Target parent directory could not be created.');
         }
 
-        $this->copyDirectory($sourcePath, $targetPath);
+        if (!$this->copyDirectory($sourcePath, $targetPath)) {
+            $this->removeDirectory($targetPath);
+            return $this->failure('copy_failed', 'Staged package could not be copied completely.');
+        }
 
         return [
             'installed' => true,
@@ -41,12 +44,14 @@ class RegistryStagedPackageInstaller
     }
 
         /** 递归复制目录及其文件。 */
-    private function copyDirectory(string $source, string $target): void
+    private function copyDirectory(string $source, string $target): bool
     {
-        mkdir($target, 0775, true);
+        if (!is_dir($target) && !mkdir($target, 0775, true) && !is_dir($target)) {
+            return false;
+        }
         $items = scandir($source);
         if ($items === false) {
-            return;
+            return false;
         }
 
         foreach ($items as $item) {
@@ -57,13 +62,35 @@ class RegistryStagedPackageInstaller
             $sourcePath = $source . DIRECTORY_SEPARATOR . $item;
             $targetPath = $target . DIRECTORY_SEPARATOR . $item;
 
+            if (is_link($sourcePath)) {
+                return false;
+            }
+
             if (is_dir($sourcePath)) {
-                $this->copyDirectory($sourcePath, $targetPath);
+                if (!$this->copyDirectory($sourcePath, $targetPath)) {
+                    return false;
+                }
                 continue;
             }
 
-            copy($sourcePath, $targetPath);
+            if (!copy($sourcePath, $targetPath)) {
+                return false;
+            }
         }
+
+        return true;
+    }
+
+    /** 清理复制失败后产生的不完整目标目录。 */
+    private function removeDirectory(string $directory): void
+    {
+        if (!is_dir($directory)) { return; }
+        foreach (scandir($directory) ?: [] as $item) {
+            if ($item === '.' || $item === '..') { continue; }
+            $path = $directory . DIRECTORY_SEPARATOR . $item;
+            is_dir($path) ? $this->removeDirectory($path) : @unlink($path);
+        }
+        @rmdir($directory);
     }
 
     /**

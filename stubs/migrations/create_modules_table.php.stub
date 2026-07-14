@@ -18,6 +18,7 @@ return new class extends Migration
         Schema::create('modules', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique()->comment('模块名称');
+            $table->string('registry_id')->nullable()->unique()->comment('Trix 生态唯一标识');
             $table->string('title')->nullable()->comment('显示名称');
             $table->string('description')->nullable()->comment('描述');
             $table->string('version')->nullable()->comment('版本');

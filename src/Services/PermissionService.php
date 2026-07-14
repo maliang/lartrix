@@ -6,7 +6,7 @@ use Lartrix\Models\Permission;
 use Lartrix\Models\Role;
 use Lartrix\Models\AdminUser;
 
-class PermissionService extends BaseService
+class PermissionService
 {
     /**
      * 获取权限树（按模块分组）
@@ -71,6 +71,14 @@ class PermissionService extends BaseService
      */
     public function syncRolePermissions(Role $role, array $permissions): void
     {
-        $role->syncPermissions($permissions);
+        $permissionModel = config('lartrix.models.permission', \Lartrix\Models\Permission::class);
+        $ids = array_values(array_filter($permissions, static fn ($value): bool => is_int($value) || ctype_digit((string) $value)));
+        $names = array_values(array_filter($permissions, static fn ($value): bool => is_string($value) && !ctype_digit($value)));
+
+        if ($ids !== []) {
+            $names = array_merge($names, $permissionModel::whereIn('id', $ids)->pluck('name')->all());
+        }
+
+        $role->syncPermissions(array_values(array_unique($names)));
     }
 }

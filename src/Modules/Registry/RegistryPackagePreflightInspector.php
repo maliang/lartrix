@@ -35,6 +35,11 @@ class RegistryPackagePreflightInspector
                 return $this->failure('unsafe_path', "Registry package contains unsafe path: {$name}");
             }
 
+            if ($this->isSymbolicLink($zip, $index)) {
+                $zip->close();
+                return $this->failure('symbolic_link_blocked', "Registry package contains a symbolic link: {$name}");
+            }
+
             $entries[] = $normalized;
             if ($this->isManifestPath($normalized)) {
                 $manifest = $normalized;
@@ -61,6 +66,19 @@ class RegistryPackagePreflightInspector
     private function isManifestPath(string $path): bool
     {
         return str_ends_with($path, '/module.json') || $path === 'module.json';
+    }
+
+    /** 判断 ZIP 条目是否为 Unix 符号链接。 */
+    private function isSymbolicLink(ZipArchive $zip, int $index): bool
+    {
+        $operationsSystem = 0;
+        $attributes = 0;
+        if (!$zip->getExternalAttributesIndex($index, $operationsSystem, $attributes)) {
+            return false;
+        }
+
+        return $operationsSystem === ZipArchive::OPSYS_UNIX
+            && (($attributes >> 16) & 0170000) === 0120000;
     }
 
         /** 判断当前业务条件是否成立。 */

@@ -20,7 +20,7 @@ class EnsureModuleEnabled
         }
 
         $expected = $this->normalizeKeys($moduleKeys);
-        $modules = Module::query()->get(['name', 'enabled', 'config']);
+        $modules = Module::query()->get(['name', 'registry_id', 'enabled']);
 
         foreach ($modules as $module) {
             // 路由可传本地模块名、Registry ID 或 manifest ID，统一归一化后比较。
@@ -82,13 +82,9 @@ class EnsureModuleEnabled
      */
     private function moduleKeys(Module $module): array
     {
-        $config = is_array($module->config) ? $module->config : [];
-
         return $this->normalizeKeys(array_filter([
             $module->name,
-            $config['id'] ?? null,
-            $config['registry_id'] ?? null,
-            data_get($config, 'trix_manifest.id'),
+            $module->registry_id,
         ], static fn ($value): bool => is_string($value) && trim($value) !== ''));
     }
 

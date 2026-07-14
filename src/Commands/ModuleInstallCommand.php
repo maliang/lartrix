@@ -3,12 +3,11 @@
 namespace Lartrix\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
 use Lartrix\Modules\Registry\RegistryInstalledPackageChecklist;
+use Lartrix\Modules\Registry\RegistryClient;
+use Lartrix\Modules\Registry\RegistryPackagePipeline;
 use Lartrix\Modules\Registry\RegistryModuleReplacer;
-use Lartrix\Modules\Registry\RegistryPackageDownloader;
 use Lartrix\Modules\Registry\RegistryPackagePreflightInspector;
-use Lartrix\Modules\Registry\RegistryPackageStager;
 use Lartrix\Modules\Registry\RegistrySecurityAdvisory;
 use Lartrix\Modules\Registry\RegistryVersionResolver;
 use Lartrix\Modules\Registry\RegistryStagedPackageInstaller;
@@ -95,7 +94,8 @@ class ModuleInstallCommand extends Command
         $this->printSecurityWarnings(is_array($verify['security'] ?? null) ? $verify['security'] : []);
 
         // Replacer 会先备份当前目录，再移动新目录；这里不做迁移/Seeder，留给人工复核后执行。
-        $replace = (new RegistryModuleReplacer())->replace($sourceDir, $targetDir, $backupDir, $confirmed);
+        $moduleSourceDir = dirname($sourceDir . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $manifest));
+        $replace = (new RegistryModuleReplacer())->replace($moduleSourceDir, $targetDir, $backupDir, $confirmed);
         if (!$replace['replaced']) {
             $this->error((string) $replace['message']);
             return 1;
@@ -213,7 +213,7 @@ class ModuleInstallCommand extends Command
             return $option;
         }
 
-        return trim((string) config('lartrix.module_registry.url', ''));
+        return trim((string) config('lartrix.module_market.url', ''));
     }
 
         /** 处理 Registry 地址、认证或请求。 */
@@ -224,20 +224,20 @@ class ModuleInstallCommand extends Command
             return $option;
         }
 
-        return (string) config('lartrix.module_registry.signature_key', '');
+        return (string) config('lartrix.module_market.signature_key', '');
     }
 
         /** 处理 Registry 地址、认证或请求。 */
     protected function registryAuthKey(): string
     {
-        return trim((string) config('lartrix.module_registry.auth_key', ''));
+        return trim((string) config('lartrix.module_market.auth_key', ''));
     }
 
     /** 查询 Registry 模块版本，并按需完成下载、预检和暂存。 */
     protected function previewRegistryInstall(string $moduleId, string $registry): void
     {
         $url = rtrim($registry, '/') . '/registry/modules/' . rawurlencode($moduleId) . '/versions';
-        $response = Http::acceptJson()->get($url, [
+        $response = (new RegistryClient($registry, $this->registryAuthKey()))->request()->get($url, [
             'page_size' => 1,
             'language' => 'php',
             'framework' => 'laravel',
@@ -276,65 +276,15 @@ class ModuleInstallCommand extends Command
             return;
         }
 
-        // 下载阶段只缓存 zip，并校验 checksum/signature；真正复制目录必须另走 --from-stage。
-        $authKey = $this->registryAuthKey();
-        $fetcher = function (string $packageUrl) use ($authKey): ?string {
-            $request = Http::acceptJson()->timeout(60);
-            $response = ($authKey === '' ? $request : $request->withToken($authKey))->get($packageUrl);
-
-            return $response->successful() ? $response->body() : null;
-        };
-
-        $download = (new RegistryPackageDownloader(signatureKey: $this->registrySignatureKey(), fetcher: $fetcher))->download(
-            $adapter,
-            $moduleId,
-            (string) ($version['version'] ?? 'latest')
-        );
-
-        if (!$download['downloaded']) {
-            $this->error((string) $download['message']);
+        $prepared = (new RegistryPackagePipeline(new RegistryClient($registry, $this->registryAuthKey())))
+            ->prepare($adapter, $moduleId, (string) ($version['version'] ?? 'latest'));
+        if (!$prepared['ok']) {
+            $this->error((string) $prepared['message']);
             return;
         }
 
-        $this->info('Package cached at: ' . $download['path']);
-        if (!empty($download['signature_reason'])) {
-            $this->info('Package signature verified: ' . $download['signature_reason']);
-        }
-        $preflight = (new RegistryPackagePreflightInspector())->inspect((string) $download['path']);
-        if (!$preflight['ok']) {
-            $this->error((string) $preflight['message']);
-            return;
-        }
-
-        $this->info('Package preflight passed. Manifest: ' . $preflight['manifest']);
-        $this->line('Package files checked: ' . $preflight['file_count']);
-
-        $stage = (new RegistryPackageStager())->stage(
-            (string) $download['path'],
-            $moduleId,
-            (string) ($version['version'] ?? 'latest')
-        );
-
-        if (!$stage['staged']) {
-            $this->error((string) $stage['message']);
-            return;
-        }
-
-        $this->info('Package staged at: ' . $stage['path']);
-        $verify = (new RegistryStagedManifestVerifier('php', 'laravel'))->verify(
-            (string) $stage['path'],
-            (string) $stage['manifest'],
-            $moduleId,
-            (string) ($version['version'] ?? 'latest')
-        );
-
-        if (!$verify['ok']) {
-            $this->error((string) $verify['message']);
-            return;
-        }
-
-        $this->info('Staged manifest verified for PHP/Laravel adapter: ' . $verify['adapter_status']);
-        $this->printSecurityWarnings(is_array($verify['security'] ?? null) ? $verify['security'] : []);
+        $this->info('Package staged at: ' . $prepared['path']);
+        $this->printSecurityWarnings(is_array($prepared['security'] ?? null) ? $prepared['security'] : []);
         $this->warn('Registry package is staged only. Install or enable the Laravel adapter through the local module flow.');
     }
 }

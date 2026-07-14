@@ -32,16 +32,16 @@ class ModuleMakeCommandTest extends TestCase
         ], $stub), true);
 
         $this->assertIsArray($manifest);
-        $this->assertSame('trix.module.v1', $manifest['schema_version']);
-        $this->assertSame('official.spec-blog', $manifest['id']);
+        $this->assertSame('trix.module.v1', $manifest['trix']['schema_version']);
+        $this->assertSame('official.spec-blog', $manifest['trix']['id']);
         $this->assertSame('SpecBlog', $manifest['name']);
         $this->assertSame('specblog', $manifest['alias']);
-        $this->assertSame('Spec Author', $manifest['author']);
-        $this->assertSame('https://example.test/spec-author', $manifest['author_url']);
-        $this->assertSame('resources/module/logo.svg', $manifest['logo']);
-        $this->assertSame('resources/module/thumbnail.svg', $manifest['thumbnail']);
-        $this->assertSame('php', $manifest['adapter']['language']);
-        $this->assertSame('laravel', $manifest['adapter']['framework']);
+        $this->assertSame('Spec Author', $manifest['trix']['author']);
+        $this->assertSame('https://example.test/spec-author', $manifest['trix']['author_url']);
+        $this->assertSame('resources/module/logo.svg', $manifest['trix']['logo']);
+        $this->assertSame('resources/module/thumbnail.svg', $manifest['trix']['thumbnail']);
+        $this->assertSame('php', $manifest['trix']['adapter']['language']);
+        $this->assertSame('laravel', $manifest['trix']['adapter']['framework']);
         $this->assertFileExists($root . '/stubs/module/logo.svg.stub');
         $this->assertFileExists($root . '/stubs/module/thumbnail.svg.stub');
     }

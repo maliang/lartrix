@@ -29,7 +29,7 @@ class RoleControllerTest extends TestCase
 
         $role = Role::create([
             'name' => 'super_admin',
-            'title' => '瓒呯骇绠＄悊鍛?,
+            'title' => '瓒呯骇绠＄悊鍛?',
             'guard_name' => 'sanctum',
             'status' => 1,
             'is_system' => true,
@@ -119,7 +119,7 @@ class RoleControllerTest extends TestCase
     {
         $role = Role::create([
             'name' => 'deletable_role',
-            'title' => '鍙垹闄よ鑹?,
+            'title' => '鍙垹闄よ鑹?',
             'guard_name' => 'sanctum',
             'status' => 1,
             'is_system' => false,

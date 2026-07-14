@@ -29,7 +29,7 @@ class PermissionControllerTest extends TestCase
 
         $role = Role::create([
             'name' => 'super_admin',
-            'title' => '瓒呯骇绠＄悊鍛?,
+            'title' => '瓒呯骇绠＄悊鍛?',
             'guard_name' => 'sanctum',
             'status' => 1,
             'is_system' => true,
@@ -126,7 +126,7 @@ class PermissionControllerTest extends TestCase
     {
         $permission = Permission::create([
             'name' => 'deletable.permission',
-            'title' => '鍙垹闄ゆ潈闄?,
+            'title' => '鍙垹闄ゆ潈闄?',
             'guard_name' => 'sanctum',
         ]);
 

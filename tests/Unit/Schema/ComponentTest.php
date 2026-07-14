@@ -3,11 +3,11 @@
 namespace Lartrix\Tests\Unit\Schema;
 
 use PHPUnit\Framework\TestCase;
-use Lartrix\Schema\Components\NaiveUI\NButton;
-use Lartrix\Schema\Components\NaiveUI\NInput;
-use Lartrix\Schema\Components\NaiveUI\NForm;
-use Lartrix\Schema\Components\NaiveUI\NFormItem;
-use Lartrix\Schema\Components\NaiveUI\NCard;
+use Lartrix\Schema\Components\NaiveUI\Button as NButton;
+use Lartrix\Schema\Components\NaiveUI\Input as NInput;
+use Lartrix\Schema\Components\NaiveUI\Form as NForm;
+use Lartrix\Schema\Components\NaiveUI\FormItem as NFormItem;
+use Lartrix\Schema\Components\NaiveUI\Card as NCard;
 use Lartrix\Schema\Actions\SetAction;
 use Lartrix\Schema\Actions\CallAction;
 use Lartrix\Schema\Actions\FetchAction;
@@ -39,21 +39,21 @@ class ComponentTest extends TestCase
     /** @test */
     public function it_can_set_children(): void
     {
-        $button = NButton::make()->text('鐐瑰嚮鎴?);
+        $button = NButton::make()->text('点击按钮');
         $array = $button->toArray();
 
-        $this->assertEquals('鐐瑰嚮鎴?, $array['children']);
+        $this->assertEquals('点击按钮', $array['children']);
     }
 
     /** @test */
     public function it_can_nest_components(): void
     {
         $card = NCard::make()
-            ->title('琛ㄥ崟')
+            ->title('表单卡片')
             ->children([
                 NForm::make()->children([
-                    NFormItem::make()->label('鐢ㄦ埛鍚?)->children([
-                        NInput::make()->placeholder('璇疯緭鍏ョ敤鎴峰悕'),
+                    NFormItem::make()->label('用户名')->children([
+                        NInput::make()->placeholder('请输入用户名'),
                     ]),
                 ]),
             ]);
@@ -182,7 +182,7 @@ class ComponentTest extends TestCase
         foreach ($components as $component) {
             $array = $component->toArray();
             $this->assertStringStartsWith('N', $array['com'], 
-                'Naive UI 缁勪欢鐨?com 瀛楁搴斾互 "N" 寮€澶?);
+                'Naive UI 缁勪欢鐨?com 瀛楁搴斾互 "N" 寮€澶?');
         }
     }
 

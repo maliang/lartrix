@@ -15,7 +15,7 @@ class Module extends Model
      * 可批量赋值的属性
      */
     protected $fillable = [
-        'name',
+        'name', 'registry_id',
         'title',
         'description',
         'version',

@@ -93,7 +93,7 @@ class ModuleControllerTest extends TestCase
     /** @test */
     public function market_modules_mark_local_registry_modules_as_installed(): void
     {
-        config(['lartrix.module_registry.url' => 'https://registry.example']);
+        config(['lartrix.module_market.url' => 'https://registry.example']);
 
         Module::create([
             'name' => 'User',
@@ -135,8 +135,8 @@ class ModuleControllerTest extends TestCase
     public function it_can_publish_the_current_project_from_module_management(): void
     {
         config([
-            'lartrix.module_registry.url' => 'https://registry.example',
-            'lartrix.module_registry.auth_key' => 'trx_test',
+            'lartrix.module_market.url' => 'https://registry.example',
+            'lartrix.module_market.auth_key' => 'trx_test',
         ]);
 
         $manifestPath = base_path('trix-project.json');
