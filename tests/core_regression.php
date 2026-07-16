@@ -22,22 +22,21 @@ function source(string $path): string
 $settingModel = source('src/Models/Setting.php');
 check(
     str_contains($settingModel, 'public static function fetchThemeConfig')
-        && str_contains($settingModel, "static::getGroup('login')")
-        && str_contains($settingModel, "array_key_exists('appTitle', \$loginSettings)")
-        && str_contains($settingModel, "array_key_exists('app_title', \$loginSettings)"),
-    'Setting must expose fetchThemeConfig() that merges login/site settings into theme config.'
+        && str_contains($settingModel, "static::get('appTitle'")
+        && str_contains($settingModel, "static::get('app_title'"),
+    'Setting must expose fetchThemeConfig() that merges standalone site settings into theme config.'
 );
 
 $settingController = source('src/Controllers/SettingController.php');
 check(
     str_contains($settingController, 'syncThemeSettings')
-        && str_contains($settingController, "'login.appTitle' => 'appTitle'")
+        && str_contains($settingController, "'appTitle' => 'appTitle'")
         && str_contains($settingController, "Setting::set('theme'"),
     'SettingController must sync app title/logo/copyright writes into the theme setting.'
 );
 check(
     !str_contains($settingController, 'exists:admin_settings,key'),
-    'SettingController must allow missing login.* setting keys so site settings can be created.'
+    'SettingController must allow missing site setting keys so site settings can be created.'
 );
 $oneImgUp = source('src/Schema/Components/Business/OneImgUp.php');
 check(

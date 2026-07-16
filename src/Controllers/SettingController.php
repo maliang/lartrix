@@ -73,10 +73,10 @@ class SettingController extends Controller
 
         $themeUpdates = [];
         $themeMapping = [
-            'login.appTitle' => 'appTitle',
-            'login.appSubtitle' => 'appSubtitle',
-            'login.logo' => 'logo',
-            'login.copyright' => 'copyright',
+            'appTitle' => 'appTitle',
+            'appSubtitle' => 'appSubtitle',
+            'logo' => 'logo',
+            'copyright' => 'copyright',
         ];
 
         foreach ($validated['settings'] as $item) {
@@ -164,10 +164,10 @@ class SettingController extends Controller
                                                 'method' => 'PUT',
                                                 'body' => [
                                                     'settings' => [
-                                                        ['key' => 'login.appTitle', 'value' => '{{ formData.appTitle }}'],
-                                                        ['key' => 'login.appSubtitle', 'value' => '{{ formData.appSubtitle }}'],
-                                                        ['key' => 'login.logo', 'value' => '{{ formData.logo }}'],
-                                                        ['key' => 'login.copyright', 'value' => '{{ formData.copyright }}'],
+                                                        ['key' => 'appTitle', 'value' => '{{ formData.appTitle }}'],
+                                                        ['key' => 'appSubtitle', 'value' => '{{ formData.appSubtitle }}'],
+                                                        ['key' => 'logo', 'value' => '{{ formData.logo }}'],
+                                                        ['key' => 'copyright', 'value' => '{{ formData.copyright }}'],
                                                     ],
                                                 ],
                                                 'then' => [
@@ -188,7 +188,7 @@ class SettingController extends Controller
                 'appTitle' => $theme['appTitle'] ?? 'Lartrix Admin',
                 'appSubtitle' => $theme['appSubtitle'] ?? config('lartrix.theme.appSubtitle', __t('system.default_subtitle')),
                 'logo' => $theme['logo'] ?? '',
-                'copyright' => config('lartrix.copyright', '© ' . date('Y') . ' Lartrix Admin. All rights reserved.'),
+                'copyright' => $theme['copyright'] ?? config('lartrix.copyright', '© ' . date('Y') . ' Lartrix Admin. All rights reserved.'),
             ],
         ];
 

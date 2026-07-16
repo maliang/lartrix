@@ -54,32 +54,33 @@ class Setting extends Model
     }
 
     /**
-     * 获取主题配置，并兼容系统设置页保存的登录/站点配置。
+     * 获取主题配置，并兼容系统设置页保存的独立站点配置。
      */
     public static function fetchThemeConfig(array $default = []): array
     {
-        $theme = static::get('theme', null);
+        $theme = static::get('theme', $default);
         if (!is_array($theme)) {
-            $theme = static::getGroup('theme');
-        }
-        if (!is_array($theme) || $theme === []) {
             $theme = $default;
         }
 
-        $loginSettings = static::getGroup('login');
-        if (array_key_exists('appTitle', $loginSettings) && $loginSettings['appTitle'] !== null) {
-            $theme['appTitle'] = $loginSettings['appTitle'];
-        } elseif (array_key_exists('app_title', $loginSettings) && $loginSettings['app_title'] !== null) {
-            $theme['appTitle'] = $loginSettings['app_title'];
+        // theme.* 为权威来源（系统设置页 form_ui 的保存目标）；
+        // 仅当 theme 中缺失对应键时，才回退到独立设置项，兼容旧数据/自定义保存路径。
+        if (!array_key_exists('appTitle', $theme) || $theme['appTitle'] === null) {
+            $appTitle = static::get('appTitle', null);
+            if ($appTitle === null) {
+                $appTitle = static::get('app_title', null);
+            }
+            if ($appTitle !== null) {
+                $theme['appTitle'] = $appTitle;
+            }
         }
 
-        if (array_key_exists('appSubtitle', $loginSettings) && $loginSettings['appSubtitle'] !== null) {
-            $theme['appSubtitle'] = $loginSettings['appSubtitle'];
-        }
-
-        foreach (['logo', 'copyright'] as $settingKey) {
-            if (array_key_exists($settingKey, $loginSettings) && $loginSettings[$settingKey] !== null) {
-                $theme[$settingKey] = $loginSettings[$settingKey];
+        foreach (['logo', 'copyright', 'appSubtitle'] as $settingKey) {
+            if (!array_key_exists($settingKey, $theme) || $theme[$settingKey] === null) {
+                $value = static::get($settingKey, null);
+                if ($value !== null) {
+                    $theme[$settingKey] = $value;
+                }
             }
         }
 
