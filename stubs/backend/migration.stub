@@ -12,14 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('{{TABLE}}', function (Blueprint $table) {
+            $table->comment('{{TABLE_COMMENT}}');
             $table->id();
-            $table->string('username')->unique();
-            $table->string('password');
-            $table->string('nickname')->nullable();
-            $table->string('email')->nullable();
-            $table->string('phone')->nullable();
-            $table->string('avatar')->nullable();
-            $table->boolean('status')->default(true);
+            $table->string('username')->unique()->comment('用户名');
+            $table->string('password')->comment('密码');
+            $table->string('nickname')->nullable()->comment('昵称');
+            $table->string('email')->nullable()->comment('邮箱');
+            $table->string('phone')->nullable()->comment('手机号');
+            $table->string('avatar')->nullable()->comment('头像');
+            $table->boolean('status')->default(true)->comment('状态');
             $table->timestamps();
         });
     }

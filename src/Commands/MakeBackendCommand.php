@@ -158,6 +158,7 @@ class MakeBackendCommand extends Command
             '{{PATH}}' => $path,
             '{{API_PREFIX}}' => $apiPrefix,
             '{{TABLE}}' => $table,
+            '{{TABLE_COMMENT}}' => $this->moduleName . '用户表',
             '{{APP_TITLE}}' => $title,
             '{{GUARD}}' => $guard,
         ];

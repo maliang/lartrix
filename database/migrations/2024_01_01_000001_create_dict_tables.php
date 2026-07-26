@@ -13,6 +13,7 @@ return new class extends Migration
     {
         // 字典分组表
         Schema::create('dict_groups', function (Blueprint $table) {
+            $table->comment('字典分组表');
             $table->id();
             $table->string('code', 50)->unique()->comment('唯一标识');
             $table->string('name', 100)->comment('显示名称');
@@ -23,8 +24,9 @@ return new class extends Migration
 
         // 字典项表
         Schema::create('dict_items', function (Blueprint $table) {
+            $table->comment('字典项表');
             $table->id();
-            $table->foreignId('group_id')->constrained('dict_groups')->cascadeOnDelete();
+            $table->foreignId('group_id')->comment('所属分组ID')->constrained('dict_groups')->cascadeOnDelete();
             $table->string('code', 50)->comment('项标识');
             $table->string('label', 100)->comment('显示文本');
             $table->string('value', 100)->comment('存储值');

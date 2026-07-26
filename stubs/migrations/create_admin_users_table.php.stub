@@ -16,6 +16,7 @@ return new class extends Migration
         }
 
         Schema::create('admin_users', function (Blueprint $table) {
+            $table->comment('后台管理员表');
             $table->id();
             $table->string('username', 20)->comment('用户名');
             $table->string('password')->comment('密码');

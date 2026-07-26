@@ -10,10 +10,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('notification_message_reads', function (Blueprint $table): void {
+            $table->comment('通知消息已读回执表');
             $table->id();
-            $table->unsignedBigInteger('notification_id');
-            $table->unsignedBigInteger('user_id');
-            $table->timestamp('read_at');
+            $table->unsignedBigInteger('notification_id')->comment('通知消息ID');
+            $table->unsignedBigInteger('user_id')->comment('用户ID');
+            $table->timestamp('read_at')->comment('阅读时间');
             $table->unique(['notification_id', 'user_id']);
             $table->index('user_id');
         });

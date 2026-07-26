@@ -16,6 +16,7 @@ return new class extends Migration
         }
 
         Schema::create('admin_settings', function (Blueprint $table) {
+            $table->comment('后台系统配置表');
             $table->id();
             $table->string('group')->comment('配置分组');
             $table->string('key')->unique()->comment('配置键');

@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('notification_categories', function (Blueprint $table) {
+            $table->comment('通知分类表');
             $table->id();
             $table->string('name')->comment('分类名称');
             $table->string('key')->comment('分类标识');

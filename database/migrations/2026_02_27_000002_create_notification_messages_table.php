@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('notification_messages', function (Blueprint $table) {
+            $table->comment('通知消息表');
             $table->id();
             $table->string('title')->comment('消息标题');
             $table->text('content')->comment('消息内容');
