@@ -8,8 +8,8 @@ use Lartrix\Models\Module;
 
 class ModuleUninstallCommand extends Command
 {
-    protected $signature = 'lartrix:module-uninstall {name?* : Module name(s), empty = all enabled}';
-    protected $description = 'Uninstall module(s). Without arguments, uninstalls all enabled modules.';
+    protected $signature = 'lartrix:module-uninstall {name?* : 模块名称，留空则卸载全部已启用模块}';
+    protected $description = '卸载模块。不带参数时卸载所有已启用的模块。';
 
     public function handle(ModuleService $moduleService): int
     {

@@ -42,18 +42,28 @@ class PermissionService
 
     /**
      * 检查用户是否有任一指定权限（排除禁用角色）
+     * 超级管理员拥有所有权限
      */
     public function userHasAnyPermission(AdminUser $user, array $permissions): bool
     {
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
         $activePermissions = $this->getUserActivePermissions($user);
         return !empty(array_intersect($permissions, $activePermissions));
     }
 
     /**
      * 检查用户是否有所有指定权限（排除禁用角色）
+     * 超级管理员拥有所有权限
      */
     public function userHasAllPermissions(AdminUser $user, array $permissions): bool
     {
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
         $activePermissions = $this->getUserActivePermissions($user);
         return empty(array_diff($permissions, $activePermissions));
     }

@@ -15,19 +15,19 @@ use Lartrix\Services\ModuleService;
 class ProjectInstallCommand extends Command
 {
     protected $signature = 'lartrix:project-install
-                            {project? : Project registry id, not required when --plan is used}
-                            {--version= : Project version, defaults to registry latest}
-                            {--registry= : Registry API base URL}
-                            {--auth-key= : Auth Key, defaults to TRIX_AUTH_KEY config}
-                            {--language=php : Adapter language}
-                            {--framework=laravel : Adapter framework}
-                            {--plan= : Existing install-plan.json path}
-                            {--target-root=Modules : Directory where modules will be copied when --execute is set}
-                            {--audit-log= : Optional JSONL audit log path}
-                            {--execute : Download, stage, verify and copy missing modules}
-                            {--dry-run : Resolve and display the plan without changing project files}';
+                            {project? : 项目市场 id，使用 --plan 时可不填}
+                            {--version= : 项目版本，默认为市场最新版}
+                            {--registry= : 市场 API 基础 URL}
+                            {--auth-key= : Auth Key，默认为 TRIX_AUTH_KEY 配置}
+                            {--language=php : 适配器语言}
+                            {--framework=laravel : 适配器框架}
+                            {--plan= : 已有的 install-plan.json 路径}
+                            {--target-root=Modules : 使用 --execute 时模块的复制目标目录}
+                            {--audit-log= : 审计日志 JSONL 文件路径（可选）}
+                            {--execute : 下载、staging、校验并复制缺失的模块}
+                            {--dry-run : 仅解析并显示计划，不修改项目文件}';
 
-    protected $description = 'Install a Trix project plan by downloading and staging its module dependencies.';
+    protected $description = '下载并落地项目依赖模块，安装 Trix 项目计划。';
 
     /** 处理命令或请求的主流程。 */
     public function handle(): int

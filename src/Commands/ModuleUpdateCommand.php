@@ -12,19 +12,19 @@ use Lartrix\Modules\Registry\RegistrySecurityAdvisory;
 class ModuleUpdateCommand extends Command
 {
     protected $signature = 'lartrix:module-update
-        {module : Registry module id}
-        {--current-dir= : Existing installed module directory containing module.json}
-        {--source-dir= : Reviewed target module directory or staging directory}
-        {--manifest=module.json : Manifest path inside --source-dir}
-        {--version= : Expected target module version}
-        {--backup-dir= : Backup directory for current module; must not already exist}
-        {--dry-run : Only print the update plan; do not replace directories}
-        {--strict-security : Fail when manifest security flags require review}
-        {--audit-log= : Optional JSONL file path for update audit records}
-        {--allow-downgrade : Explicitly allow replacing the current module with an older target version}
-        {--confirm-replace : Explicitly confirm replacing the current module directory}';
+        {module : 市场模块 id}
+        {--current-dir= : 已安装模块所在目录（包含 module.json）}
+        {--source-dir= : 已审核的目标模块目录或 staging 目录}
+        {--manifest=module.json : --source-dir 内的 manifest 路径}
+        {--version= : 预期的目标模块版本}
+        {--backup-dir= : 当前模块的备份目录，不能已存在}
+        {--dry-run : 仅打印更新计划，不替换目录}
+        {--strict-security : manifest 存在需人工审核的安全标记时直接失败}
+        {--audit-log= : 更新审计记录的 JSONL 文件路径（可选）}
+        {--allow-downgrade : 显式允许用旧版本替换当前模块}
+        {--confirm-replace : 显式确认替换当前模块目录}';
 
-    protected $description = 'Update an installed Lartrix module from a reviewed registry package directory.';
+    protected $description = '从已审核的市场包目录更新已安装的 Lartrix 模块。';
 
     /** 处理命令或请求的主流程。 */
     public function handle(): int

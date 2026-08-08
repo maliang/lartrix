@@ -21,16 +21,16 @@ class PermissionControllerTest extends TestCase
         parent::setUp();
 
         $this->admin = AdminUser::create([
-            'name' => 'admin',
+            'username' => 'admin',
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
             'status' => 1,
         ]);
 
         $role = Role::create([
-            'name' => 'super_admin',
+            'name' => 'super-admin',
             'title' => '瓒呯骇绠＄悊鍛?',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
             'status' => 1,
             'is_system' => true,
         ]);
@@ -38,7 +38,7 @@ class PermissionControllerTest extends TestCase
         $permission = Permission::create([
             'name' => 'permissions.*',
             'title' => '鏉冮檺绠＄悊',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
         ]);
 
         $role->givePermissionTo($permission);
@@ -63,18 +63,18 @@ class PermissionControllerTest extends TestCase
         $parent = Permission::create([
             'name' => 'users',
             'title' => '鐢ㄦ埛绠＄悊',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
         ]);
 
         Permission::create([
             'name' => 'users.view',
             'title' => '鏌ョ湅鐢ㄦ埛',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
             'parent_id' => $parent->id,
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson('/api/lartrix/permissions/tree');
+            ->getJson('/api/lartrix/permissions?action_type=tree');
 
         $response->assertStatus(200)
             ->assertJson(['code' => 0]);
@@ -106,7 +106,7 @@ class PermissionControllerTest extends TestCase
         $permission = Permission::create([
             'name' => 'test.permission',
             'title' => '娴嬭瘯鏉冮檺',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
@@ -127,7 +127,7 @@ class PermissionControllerTest extends TestCase
         $permission = Permission::create([
             'name' => 'deletable.permission',
             'title' => '鍙垹闄ゆ潈闄?',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)

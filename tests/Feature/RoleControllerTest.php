@@ -21,16 +21,16 @@ class RoleControllerTest extends TestCase
         parent::setUp();
 
         $this->admin = AdminUser::create([
-            'name' => 'admin',
+            'username' => 'admin',
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
             'status' => 1,
         ]);
 
         $role = Role::create([
-            'name' => 'super_admin',
+            'name' => 'super-admin',
             'title' => '瓒呯骇绠＄悊鍛?',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
             'status' => 1,
             'is_system' => true,
         ]);
@@ -38,7 +38,7 @@ class RoleControllerTest extends TestCase
         $permission = Permission::create([
             'name' => 'roles.*',
             'title' => '瑙掕壊绠＄悊',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
         ]);
 
         $role->givePermissionTo($permission);
@@ -83,7 +83,7 @@ class RoleControllerTest extends TestCase
         $role = Role::create([
             'name' => 'test_role',
             'title' => '娴嬭瘯瑙掕壊',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
             'status' => 1,
         ]);
 
@@ -106,8 +106,8 @@ class RoleControllerTest extends TestCase
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->deleteJson('/api/lartrix/roles/' . $systemRole->id);
 
-        // 绯荤粺瑙掕壊涓嶈兘鍒犻櫎
-        $response->assertJson(['code' => 1]);
+        // 系统角色不能删除
+        $response->assertJson(['code' => 40100]);
 
         $this->assertDatabaseHas('roles', [
             'id' => $systemRole->id,
@@ -120,7 +120,7 @@ class RoleControllerTest extends TestCase
         $role = Role::create([
             'name' => 'deletable_role',
             'title' => '鍙垹闄よ鑹?',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
             'status' => 1,
             'is_system' => false,
         ]);
@@ -142,24 +142,24 @@ class RoleControllerTest extends TestCase
         $role = Role::create([
             'name' => 'test_role',
             'title' => '娴嬭瘯瑙掕壊',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
             'status' => 1,
         ]);
 
         $permission1 = Permission::create([
             'name' => 'test.permission1',
             'title' => '娴嬭瘯鏉冮檺1',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
         ]);
 
         $permission2 = Permission::create([
             'name' => 'test.permission2',
             'title' => '娴嬭瘯鏉冮檺2',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->postJson('/api/lartrix/roles/' . $role->id . '/permissions', [
+            ->putJson('/api/lartrix/roles/' . $role->id . '?action_type=permissions', [
                 'permissions' => [$permission1->id, $permission2->id],
             ]);
 

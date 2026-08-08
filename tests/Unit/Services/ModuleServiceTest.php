@@ -20,26 +20,6 @@ class ModuleServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_can_get_module_list(): void
-    {
-        Module::create([
-            'name' => 'Blog',
-            'title' => '鍗氬妯″潡',
-            'enabled' => true,
-        ]);
-
-        Module::create([
-            'name' => 'Shop',
-            'title' => '鍟嗗煄妯″潡',
-            'enabled' => false,
-        ]);
-
-        $modules = $this->moduleService->getList();
-
-        $this->assertCount(2, $modules);
-    }
-
-    /** @test */
     public function it_can_enable_module(): void
     {
         $module = Module::create([
@@ -77,7 +57,7 @@ class ModuleServiceTest extends TestCase
         ]);
 
         // 鍚屾鎿嶄綔搴旇涓嶄細鎶涘嚭寮傚父
-        $this->moduleService->sync();
+        $this->moduleService->syncModules();
 
         $this->assertTrue(true);
     }

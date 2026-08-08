@@ -138,7 +138,7 @@ class RoleController extends CrudController
     protected function beforeDelete(mixed $model): void
     {
         if ($model->isSystemRole()) {
-            throw new \Lartrix\Exceptions\ApiException(__t('role.cannot_delete_system'), 40100);
+            throw new \Lartrix\Exceptions\ApiException(__t('role.cannot_delete_system'), null, 40100);
         }
     }
 

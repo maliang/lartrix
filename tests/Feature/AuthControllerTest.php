@@ -11,18 +11,23 @@ class AuthControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
-    public function it_can_login_with_valid_credentials(): void
+    protected function createUser(array $attributes = []): AdminUser
     {
-        $user = AdminUser::create([
-            'name' => 'testuser',
+        return AdminUser::create(array_merge([
+            'username' => 'testuser',
             'email' => 'test@example.com',
             'password' => Hash::make('password'),
             'status' => 1,
-        ]);
+        ], $attributes));
+    }
+
+    /** @test */
+    public function it_can_login_with_valid_credentials(): void
+    {
+        $user = $this->createUser();
 
         $response = $this->postJson('/api/lartrix/auth/login', [
-            'email' => 'test@example.com',
+            'username' => 'testuser',
             'password' => 'password',
         ]);
 
@@ -32,7 +37,6 @@ class AuthControllerTest extends TestCase
                 'msg',
                 'data' => [
                     'token',
-                    'user',
                 ],
             ])
             ->assertJson(['code' => 0]);
@@ -41,30 +45,20 @@ class AuthControllerTest extends TestCase
     /** @test */
     public function it_fails_login_with_invalid_credentials(): void
     {
-        AdminUser::create([
-            'name' => 'testuser',
-            'email' => 'test@example.com',
-            'password' => Hash::make('password'),
-            'status' => 1,
-        ]);
+        $this->createUser();
 
         $response = $this->postJson('/api/lartrix/auth/login', [
-            'email' => 'test@example.com',
+            'username' => 'testuser',
             'password' => 'wrong_password',
         ]);
 
-        $response->assertJson(['code' => 1]);
+        $response->assertJson(['code' => 40001]);
     }
 
     /** @test */
     public function it_can_logout(): void
     {
-        $user = AdminUser::create([
-            'name' => 'testuser',
-            'email' => 'test@example.com',
-            'password' => Hash::make('password'),
-            'status' => 1,
-        ]);
+        $user = $this->createUser();
 
         $token = $user->createToken('test-token')->plainTextToken;
 
@@ -78,12 +72,7 @@ class AuthControllerTest extends TestCase
     /** @test */
     public function it_can_get_current_user(): void
     {
-        $user = AdminUser::create([
-            'name' => 'testuser',
-            'email' => 'test@example.com',
-            'password' => Hash::make('password'),
-            'status' => 1,
-        ]);
+        $user = $this->createUser();
 
         $token = $user->createToken('test-token')->plainTextToken;
 
@@ -95,6 +84,7 @@ class AuthControllerTest extends TestCase
                 'code' => 0,
                 'data' => [
                     'id' => $user->id,
+                    'username' => 'testuser',
                     'email' => 'test@example.com',
                 ],
             ]);
@@ -111,12 +101,7 @@ class AuthControllerTest extends TestCase
     /** @test */
     public function it_can_refresh_token(): void
     {
-        $user = AdminUser::create([
-            'name' => 'testuser',
-            'email' => 'test@example.com',
-            'password' => Hash::make('password'),
-            'status' => 1,
-        ]);
+        $user = $this->createUser();
 
         $token = $user->createToken('test-token')->plainTextToken;
 

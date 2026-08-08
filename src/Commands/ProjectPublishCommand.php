@@ -11,12 +11,12 @@ use Lartrix\Modules\Project\ProjectManifest;
 class ProjectPublishCommand extends Command
 {
     protected $signature = 'lartrix:project-publish
-                            {--manifest=trix-project.json : Project manifest path}
-                            {--registry= : Registry API base URL}
-                            {--auth-key= : Auth Key, defaults to TRIX_AUTH_KEY config}
-                            {--dry-run : Validate only, do not publish}';
+                            {--manifest=trix-project.json : 项目清单路径}
+                            {--registry= : 市场 API 基础 URL}
+                            {--auth-key= : Auth Key，默认为 TRIX_AUTH_KEY 配置}
+                            {--dry-run : 仅校验，不发布}';
 
-    protected $description = 'Publish the root trix-project.json manifest to Trix Registry';
+    protected $description = '将根目录的 trix-project.json 项目清单发布到 Trix 市场';
 
     /** 处理命令或请求的主流程。 */
     public function handle(): int

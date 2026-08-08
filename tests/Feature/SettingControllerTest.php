@@ -22,16 +22,16 @@ class SettingControllerTest extends TestCase
         parent::setUp();
 
         $this->admin = AdminUser::create([
-            'name' => 'admin',
+            'username' => 'admin',
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
             'status' => 1,
         ]);
 
         $role = Role::create([
-            'name' => 'super_admin',
+            'name' => 'super-admin',
             'title' => '瓒呯骇绠＄悊鍛?',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
             'status' => 1,
             'is_system' => true,
         ]);
@@ -39,7 +39,7 @@ class SettingControllerTest extends TestCase
         $permission = Permission::create([
             'name' => 'settings.*',
             'title' => '璁剧疆绠＄悊',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
         ]);
 
         $role->givePermissionTo($permission);
@@ -86,7 +86,7 @@ class SettingControllerTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson('/api/lartrix/settings/group/site');
+            ->getJson('/api/lartrix/settings/site');
 
         $response->assertStatus(200)
             ->assertJson(['code' => 0]);
@@ -114,8 +114,8 @@ class SettingControllerTest extends TestCase
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->putJson('/api/lartrix/settings', [
                 'settings' => [
-                    'site_name' => 'New Name',
-                    'site_logo' => '/new-logo.png',
+                    ['key' => 'site_name', 'value' => 'New Name'],
+                    ['key' => 'site_logo', 'value' => '/new-logo.png'],
                 ],
             ]);
 

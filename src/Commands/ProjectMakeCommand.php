@@ -13,17 +13,17 @@ use Nwidart\Modules\Facades\Module as ModuleFacade;
 class ProjectMakeCommand extends Command
 {
     protected $signature = 'lartrix:project-make
-                            {--sync : Sync installed modules into an existing trix-project.json}
-                            {--force : Overwrite an existing trix-project.json}
-                            {--id= : Project registry id}
-                            {--name= : Project display name}
-                            {--version=1.0.0 : Project version}
-                            {--type=starter : Project type}
-                            {--description= : Project description}
-                            {--author= : Project author, usually the Auth Key user name or email}
-                            {--author-url= : Project author URL}';
+                            {--sync : 将已安装模块同步到已有的 trix-project.json}
+                            {--force : 覆盖已有的 trix-project.json}
+                            {--id= : 项目市场 id}
+                            {--name= : 项目显示名称}
+                            {--version=1.0.0 : 项目版本}
+                            {--type=starter : 项目类型}
+                            {--description= : 项目描述}
+                            {--author= : 项目作者，通常为 Auth Key 用户名或邮箱}
+                            {--author-url= : 项目作者 URL}';
 
-    protected $description = 'Create or sync the root trix-project.json manifest';
+    protected $description = '创建或同步根目录的 trix-project.json 项目清单';
 
     /** 处理命令或请求的主流程。 */
     public function handle(): int

@@ -12,16 +12,16 @@ use Illuminate\Support\Str;
 class ModuleMakeCommand extends Command
 {
     protected $signature = 'lartrix:module-make
-                            {name : Module name, for example Blog}
-                            {--id= : Trix registry id, defaults to module alias}
-                            {--title= : Human readable module title}
-                            {--description= : Module description}
-                            {--type=native : Trix module type}
-                            {--author= : Module author, usually the Auth Key user name or email}
-                            {--author-url= : Module author URL}
-                            {--force : Overwrite Lartrix standard files when the module already exists}';
+                            {name : 模块名称，例如 Blog}
+                            {--id= : Trix 市场 id，默认为模块别名}
+                            {--title= : 模块可读标题}
+                            {--description= : 模块描述}
+                            {--type=native : Trix 模块类型}
+                            {--author= : 模块作者，通常为 Auth Key 用户名或邮箱}
+                            {--author-url= : 模块作者 URL}
+                            {--force : 模块已存在时覆盖 Lartrix 标准文件}';
 
-    protected $description = 'Create a standard Lartrix/Trix module based on nwidart/laravel-modules';
+    protected $description = '创建基于 nwidart/laravel-modules 的标准 Lartrix/Trix 模块';
 
     private string $moduleName;
     private string $lowerName;

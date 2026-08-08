@@ -26,15 +26,15 @@ class PermissionServiceTest extends TestCase
     {
         $parent = Permission::create([
             'name' => 'users',
-            'title' => '鐢ㄦ埛绠＄悊',
-            'guard_name' => 'sanctum',
+            'title' => '用户管理',
+            'guard_name' => 'admin',
             'module' => 'system',
         ]);
 
         Permission::create([
             'name' => 'users.view',
-            'title' => '鏌ョ湅鐢ㄦ埛',
-            'guard_name' => 'sanctum',
+            'title' => '查看用户',
+            'guard_name' => 'admin',
             'module' => 'system',
             'parent_id' => $parent->id,
         ]);
@@ -50,19 +50,19 @@ class PermissionServiceTest extends TestCase
     {
         Permission::create([
             'name' => 'users.view',
-            'title' => '鏌ョ湅鐢ㄦ埛',
-            'guard_name' => 'sanctum',
+            'title' => '查看用户',
+            'guard_name' => 'admin',
             'module' => 'system',
         ]);
 
         Permission::create([
             'name' => 'posts.view',
-            'title' => '鏌ョ湅鏂囩珷',
-            'guard_name' => 'sanctum',
+            'title' => '查看文章',
+            'guard_name' => 'admin',
             'module' => 'blog',
         ]);
 
-        $grouped = $this->permissionService->getGroupedByModule();
+        $grouped = $this->permissionService->getTreeByModule();
 
         $this->assertArrayHasKey('system', $grouped);
         $this->assertArrayHasKey('blog', $grouped);
@@ -72,7 +72,7 @@ class PermissionServiceTest extends TestCase
     public function it_excludes_disabled_role_permissions(): void
     {
         $user = AdminUser::create([
-            'name' => 'testuser',
+            'username' => 'testuser',
             'email' => 'test@example.com',
             'password' => bcrypt('password'),
             'status' => 1,
@@ -80,28 +80,28 @@ class PermissionServiceTest extends TestCase
 
         $activeRole = Role::create([
             'name' => 'active_role',
-            'title' => '鍚敤瑙掕壊',
-            'guard_name' => 'sanctum',
+            'title' => '启用角色',
+            'guard_name' => 'admin',
             'status' => 1,
         ]);
 
         $disabledRole = Role::create([
             'name' => 'disabled_role',
-            'title' => '绂佺敤瑙掕壊',
-            'guard_name' => 'sanctum',
+            'title' => '禁用角色',
+            'guard_name' => 'admin',
             'status' => 0,
         ]);
 
         $permission1 = Permission::create([
             'name' => 'permission1',
-            'title' => '鏉冮檺1',
-            'guard_name' => 'sanctum',
+            'title' => '权限1',
+            'guard_name' => 'admin',
         ]);
 
         $permission2 = Permission::create([
             'name' => 'permission2',
-            'title' => '鏉冮檺2',
-            'guard_name' => 'sanctum',
+            'title' => '权限2',
+            'guard_name' => 'admin',
         ]);
 
         $activeRole->givePermissionTo($permission1);
@@ -110,10 +110,10 @@ class PermissionServiceTest extends TestCase
         $user->assignRole($activeRole);
         $user->assignRole($disabledRole);
 
-        $permissions = $this->permissionService->getUserPermissions($user);
+        $permissions = $this->permissionService->getUserActivePermissions($user);
 
-        // 鍙簲璇ュ寘鍚惎鐢ㄨ鑹茬殑鏉冮檺
-        $this->assertTrue($permissions->contains('name', 'permission1'));
-        $this->assertFalse($permissions->contains('name', 'permission2'));
+        // 应只包含启用角色的权限
+        $this->assertContains('permission1', $permissions);
+        $this->assertNotContains('permission2', $permissions);
     }
 }

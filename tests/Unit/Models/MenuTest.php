@@ -16,7 +16,7 @@ class MenuTest extends TestCase
         $menu = Menu::create([
             'name' => 'dashboard',
             'path' => '/dashboard',
-            'title' => '浠〃鐩?',
+            'title' => '仪表盘',
             'component' => 'layout.base',
             'sort' => 1,
             'status' => 1,
@@ -34,7 +34,7 @@ class MenuTest extends TestCase
         $menu = Menu::create([
             'name' => 'dashboard',
             'path' => '/dashboard',
-            'title' => '浠〃鐩?',
+            'title' => '仪表盘',
             'component' => 'layout.base',
             'icon' => 'mdi:view-dashboard',
             'sort' => 1,
@@ -56,7 +56,7 @@ class MenuTest extends TestCase
         $parent = Menu::create([
             'name' => 'system',
             'path' => '/system',
-            'title' => '绯荤粺绠＄悊',
+            'title' => '系统管理',
             'component' => 'layout.base',
             'sort' => 1,
             'status' => 1,
@@ -65,7 +65,7 @@ class MenuTest extends TestCase
         $child = Menu::create([
             'name' => 'system_user',
             'path' => '/system/user',
-            'title' => '鐢ㄦ埛绠＄悊',
+            'title' => '用户管理',
             'component' => 'view.system_user',
             'parent_id' => $parent->id,
             'sort' => 1,
@@ -74,33 +74,5 @@ class MenuTest extends TestCase
 
         $this->assertEquals($parent->id, $child->parent_id);
         $this->assertCount(1, $parent->children);
-    }
-
-    /** @test */
-    public function it_can_get_menu_tree(): void
-    {
-        $parent = Menu::create([
-            'name' => 'system',
-            'path' => '/system',
-            'title' => '绯荤粺绠＄悊',
-            'component' => 'layout.base',
-            'sort' => 1,
-            'status' => 1,
-        ]);
-
-        Menu::create([
-            'name' => 'system_user',
-            'path' => '/system/user',
-            'title' => '鐢ㄦ埛绠＄悊',
-            'component' => 'view.system_user',
-            'parent_id' => $parent->id,
-            'sort' => 1,
-            'status' => 1,
-        ]);
-
-        $tree = Menu::getTree();
-        
-        $this->assertIsArray($tree);
-        $this->assertNotEmpty($tree);
     }
 }

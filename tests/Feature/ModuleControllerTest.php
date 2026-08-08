@@ -24,16 +24,16 @@ class ModuleControllerTest extends TestCase
         parent::setUp();
 
         $this->admin = AdminUser::create([
-            'name' => 'admin',
+            'username' => 'admin',
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
             'status' => 1,
         ]);
 
         $role = Role::create([
-            'name' => 'super_admin',
+            'name' => 'super-admin',
             'title' => 'Super Admin',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
             'status' => 1,
             'is_system' => true,
         ]);
@@ -41,7 +41,7 @@ class ModuleControllerTest extends TestCase
         $permission = Permission::create([
             'name' => 'modules.*',
             'title' => 'Modules',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
         ]);
 
         $role->givePermissionTo($permission);
@@ -99,6 +99,7 @@ class ModuleControllerTest extends TestCase
             'name' => 'User',
             'title' => 'User',
             'enabled' => true,
+            'registry_id' => 'official.user',
             'config' => ['id' => 'official.user'],
         ]);
 
@@ -189,7 +190,7 @@ class ModuleControllerTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->postJson('/api/lartrix/modules/' . $module->name . '/enable');
+            ->putJson('/api/lartrix/modules/' . $module->name . '/enable');
 
         $response->assertStatus(200)
             ->assertJson(['code' => 0]);
@@ -207,7 +208,7 @@ class ModuleControllerTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->postJson('/api/lartrix/modules/' . $module->name . '/disable');
+            ->putJson('/api/lartrix/modules/' . $module->name . '/disable');
 
         $response->assertStatus(200)
             ->assertJson(['code' => 0]);

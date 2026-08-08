@@ -22,16 +22,16 @@ class MenuControllerTest extends TestCase
         parent::setUp();
 
         $this->admin = AdminUser::create([
-            'name' => 'admin',
+            'username' => 'admin',
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
             'status' => 1,
         ]);
 
         $role = Role::create([
-            'name' => 'super_admin',
+            'name' => 'super-admin',
             'title' => '瓒呯骇绠＄悊鍛?',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
             'status' => 1,
             'is_system' => true,
         ]);
@@ -39,7 +39,7 @@ class MenuControllerTest extends TestCase
         $permission = Permission::create([
             'name' => 'menus.*',
             'title' => '鑿滃崟绠＄悊',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
         ]);
 
         $role->givePermissionTo($permission);
@@ -90,7 +90,7 @@ class MenuControllerTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson('/api/lartrix/menus/all');
+            ->getJson('/api/lartrix/menus?action_type=all');
 
         $response->assertStatus(200)
             ->assertJson(['code' => 0]);
@@ -172,7 +172,7 @@ class MenuControllerTest extends TestCase
             'path' => '/menu1',
             'title' => '鑿滃崟1',
             'component' => 'view.menu1',
-            'sort' => 1,
+            'order' => 1,
             'status' => 1,
         ]);
 
@@ -181,22 +181,22 @@ class MenuControllerTest extends TestCase
             'path' => '/menu2',
             'title' => '鑿滃崟2',
             'component' => 'view.menu2',
-            'sort' => 2,
+            'order' => 2,
             'status' => 1,
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->postJson('/api/lartrix/menus/sort', [
+            ->putJson('/api/lartrix/menus/' . $menu1->id . '?action_type=sort', [
                 'items' => [
-                    ['id' => $menu1->id, 'sort' => 2],
-                    ['id' => $menu2->id, 'sort' => 1],
+                    ['id' => $menu1->id, 'order' => 2],
+                    ['id' => $menu2->id, 'order' => 1],
                 ],
             ]);
 
         $response->assertStatus(200)
             ->assertJson(['code' => 0]);
 
-        $this->assertEquals(2, $menu1->fresh()->sort);
-        $this->assertEquals(1, $menu2->fresh()->sort);
+        $this->assertEquals(2, $menu1->fresh()->order);
+        $this->assertEquals(1, $menu2->fresh()->order);
     }
 }

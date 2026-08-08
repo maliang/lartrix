@@ -390,6 +390,13 @@ class MakeBackendCommand extends Command
 
         if (class_exists($seederClass)) {
             $seeder = new $seederClass();
+
+            // 注入命令实例：通过 db:seed 执行时框架会自动注入，
+            // 此处手动注入以便 Seeder 内部使用 $this->command->info() 等输出
+            if (method_exists($seeder, 'setCommand')) {
+                $seeder->setCommand($this);
+            }
+
             $seeder->run();
         } else {
             $this->warn("   Seeder 类 [{$seederClass}] 未找到，跳过数据初始化。");

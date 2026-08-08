@@ -14,7 +14,7 @@ class AdminUserTest extends TestCase
     public function it_can_create_admin_user(): void
     {
         $user = AdminUser::create([
-            'name' => 'testuser',
+            'username' => 'testuser',
             'nick_name' => 'Test User',
             'email' => 'test@example.com',
             'password' => bcrypt('password'),
@@ -22,7 +22,7 @@ class AdminUserTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('admin_users', [
-            'name' => 'testuser',
+            'username' => 'testuser',
             'email' => 'test@example.com',
         ]);
     }
@@ -58,14 +58,14 @@ class AdminUserTest extends TestCase
     public function it_can_check_user_status(): void
     {
         $activeUser = AdminUser::create([
-            'name' => 'active',
+            'username' => 'active',
             'email' => 'active@example.com',
             'password' => bcrypt('password'),
             'status' => 1,
         ]);
 
         $inactiveUser = AdminUser::create([
-            'name' => 'inactive',
+            'username' => 'inactive',
             'email' => 'inactive@example.com',
             'password' => bcrypt('password'),
             'status' => 0,
@@ -79,7 +79,7 @@ class AdminUserTest extends TestCase
     public function it_hides_password_in_array(): void
     {
         $user = AdminUser::create([
-            'name' => 'testuser',
+            'username' => 'testuser',
             'email' => 'test@example.com',
             'password' => bcrypt('password'),
             'status' => 1,

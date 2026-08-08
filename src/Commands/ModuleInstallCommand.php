@@ -19,18 +19,18 @@ use Lartrix\Models\Module;
 class ModuleInstallCommand extends Command
 {
     protected $signature = 'lartrix:module-install
-        {name?* : Module name(s), empty = all not installed}
-        {--registry= : Trix Module Registry base URL for future adapter resolution}
-        {--download : Download registry adapter package to cache after checksum validation; does not install it}
-        {--signature-key= : Optional HMAC key for verifying registry adapter package signatures}
-        {--from-stage= : Copy a previously verified staging directory to a local module directory}
-        {--manifest= : Manifest path inside the staging directory for --from-stage}
-        {--version= : Expected module version for --from-stage verification}
-        {--target-dir= : Final local module directory for --from-stage or --replace-from-dir}
-        {--replace-from-dir= : Replace an existing local module directory with this reviewed source directory}
-        {--backup-dir= : Backup directory for --replace-from-dir; must not already exist}
-        {--confirm-replace : Explicitly confirm replacing the target module directory}';
-    protected $description = 'Install module(s). Without arguments, installs all uninstalled modules.';
+        {name?* : 模块名称，留空则安装全部未安装模块}
+        {--registry= : 模块市场 API 基础 URL，用于后续适配器解析}
+        {--download : 校验通过后将市场适配器包下载到缓存，不进行安装}
+        {--signature-key= : 用于校验市场适配器包签名的 HMAC 密钥（可选）}
+        {--from-stage= : 将已校验的 staging 目录复制到本地模块目录}
+        {--manifest= : --from-stage 时 staging 目录内的 manifest 路径}
+        {--version= : --from-stage 校验时预期的模块版本}
+        {--target-dir= : --from-stage 或 --replace-from-dir 的最终本地模块目录}
+        {--replace-from-dir= : 用该已审核源目录替换现有的本地模块目录}
+        {--backup-dir= : --replace-from-dir 的备份目录，不能已存在}
+        {--confirm-replace : 显式确认替换目标模块目录}';
+    protected $description = '安装模块。不带参数时安装所有未安装的模块。';
 
     /** 处理命令或请求的主流程。 */
     public function handle(ModuleService $moduleService): int

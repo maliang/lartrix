@@ -16,7 +16,7 @@ class RoleTest extends TestCase
         $role = Role::create([
             'name' => 'admin',
             'title' => '绠＄悊鍛?',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
             'description' => '绯荤粺绠＄悊鍛樿鑹?',
             'status' => 1,
             'is_system' => true,
@@ -33,16 +33,16 @@ class RoleTest extends TestCase
     public function it_has_system_role_flag(): void
     {
         $systemRole = Role::create([
-            'name' => 'super_admin',
+            'name' => 'super-admin',
             'title' => '瓒呯骇绠＄悊鍛?',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
             'is_system' => true,
         ]);
 
         $normalRole = Role::create([
             'name' => 'editor',
             'title' => '缂栬緫',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
             'is_system' => false,
         ]);
 
@@ -56,14 +56,14 @@ class RoleTest extends TestCase
         $activeRole = Role::create([
             'name' => 'active_role',
             'title' => '鍚敤瑙掕壊',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
             'status' => 1,
         ]);
 
         $inactiveRole = Role::create([
             'name' => 'inactive_role',
             'title' => '绂佺敤瑙掕壊',
-            'guard_name' => 'sanctum',
+            'guard_name' => 'admin',
             'status' => 0,
         ]);
 
