@@ -72,7 +72,7 @@ All API responses follow this format:
 ```json
 {
   "code": 0,
-  "message": "Success",
+  "msg": "Success",
   "data": {}
 }
 ```
@@ -82,7 +82,7 @@ All API responses follow this format:
 ```json
 {
   "code": 0,
-  "message": "Success",
+  "msg": "Success",
   "data": {
     "id": 1,
     "name": "John Doe"
@@ -95,7 +95,7 @@ All API responses follow this format:
 ```json
 {
   "code": 40004,
-  "message": "Resource not found",
+  "msg": "Resource not found",
   "data": null
 }
 ```
@@ -105,7 +105,7 @@ All API responses follow this format:
 ```json
 {
   "code": 0,
-  "message": "Success",
+  "msg": "Success",
   "data": {
     "data": [...],
     "total": 100,

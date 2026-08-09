@@ -63,15 +63,31 @@ Add to `config/auth.php`:
 
 ## Initialize Data
 
+`lartrix:make-backend` runs the `{Name}BackendSeeder` automatically, creating:
+
+- Default menus (home + system management)
+- Permission data (four groups with children)
+- Notification categories
+- `super-admin` role (`guard_name = merchant`)
+- `admin / 123456` admin account
+
+> Note: do not use `php artisan module:seed Merchant` to initialize — nwidart's `module:seed` only recognizes `{Name}DatabaseSeeder`, while make-backend generates `{Name}BackendSeeder`, so `module:seed` will not run it.
+
+## Reinstall (New Database / New Environment)
+
+When moving an existing sub-admin module to a **new database**, its migrations and Seeder are not re-run automatically. Use the reinstall command:
+
 ```bash
-php artisan migrate
-php artisan module:seed Merchant
+php artisan lartrix:backend-install Merchant
 ```
 
-This creates:
-- Super admin role
-- Initial permissions
-- Default menus
+All steps are **idempotent** and safe to re-run:
+
+1. Add the guard/provider to `config/auth.php` (skipped if present)
+2. Enable the module and sync the `modules` table
+3. Run module migrations (`module:migrate`, already-run ones are skipped)
+4. Run the `{Name}BackendSeeder` data seeding
+5. Print a summary (guard / path / admin credentials)
 
 ## Data Isolation
 

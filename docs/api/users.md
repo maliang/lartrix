@@ -20,13 +20,14 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": {
         "data": [
             {
                 "id": 1,
-                "name": "管理员",
+                "username": "admin",
+                "nickname": "管理员",
                 "email": "admin@example.com",
                 "status": true,
                 "created_at": "2024-01-01 00:00:00"
@@ -45,7 +46,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -54,7 +55,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -71,22 +72,24 @@ Content-Type: application/json
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| name | string | 是 | 姓名 |
-| email | string | 是 | 邮箱 |
-| phone | string | 否 | 电话 |
-| password | string | 是 | 密码 |
+| username | string | 是 | 用户名 |
+| password | string | 是 | 密码（至少 6 位） |
+| nickname | string | 否 | 昵称 |
+| email | string | 否 | 邮箱 |
+| phone | string | 否 | 手机号 |
 | status | boolean | 否 | 状态，默认 true |
-| role_ids | array | 否 | 角色ID列表 |
+| roles | array | 否 | 角色名列表 |
 
 ### 响应示例
 
 ```json
 {
-    "code": 200,
-    "message": "创建成功",
+    "code": 0,
+    "msg": "创建成功",
     "data": {
         "id": 2,
-        "name": "新用户",
+        "username": "newuser",
+        "nickname": "新用户",
         "email": "user@example.com",
         "status": true
     }
@@ -99,7 +102,7 @@ Content-Type: application/json
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -108,7 +111,7 @@ Content-Type: application/json
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -117,7 +120,7 @@ Content-Type: application/json
 ```json
 {
     "code": 422,
-    "message": "验证失败",
+    "msg": "验证失败",
     "data": {
         "errors": {
             "email": ["邮箱格式不正确"],
@@ -138,13 +141,14 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": {
         "id": 1,
-        "name": "管理员",
+        "username": "admin",
+        "nickname": "管理员",
         "email": "admin@example.com",
-        "roles": [{"id": 1, "name": "super_admin"}],
+        "roles": [{"id": 1, "name": "super-admin"}],
         "permissions": ["*"]
     }
 }
@@ -173,11 +177,12 @@ Content-Type: application/json
 
 ```json
 {
-    "code": 200,
-    "message": "更新成功",
+    "code": 0,
+    "msg": "更新成功",
     "data": {
         "id": 1,
-        "name": "新名称"
+        "username": "admin",
+        "nickname": "新名称"
     }
 }
 ```
@@ -200,8 +205,8 @@ Content-Type: application/json
 
 ```json
 {
-    "code": 200,
-    "message": "状态更新成功",
+    "code": 0,
+    "msg": "状态更新成功",
     "data": null
 }
 ```
@@ -217,8 +222,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "删除成功",
+    "code": 0,
+    "msg": "删除成功",
     "data": null
 }
 ```
@@ -229,7 +234,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -238,7 +243,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -247,7 +252,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 404,
-    "message": "用户不存在",
+    "msg": "用户不存在",
     "data": null
 }
 ```
@@ -270,8 +275,8 @@ Content-Type: application/json
 
 ```json
 {
-    "code": 200,
-    "message": "批量删除成功",
+    "code": 0,
+    "msg": "批量删除成功",
     "data": null
 }
 ```
@@ -287,8 +292,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": {
         // vschema-ui Schema 对象
     }
@@ -306,8 +311,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": {
         // 表单 Schema 对象
     }

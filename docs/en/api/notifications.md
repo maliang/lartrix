@@ -20,8 +20,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": {
         "data": [
             {
@@ -44,7 +44,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -53,7 +53,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```
@@ -69,8 +69,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": {
         "id": 1,
         "title": "System Notification",
@@ -88,7 +88,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -97,7 +97,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```
@@ -106,7 +106,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 404,
-    "message": "Notification not found",
+    "msg": "Notification not found",
     "data": null
 }
 ```
@@ -122,8 +122,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "Marked as read",
+    "code": 0,
+    "msg": "Marked as read",
     "data": null
 }
 ```
@@ -134,7 +134,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -143,7 +143,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```
@@ -152,7 +152,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 404,
-    "message": "Notification not found",
+    "msg": "Notification not found",
     "data": null
 }
 ```
@@ -168,8 +168,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "All marked as read",
+    "code": 0,
+    "msg": "All marked as read",
     "data": null
 }
 ```
@@ -180,7 +180,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -189,7 +189,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```
@@ -205,8 +205,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "Deleted successfully",
+    "code": 0,
+    "msg": "Deleted successfully",
     "data": null
 }
 ```
@@ -217,7 +217,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -226,7 +226,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```
@@ -235,7 +235,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 404,
-    "message": "Notification not found",
+    "msg": "Notification not found",
     "data": null
 }
 ```
@@ -251,8 +251,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": [
         {
             "id": 1,
@@ -276,7 +276,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -285,7 +285,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```
@@ -323,8 +323,8 @@ Content-Type: application/json
 
 ```json
 {
-    "code": 200,
-    "message": "Sent successfully",
+    "code": 0,
+    "msg": "Sent successfully",
     "data": {
         "sent_count": 3
     }
@@ -337,7 +337,7 @@ Content-Type: application/json
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -346,7 +346,7 @@ Content-Type: application/json
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```
@@ -355,7 +355,7 @@ Content-Type: application/json
 ```json
 {
     "code": 422,
-    "message": "Validation failed",
+    "msg": "Validation failed",
     "data": {
         "errors": {
             "title": ["Title is required"],
@@ -376,8 +376,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": [
         {"value": "admin", "label": "Main Admin"},
         {"value": "merchant", "label": "Merchant Admin"}
@@ -391,7 +391,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -400,7 +400,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```
@@ -416,8 +416,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": {
         "data": [
             {
@@ -438,7 +438,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -447,7 +447,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```

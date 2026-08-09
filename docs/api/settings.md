@@ -17,8 +17,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": {
         "site": {
             "title": "管理系统",
@@ -39,7 +39,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -48,7 +48,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -64,8 +64,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": {
         "title": "管理系统",
         "logo": "/logo.png"
@@ -79,7 +79,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -88,7 +88,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -114,8 +114,8 @@ Content-Type: application/json
 
 ```json
 {
-    "code": 200,
-    "message": "创建成功",
+    "code": 0,
+    "msg": "创建成功",
     "data": {
         "id": 1,
         "key": "site.title",
@@ -130,7 +130,7 @@ Content-Type: application/json
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -139,7 +139,7 @@ Content-Type: application/json
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -148,7 +148,7 @@ Content-Type: application/json
 ```json
 {
     "code": 422,
-    "message": "验证失败",
+    "msg": "验证失败",
     "data": {
         "errors": {
             "key": ["键不能为空"],
@@ -187,8 +187,8 @@ Content-Type: application/json
 
 ```json
 {
-    "code": 200,
-    "message": "更新成功",
+    "code": 0,
+    "msg": "更新成功",
     "data": null
 }
 ```
@@ -199,7 +199,7 @@ Content-Type: application/json
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -208,7 +208,7 @@ Content-Type: application/json
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -217,7 +217,7 @@ Content-Type: application/json
 ```json
 {
     "code": 422,
-    "message": "验证失败",
+    "msg": "验证失败",
     "data": {
         "errors": {
             "settings": ["设置不能为空"]
@@ -237,8 +237,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "删除成功",
+    "code": 0,
+    "msg": "删除成功",
     "data": null
 }
 ```
@@ -249,7 +249,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -258,7 +258,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -267,7 +267,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 404,
-    "message": "资源不存在",
+    "msg": "资源不存在",
     "data": null
 }
 ```
@@ -283,8 +283,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "缓存已刷新",
+    "code": 0,
+    "msg": "缓存已刷新",
     "data": null
 }
 ```
@@ -295,7 +295,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -304,7 +304,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```

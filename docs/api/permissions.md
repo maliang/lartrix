@@ -17,8 +17,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": {
         "data": [
             {
@@ -42,7 +42,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -51,7 +51,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -67,8 +67,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": {
         "users": [
             {"id": 1, "name": "users.list"},
@@ -103,8 +103,8 @@ Content-Type: application/json
 
 ```json
 {
-    "code": 200,
-    "message": "创建成功",
+    "code": 0,
+    "msg": "创建成功",
     "data": {
         "id": 10,
         "name": "custom.permission",
@@ -119,7 +119,7 @@ Content-Type: application/json
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -128,7 +128,7 @@ Content-Type: application/json
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -137,7 +137,7 @@ Content-Type: application/json
 ```json
 {
     "code": 422,
-    "message": "验证失败",
+    "msg": "验证失败",
     "data": {
         "errors": {
             "name": ["权限标识不能为空"]
@@ -157,8 +157,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "删除成功",
+    "code": 0,
+    "msg": "删除成功",
     "data": null
 }
 ```
@@ -169,7 +169,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -178,7 +178,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -187,7 +187,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 404,
-    "message": "权限不存在",
+    "msg": "权限不存在",
     "data": null
 }
 ```
@@ -203,8 +203,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "缓存已刷新",
+    "code": 0,
+    "msg": "缓存已刷新",
     "data": null
 }
 ```

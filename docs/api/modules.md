@@ -11,8 +11,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": [
         {
             "name": "Blog",
@@ -32,7 +32,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -41,7 +41,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -57,8 +57,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "模块已启用",
+    "code": 0,
+    "msg": "模块已启用",
     "data": null
 }
 ```
@@ -69,7 +69,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -78,7 +78,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -87,7 +87,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 404,
-    "message": "模块不存在",
+    "msg": "模块不存在",
     "data": null
 }
 ```
@@ -103,8 +103,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "模块已禁用",
+    "code": 0,
+    "msg": "模块已禁用",
     "data": null
 }
 ```
@@ -115,7 +115,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -124,7 +124,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -133,7 +133,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 404,
-    "message": "模块不存在",
+    "msg": "模块不存在",
     "data": null
 }
 ```
@@ -149,8 +149,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": {
         "name": "Blog",
         "alias": "blog",
@@ -169,7 +169,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -178,7 +178,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -187,7 +187,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 404,
-    "message": "模块不存在",
+    "msg": "模块不存在",
     "data": null
 }
 ```

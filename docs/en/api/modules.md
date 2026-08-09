@@ -11,8 +11,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": [
         {
             "name": "Blog",
@@ -32,7 +32,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -41,7 +41,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```
@@ -57,8 +57,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "Module enabled",
+    "code": 0,
+    "msg": "Module enabled",
     "data": null
 }
 ```
@@ -69,7 +69,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -78,7 +78,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```
@@ -87,7 +87,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 404,
-    "message": "Module not found",
+    "msg": "Module not found",
     "data": null
 }
 ```
@@ -103,8 +103,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "Module disabled",
+    "code": 0,
+    "msg": "Module disabled",
     "data": null
 }
 ```
@@ -115,7 +115,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -124,7 +124,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```
@@ -133,7 +133,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 404,
-    "message": "Module not found",
+    "msg": "Module not found",
     "data": null
 }
 ```
@@ -149,8 +149,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": {
         "name": "Blog",
         "alias": "blog",
@@ -169,7 +169,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -178,7 +178,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```
@@ -187,7 +187,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 404,
-    "message": "Module not found",
+    "msg": "Module not found",
     "data": null
 }
 ```

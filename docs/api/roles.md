@@ -19,13 +19,13 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": {
         "data": [
             {
                 "id": 1,
-                "name": "super_admin",
+                "name": "super-admin",
                 "guard_name": "admin",
                 "created_at": "2024-01-01 00:00:00"
             }
@@ -41,7 +41,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -50,7 +50,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -75,8 +75,8 @@ Content-Type: application/json
 
 ```json
 {
-    "code": 200,
-    "message": "创建成功",
+    "code": 0,
+    "msg": "创建成功",
     "data": {
         "id": 2,
         "name": "editor",
@@ -91,7 +91,7 @@ Content-Type: application/json
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -100,7 +100,7 @@ Content-Type: application/json
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -109,7 +109,7 @@ Content-Type: application/json
 ```json
 {
     "code": 422,
-    "message": "验证失败",
+    "msg": "验证失败",
     "data": {
         "errors": {
             "name": ["角色标识不能为空"],
@@ -130,11 +130,11 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": {
         "id": 1,
-        "name": "super_admin",
+        "name": "super-admin",
         "permissions": [
             {"id": 1, "name": "users.list"},
             {"id": 2, "name": "users.create"}
@@ -162,8 +162,8 @@ Content-Type: application/json
 
 ```json
 {
-    "code": 200,
-    "message": "更新成功",
+    "code": 0,
+    "msg": "更新成功",
     "data": null
 }
 ```
@@ -179,8 +179,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "删除成功",
+    "code": 0,
+    "msg": "删除成功",
     "data": null
 }
 ```
@@ -191,7 +191,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -200,7 +200,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -209,7 +209,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 404,
-    "message": "角色不存在",
+    "msg": "角色不存在",
     "data": null
 }
 ```
@@ -225,10 +225,10 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": [
-        {"id": 1, "name": "super_admin"},
+        {"id": 1, "name": "super-admin"},
         {"id": 2, "name": "editor"}
     ]
 }

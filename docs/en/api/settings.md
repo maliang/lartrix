@@ -17,8 +17,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": {
         "site": {
             "title": "Admin System",
@@ -39,7 +39,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -48,7 +48,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```
@@ -64,8 +64,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": {
         "title": "Admin System",
         "logo": "/logo.png"
@@ -79,7 +79,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -88,7 +88,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```
@@ -114,8 +114,8 @@ Content-Type: application/json
 
 ```json
 {
-    "code": 200,
-    "message": "Created successfully",
+    "code": 0,
+    "msg": "Created successfully",
     "data": {
         "id": 1,
         "key": "site.title",
@@ -130,7 +130,7 @@ Content-Type: application/json
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -139,7 +139,7 @@ Content-Type: application/json
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```
@@ -148,7 +148,7 @@ Content-Type: application/json
 ```json
 {
     "code": 422,
-    "message": "Validation failed",
+    "msg": "Validation failed",
     "data": {
         "errors": {
             "key": ["Key is required"],
@@ -187,8 +187,8 @@ Content-Type: application/json
 
 ```json
 {
-    "code": 200,
-    "message": "Updated successfully",
+    "code": 0,
+    "msg": "Updated successfully",
     "data": null
 }
 ```
@@ -199,7 +199,7 @@ Content-Type: application/json
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -208,7 +208,7 @@ Content-Type: application/json
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```
@@ -217,7 +217,7 @@ Content-Type: application/json
 ```json
 {
     "code": 422,
-    "message": "Validation failed",
+    "msg": "Validation failed",
     "data": {
         "errors": {
             "settings": ["Settings is required"]
@@ -237,8 +237,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "Deleted successfully",
+    "code": 0,
+    "msg": "Deleted successfully",
     "data": null
 }
 ```
@@ -249,7 +249,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -258,7 +258,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```
@@ -267,7 +267,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 404,
-    "message": "Resource not found",
+    "msg": "Resource not found",
     "data": null
 }
 ```
@@ -283,8 +283,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "Cache refreshed",
+    "code": 0,
+    "msg": "Cache refreshed",
     "data": null
 }
 ```
@@ -295,7 +295,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "Unauthenticated",
+    "msg": "Unauthenticated",
     "data": null
 }
 ```
@@ -304,7 +304,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "Forbidden",
+    "msg": "Forbidden",
     "data": null
 }
 ```

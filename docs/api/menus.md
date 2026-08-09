@@ -18,8 +18,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": [
         {
             "id": 1,
@@ -48,7 +48,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 401,
-    "message": "未认证",
+    "msg": "未认证",
     "data": null
 }
 ```
@@ -57,7 +57,7 @@ Authorization: Bearer {token}
 ```json
 {
     "code": 403,
-    "message": "无权限访问",
+    "msg": "无权限访问",
     "data": null
 }
 ```
@@ -89,8 +89,8 @@ Content-Type: application/json
 
 ```json
 {
-    "code": 200,
-    "message": "创建成功",
+    "code": 0,
+    "msg": "创建成功",
     "data": {
         "id": 10,
         "title": "新菜单",
@@ -115,8 +115,8 @@ Content-Type: application/json
 
 ```json
 {
-    "code": 200,
-    "message": "更新成功",
+    "code": 0,
+    "msg": "更新成功",
     "data": null
 }
 ```
@@ -132,8 +132,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "删除成功",
+    "code": 0,
+    "msg": "删除成功",
     "data": null
 }
 ```
@@ -149,8 +149,8 @@ Authorization: Bearer {token}
 
 ```json
 {
-    "code": 200,
-    "message": "success",
+    "code": 0,
+    "msg": "success",
     "data": [
         {
             "id": 1,
@@ -179,8 +179,8 @@ Content-Type: application/json
 
 ```json
 {
-    "code": 200,
-    "message": "排序成功",
+    "code": 0,
+    "msg": "排序成功",
     "data": null
 }
 ```
