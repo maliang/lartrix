@@ -215,11 +215,17 @@ class InstallCommand extends Command
         // 生成 lartrix 迁移文件（时间戳在依赖包迁移之后）
         $this->generateLartrixMigrations();
 
-        // 发布 lartrix 配置文件
-        Artisan::call('vendor:publish', [
-            '--tag' => 'lartrix-config',
-            '--force' => true,
-        ]);
+        // 发布 lartrix 配置文件（已存在时跳过，除非 --force 显式覆盖）
+        $lartrixConfig = config_path('lartrix.php');
+        if (!file_exists($lartrixConfig) || $this->option('force')) {
+            Artisan::call('vendor:publish', [
+                '--tag' => 'lartrix-config',
+                '--force' => true,
+            ]);
+            $this->line('   发布 lartrix.php 配置文件。');
+        } else {
+            $this->line('   lartrix.php 配置已存在，跳过（如需覆盖请加 --force）。');
+        }
     }
 
     /**
