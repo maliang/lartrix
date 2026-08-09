@@ -69,6 +69,7 @@ return [
     ],
     'system' => [
         'locale_saved' => 'Language preference saved',
+        'locale_invalid' => 'Unsupported language',
         'theme_saved' => 'Theme configuration saved',
         'settings_updated' => 'Settings updated',
         'default_subtitle' => 'Admin Management System',

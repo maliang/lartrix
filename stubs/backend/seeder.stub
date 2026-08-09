@@ -4,8 +4,6 @@ namespace Modules\{{MODULE_NAME}}\Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 
 class {{MODULE_NAME}}BackendSeeder extends Seeder
 {
@@ -17,18 +15,20 @@ class {{MODULE_NAME}}BackendSeeder extends Seeder
         $guard = '{{GUARD}}';
         $modelClass = \Modules\{{MODULE_NAME}}\Models\{{MODEL_NAME}}::class;
         $menuModel = config('lartrix.models.menu', \Lartrix\Models\Menu::class);
+        $roleModel = config('lartrix.models.role', \Lartrix\Models\Role::class);
+        $permissionModel = config('lartrix.models.permission', \Lartrix\Models\Permission::class);
 
         // 创建默认菜单
         $this->createMenus($menuModel, $guard);
 
         // 创建默认权限
-        $this->createPermissions($guard);
+        $this->createPermissions($permissionModel, $guard);
 
         // 创建默认通知分类
         $this->createNotificationCategories($guard);
 
         // 创建超级管理员角色
-        $role = Role::firstOrCreate(
+        $role = $roleModel::firstOrCreate(
             ['name' => 'super-admin', 'guard_name' => $guard],
             [
                 'name' => 'super-admin',
@@ -154,7 +154,7 @@ class {{MODULE_NAME}}BackendSeeder extends Seeder
     /**
      * 创建默认权限
      */
-    protected function createPermissions(string $guard): void
+    protected function createPermissions($permissionModel, string $guard): void
     {
         $groups = [
             [
@@ -194,19 +194,19 @@ class {{MODULE_NAME}}BackendSeeder extends Seeder
         ];
 
         foreach ($groups as $group) {
-            $this->createPermission($guard, $group);
+            $this->createPermission($permissionModel, $guard, $group);
         }
     }
 
     /**
      * 递归创建权限
      */
-    protected function createPermission(string $guard, array $data, ?int $parentId = null): void
+    protected function createPermission($permissionModel, string $guard, array $data, ?int $parentId = null): void
     {
         $children = $data['children'] ?? [];
         unset($data['children']);
 
-        $permission = Permission::firstOrCreate(
+        $permission = $permissionModel::firstOrCreate(
             ['name' => $data['name'], 'guard_name' => $guard],
             [
                 'name' => $data['name'],
@@ -219,7 +219,7 @@ class {{MODULE_NAME}}BackendSeeder extends Seeder
         );
 
         foreach ($children as $child) {
-            $this->createPermission($guard, $child, $permission->id);
+            $this->createPermission($permissionModel, $guard, $child, $permission->id);
         }
     }
 

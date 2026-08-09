@@ -5,6 +5,12 @@ namespace Lartrix\Controllers;
 use Illuminate\Http\Request;
 use Lartrix\Services\AuthService;
 use Lartrix\Services\TranslationService;
+use Lartrix\Schema\Components\Business\OptForm;
+use Lartrix\Schema\Components\NaiveUI\Input;
+use Lartrix\Schema\Components\NaiveUI\Select;
+use Lartrix\Schema\Components\NaiveUI\Button;
+use Lartrix\Schema\Actions\EmitAction;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -104,11 +110,149 @@ class AuthController extends Controller
     }
 
     /**
+     * 个人资料弹窗 UI Schema
+     * GET /user/profile/ui
+     */
+    public function profileUi(Request $request): array
+    {
+        $user = $request->user();
+
+        $form = OptForm::make('formData')
+            ->fields([
+                ['用户名', 'username', Input::make()->props(['disabled' => true, 'placeholder' => '用户名'])],
+                ['昵称', 'nickname', Input::make()->props(['placeholder' => '请输入昵称']), $user->nickname ?? ''],
+                ['邮箱', 'email', Input::make()->props(['placeholder' => '请输入邮箱']), $user->email ?? ''],
+                ['手机号', 'phone', Input::make()->props(['placeholder' => '请输入手机号']), $user->phone ?? ''],
+                ['头像', 'avatar', Input::make()->props(['placeholder' => '头像 URL']), $user->avatar ?? ''],
+            ])
+            ->buttons([
+                Button::make()->on('click', EmitAction::make('close'))->text(__t('button.cancel')),
+                Button::make()->type('primary')->on('click', EmitAction::make('submit'))->text(__t('button.save')),
+            ]);
+
+        return success($form->toArray());
+    }
+
+    /**
+     * 保存个人资料
+     * PUT /user/profile
+     */
+    public function profile(Request $request): array
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'nickname' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'avatar' => 'nullable|string|max:255',
+        ]);
+
+        $user->fill($validated);
+        $user->save();
+
+        return success(__t('common.save_ok'));
+    }
+
+    /**
+     * 账号设置弹窗 UI Schema
+     * GET /user/settings/ui
+     */
+    public function settingsUi(Request $request): array
+    {
+        $user = $request->user();
+        $translationService = app(TranslationService::class);
+        $locale = $user->locale ?: config('lartrix.locale', 'zh-CN');
+
+        $form = OptForm::make('formData')
+            ->fields([
+                ['语言', 'locale', Select::make()->props([
+                    'placeholder' => '请选择语言',
+                    'options' => $translationService->getLanguageOptions(),
+                ]), $locale],
+            ])
+            ->buttons([
+                Button::make()->on('click', EmitAction::make('close'))->text(__t('button.cancel')),
+                Button::make()->type('primary')->on('click', EmitAction::make('submit'))->text(__t('button.save')),
+            ]);
+
+        return success($form->toArray());
+    }
+
+    /**
+     * 保存账号设置
+     * PUT /user/settings
+     */
+    public function settings(Request $request): array
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'locale' => 'nullable|string|max:20',
+        ]);
+
+        if (!empty($validated['locale'])) {
+            $service = app(TranslationService::class);
+            $locale = $service->normalizeLocale($validated['locale']);
+            if ($locale === null) {
+                error(__t('system.locale_invalid'), null, 40022);
+            }
+            $user->locale = $locale;
+            $user->save();
+            app()->setLocale($locale);
+        }
+
+        return success(__t('common.save_ok'));
+    }
+
+    /**
+     * 修改密码弹窗 UI Schema
+     * GET /user/password/ui
+     */
+    public function passwordUi(): array
+    {
+        $form = OptForm::make('formData')
+            ->fields([
+                ['当前密码', 'current_password', Input::make()->props(['type' => 'password', 'showPasswordOn' => 'click', 'placeholder' => '请输入当前密码'])],
+                ['新密码', 'new_password', Input::make()->props(['type' => 'password', 'showPasswordOn' => 'click', 'placeholder' => '请输入新密码（至少 6 位）'])],
+                ['确认新密码', 'new_password_confirmation', Input::make()->props(['type' => 'password', 'showPasswordOn' => 'click', 'placeholder' => '请再次输入新密码'])],
+            ])
+            ->buttons([
+                Button::make()->on('click', EmitAction::make('close'))->text(__t('button.cancel')),
+                Button::make()->type('primary')->on('click', EmitAction::make('submit'))->text(__t('button.save')),
+            ]);
+
+        return success($form->toArray());
+    }
+
+    /**
+     * 修改当前用户密码
+     * PUT /user/password
+     */
+    public function password(Request $request): array
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:6|confirmed',
+        ]);
+
+        if (!Hash::check($validated['current_password'], $user->password)) {
+            error(__t('auth.password_incorrect'), null, 40022);
+        }
+
+        $user->password = Hash::make($validated['new_password']);
+        $user->save();
+
+        return success(__t('auth.password_changed'));
+    }
+
+    /**
      * 获取后台配置（API 接口）
      * 注意：只返回前端必需的公开信息
      */
-    public function config(): array
-    {
+    public function config(): array    {
         $theme = \Lartrix\Models\Setting::fetchThemeConfig(config('lartrix.theme', []));
         return success([
             'apiPrefix' => '/' . ltrim(config('lartrix.api_prefix', 'api/admin'), '/'),

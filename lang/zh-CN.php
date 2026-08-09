@@ -69,6 +69,7 @@ return [
     ],
     'system' => [
         'locale_saved' => '语言设置已保存',
+        'locale_invalid' => '不支持的语言',
         'theme_saved' => '主题配置保存成功',
         'settings_updated' => '更新成功',
         'default_subtitle' => '后台管理系统',

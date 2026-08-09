@@ -2,6 +2,7 @@
 
 namespace Modules\{{MODULE_NAME}}\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -9,7 +10,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class {{MODEL_NAME}} extends Authenticatable
 {
-    use HasApiTokens, Notifiable, HasRoles;
+    use HasApiTokens, Notifiable, HasRoles, SoftDeletes;
 
     /**
      * 表名
@@ -32,6 +33,10 @@ class {{MODEL_NAME}} extends Authenticatable
         'phone',
         'avatar',
         'status',
+        'remark',
+        'last_login_ip',
+        'last_login_time',
+        'locale',
     ];
 
     /**
@@ -39,13 +44,15 @@ class {{MODEL_NAME}} extends Authenticatable
      */
     protected $hidden = [
         'password',
+        'remember_token',
     ];
 
     /**
      * 属性类型转换
      */
     protected $casts = [
-        'status' => 'boolean',
+        'password' => 'hashed',
+        'last_login_time' => 'datetime',
     ];
 
     /**
@@ -57,18 +64,54 @@ class {{MODEL_NAME}} extends Authenticatable
     }
 
     /**
-     * 获取用户的有效权限
-     * 超级管理员返回所有权限
+     * 检查用户是否为超级管理员
      */
-    public function getActivePermissions()
+    public function isSuperAdmin(): bool
     {
         $superAdminRole = config('lartrix.super_admin_role', 'super-admin');
+        return $this->hasRole($superAdminRole);
+    }
 
-        if ($this->hasRole($superAdminRole)) {
+    /**
+     * 获取用户的有效权限（排除禁用角色的权限）
+     * 超级管理员返回本后台全部权限
+     */
+    public function getActivePermissions(): \Illuminate\Support\Collection
+    {
+        // 超级管理员拥有本后台所有权限
+        if ($this->isSuperAdmin()) {
             $permissionModel = config('lartrix.models.permission', \Lartrix\Models\Permission::class);
             return $permissionModel::where('guard_name', $this->guard_name)->get();
         }
 
-        return $this->getAllPermissions();
+        return $this->roles()
+            ->where('status', true)
+            ->with('permissions')
+            ->get()
+            ->pluck('permissions')
+            ->flatten()
+            ->unique('id');
+    }
+
+    /**
+     * 检查用户是否有指定权限（排除禁用角色）
+     * 超级管理员拥有所有权限
+     */
+    public function hasActivePermission(string $permission): bool
+    {
+        // 超级管理员拥有所有权限
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        return $this->getActivePermissions()->contains('name', $permission);
+    }
+
+    /**
+     * 检查用户状态是否启用
+     */
+    public function isActive(): bool
+    {
+        return $this->status == 1 || $this->status === '1' || $this->status === true;
     }
 }

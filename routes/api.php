@@ -78,6 +78,14 @@ Route::prefix($prefix)->group(function () use (
             Route::delete('tokens/{id}', [$authController, 'revokeToken']);
         });
 
+        // 当前用户自助接口（个人资料/账号设置/修改密码）
+        Route::get('user/profile/ui', [$authController, 'profileUi']);
+        Route::post('user/profile', [$authController, 'profile']);
+        Route::get('user/settings/ui', [$authController, 'settingsUi']);
+        Route::post('user/settings', [$authController, 'settings']);
+        Route::get('user/password/ui', [$authController, 'passwordUi']);
+        Route::post('user/password', [$authController, 'password']);
+
         // 系统配置
         Route::get('translations', [$systemController, 'translations']);
         Route::post('locale', [$systemController, 'setLocale']);

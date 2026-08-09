@@ -80,6 +80,70 @@ class SystemController
     }
 
     /**
+     * 保存主题配置（模块专属主题，写入 theme.{{LOWER_NAME}} 分组）
+     */
+    public function saveThemeConfig(Request $request): array
+    {
+        $settingModel = config('lartrix.models.setting', \Lartrix\Models\Setting::class);
+
+        $validated = $request->validate([
+            'themeScheme' => 'nullable|string|in:light,dark,auto',
+            'themeColor' => 'nullable|string|max:20',
+            'otherColor' => 'nullable|array',
+            'isInfoFollowPrimary' => 'nullable|boolean',
+            'layout' => 'nullable|array',
+            'page' => 'nullable|array',
+            'header' => 'nullable|array',
+            'tab' => 'nullable|array',
+            'fixedHeaderAndTab' => 'nullable|boolean',
+            'sider' => 'nullable|array',
+            'footer' => 'nullable|array',
+            'watermark' => 'nullable|array',
+        ]);
+
+        foreach ($validated as $key => $value) {
+            if ($value !== null) {
+                $settingModel::set($key, $value, 'theme.{{LOWER_NAME}}');
+            }
+        }
+
+        return success('主题配置保存成功');
+    }
+
+    /**
+     * 获取语言包翻译
+     */
+    public function translations(): array
+    {
+        $service = app(\Lartrix\Services\TranslationService::class);
+        $locale = request()->input('locale', config('lartrix.locale', 'zh-CN'));
+        $locale = $service->normalizeLocale((string) $locale);
+        if ($locale === null) {
+            error('不支持的语言', null, 40022);
+        }
+        return success($service->getTranslations($locale));
+    }
+
+    /**
+     * 设置用户语言偏好
+     */
+    public function setLocale(Request $request): array
+    {
+        $service = app(\Lartrix\Services\TranslationService::class);
+        $locale = $service->normalizeLocale((string) $request->input('locale', ''));
+        if ($locale === null) {
+            error('不支持的语言', null, 40022);
+        }
+        $user = $request->user();
+        if ($user) {
+            $user->locale = $locale;
+            $user->save();
+        }
+        app()->setLocale($locale);
+        return success('语言设置已保存');
+    }
+
+    /**
      * 获取默认主题配置
      */
     protected function getDefaultThemeConfig(): array
@@ -561,6 +625,9 @@ class SystemController
      */
     public function headerRight(): array
     {
+        $user = request()->user();
+        $locale = $user?->locale ?: config('lartrix.locale', 'zh-CN');
+
         $schema = Html::div()
             ->props(['class' => 'h-full flex-y-center gap-4px'])
             ->children([
@@ -572,8 +639,10 @@ class SystemController
                             ['label' => '中文', 'value' => 'zh-CN'],
                             ['label' => 'English', 'value' => 'en-US'],
                         ],
-                        'defaultLang' => 'zh-CN',
-                        'submitUrl' => '',
+                        'defaultLang' => $locale,
+                        'submitUrl' => '/locale',
+                        'translationsUrl' => '/translations',
+                        'reloadOnChange' => true,
                     ]),
                 ThemeSchemaSwitch::make(),
                 ThemeButton::make(),

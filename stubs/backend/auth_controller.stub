@@ -106,7 +106,143 @@ class AuthController
             'status' => $user->status,
             'roles' => $user->getRoleNames(),
             'permissions' => $user->getActivePermissions()->pluck('name'),
+            'locale' => $user->locale ?: config('lartrix.locale', 'zh-CN'),
         ]);
+    }
+
+    /**
+     * 个人资料弹窗 UI Schema
+     * GET /user/profile/ui
+     */
+    public function profileUi(Request $request): array
+    {
+        $user = $request->user();
+
+        $form = \Lartrix\Schema\Components\Business\OptForm::make('formData')
+            ->fields([
+                ['用户名', 'username', \Lartrix\Schema\Components\NaiveUI\Input::make()->props(['disabled' => true, 'placeholder' => '用户名'])],
+                ['昵称', 'nickname', \Lartrix\Schema\Components\NaiveUI\Input::make()->props(['placeholder' => '请输入昵称']), $user->nickname ?? ''],
+                ['邮箱', 'email', \Lartrix\Schema\Components\NaiveUI\Input::make()->props(['placeholder' => '请输入邮箱']), $user->email ?? ''],
+                ['手机号', 'phone', \Lartrix\Schema\Components\NaiveUI\Input::make()->props(['placeholder' => '请输入手机号']), $user->phone ?? ''],
+                ['头像', 'avatar', \Lartrix\Schema\Components\NaiveUI\Input::make()->props(['placeholder' => '头像 URL']), $user->avatar ?? ''],
+            ])
+            ->buttons([
+                \Lartrix\Schema\Components\NaiveUI\Button::make()->on('click', \Lartrix\Schema\Actions\EmitAction::make('close'))->text('取消'),
+                \Lartrix\Schema\Components\NaiveUI\Button::make()->type('primary')->on('click', \Lartrix\Schema\Actions\EmitAction::make('submit'))->text('保存'),
+            ]);
+
+        return success($form->toArray());
+    }
+
+    /**
+     * 保存个人资料
+     * POST /user/profile
+     */
+    public function profile(Request $request): array
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'nickname' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'avatar' => 'nullable|string|max:255',
+        ]);
+
+        $user->fill($validated);
+        $user->save();
+
+        return success('保存成功');
+    }
+
+    /**
+     * 账号设置弹窗 UI Schema
+     * GET /user/settings/ui
+     */
+    public function settingsUi(Request $request): array
+    {
+        $user = $request->user();
+        $locale = $user->locale ?: config('lartrix.locale', 'zh-CN');
+
+        $form = \Lartrix\Schema\Components\Business\OptForm::make('formData')
+            ->fields([
+                ['语言', 'locale', \Lartrix\Schema\Components\NaiveUI\Select::make()->props([
+                    'placeholder' => '请选择语言',
+                    'options' => [
+                        ['label' => '中文', 'value' => 'zh-CN'],
+                        ['label' => 'English', 'value' => 'en-US'],
+                    ],
+                ]), $locale],
+            ])
+            ->buttons([
+                \Lartrix\Schema\Components\NaiveUI\Button::make()->on('click', \Lartrix\Schema\Actions\EmitAction::make('close'))->text('取消'),
+                \Lartrix\Schema\Components\NaiveUI\Button::make()->type('primary')->on('click', \Lartrix\Schema\Actions\EmitAction::make('submit'))->text('保存'),
+            ]);
+
+        return success($form->toArray());
+    }
+
+    /**
+     * 保存账号设置
+     * POST /user/settings
+     */
+    public function settings(Request $request): array
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'locale' => 'nullable|string|max:20',
+        ]);
+
+        if (!empty($validated['locale'])) {
+            $user->locale = $validated['locale'];
+            $user->save();
+        }
+
+        return success('保存成功');
+    }
+
+    /**
+     * 修改密码弹窗 UI Schema
+     * GET /user/password/ui
+     */
+    public function passwordUi(): array
+    {
+        $form = \Lartrix\Schema\Components\Business\OptForm::make('formData')
+            ->fields([
+                ['当前密码', 'current_password', \Lartrix\Schema\Components\NaiveUI\Input::make()->props(['type' => 'password', 'showPasswordOn' => 'click', 'placeholder' => '请输入当前密码'])],
+                ['新密码', 'new_password', \Lartrix\Schema\Components\NaiveUI\Input::make()->props(['type' => 'password', 'showPasswordOn' => 'click', 'placeholder' => '请输入新密码（至少 6 位）'])],
+                ['确认新密码', 'new_password_confirmation', \Lartrix\Schema\Components\NaiveUI\Input::make()->props(['type' => 'password', 'showPasswordOn' => 'click', 'placeholder' => '请再次输入新密码'])],
+            ])
+            ->buttons([
+                \Lartrix\Schema\Components\NaiveUI\Button::make()->on('click', \Lartrix\Schema\Actions\EmitAction::make('close'))->text('取消'),
+                \Lartrix\Schema\Components\NaiveUI\Button::make()->type('primary')->on('click', \Lartrix\Schema\Actions\EmitAction::make('submit'))->text('保存'),
+            ]);
+
+        return success($form->toArray());
+    }
+
+    /**
+     * 修改当前用户密码
+     * POST /user/password
+     */
+    public function password(Request $request): array
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:6|confirmed',
+        ]);
+
+        if (!\Illuminate\Support\Facades\Hash::check($validated['current_password'], $user->password)) {
+            error('当前密码不正确', null, 40022);
+        }
+
+        $user->password = \Illuminate\Support\Facades\Hash::make($validated['new_password']);
+        $user->save();
+
+        return success('密码修改成功，请重新登录');
     }
 
     /**

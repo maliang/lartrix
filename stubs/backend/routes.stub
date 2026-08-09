@@ -26,6 +26,19 @@ Route::prefix($prefix)->middleware(\Lartrix\Middleware\EnsureModuleEnabled::clas
             Route::get('user', [\Modules\{{MODULE_NAME}}\Http\Controllers\AuthController::class, 'user']);
         });
 
+        // 当前用户自助接口（个人资料/账号设置/修改密码）
+        Route::get('user/profile/ui', [\Modules\{{MODULE_NAME}}\Http\Controllers\AuthController::class, 'profileUi']);
+        Route::post('user/profile', [\Modules\{{MODULE_NAME}}\Http\Controllers\AuthController::class, 'profile']);
+        Route::get('user/settings/ui', [\Modules\{{MODULE_NAME}}\Http\Controllers\AuthController::class, 'settingsUi']);
+        Route::post('user/settings', [\Modules\{{MODULE_NAME}}\Http\Controllers\AuthController::class, 'settings']);
+        Route::get('user/password/ui', [\Modules\{{MODULE_NAME}}\Http\Controllers\AuthController::class, 'passwordUi']);
+        Route::post('user/password', [\Modules\{{MODULE_NAME}}\Http\Controllers\AuthController::class, 'password']);
+
+        // 语言切换与主题保存
+        Route::get('translations', [\Modules\{{MODULE_NAME}}\Http\Controllers\SystemController::class, 'translations']);
+        Route::post('locale', [\Modules\{{MODULE_NAME}}\Http\Controllers\SystemController::class, 'setLocale']);
+        Route::post('theme-config', [\Modules\{{MODULE_NAME}}\Http\Controllers\SystemController::class, 'saveThemeConfig']);
+
         // 布局相关
         Route::prefix('layout')->group(function () {
             Route::get('header-right', [\Modules\{{MODULE_NAME}}\Http\Controllers\SystemController::class, 'headerRight']);
