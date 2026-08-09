@@ -6,9 +6,11 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
+use Lartrix\Commands\Concerns\ConfiguresBackendAuth;
 
 class MakeBackendCommand extends Command
 {
+    use ConfiguresBackendAuth;
     /**
      * 命令签名
      */
@@ -286,86 +288,13 @@ class MakeBackendCommand extends Command
             return;
         }
 
-        $content = File::get($authPath);
-        $guard = $this->replacements['{{GUARD}}'];
-        $modelClass = "Modules\\{$this->moduleName}\\Models\\{$this->moduleName}";
-        $changed = false;
+        $changed = $this->configureBackendAuth($this->replacements['{{GUARD}}'], $this->moduleName);
 
-        // 添加 guard
-        if (!str_contains($content, "'{$guard}' =>")) {
-            $guardBlock = "\n        '{$guard}' => [\n            'driver' => 'sanctum',\n            'provider' => '{$guard}s',\n        ],";
-            $content = $this->insertIntoArraySection($content, 'guards', $guardBlock);
-            if ($content !== false) {
-                $this->info("   已添加 {$guard} guard。");
-                $changed = true;
-            }
-        } else {
-            $this->line("   {$guard} guard 已存在，跳过。");
-        }
-
-        // 添加 provider
-        $providerName = $guard . 's';
-        if ($content !== false && !str_contains($content, "'{$providerName}' =>")) {
-            $providerBlock = "\n        '{$providerName}' => [\n            'driver' => 'eloquent',\n            'model' => \\{$modelClass}::class,\n        ],";
-            $content = $this->insertIntoArraySection($content, 'providers', $providerBlock);
-            if ($content !== false) {
-                $this->info("   已添加 {$providerName} provider。");
-                $changed = true;
-            }
-        } else if ($content !== false) {
-            $this->line("   {$providerName} provider 已存在，跳过。");
-        }
-
-        if ($changed && $content !== false) {
-            File::put($authPath, $content);
+        if ($changed) {
             $this->info('   auth.php 配置完成。');
+        } else {
+            $this->line('   guard/provider 已存在，跳过。');
         }
-    }
-
-    /**
-     * 在 auth.php 的指定数组段落末尾插入内容
-     * 通过逐字符解析括号匹配，找到 'key' => [ ... ] 中最后一个子项 ], 的位置
-     */
-    protected function insertIntoArraySection(string $content, string $sectionKey, string $insertBlock): string|false
-    {
-        // 找到 'guards' => [ 或 'providers' => [ 的位置
-        $pattern = "/'{$sectionKey}'\s*=>\s*\[/";
-        if (!preg_match($pattern, $content, $match, PREG_OFFSET_CAPTURE)) {
-            return false;
-        }
-
-        // 找到开头 [ 的位置
-        $openBracketPos = strpos($content, '[', $match[0][1]);
-        if ($openBracketPos === false) {
-            return false;
-        }
-
-        // 从 [ 开始，用括号计数找到匹配的 ]
-        $depth = 0;
-        $closeBracketPos = null;
-        $len = strlen($content);
-
-        for ($i = $openBracketPos; $i < $len; $i++) {
-            if ($content[$i] === '[') {
-                $depth++;
-            } elseif ($content[$i] === ']') {
-                $depth--;
-                if ($depth === 0) {
-                    $closeBracketPos = $i;
-                    break;
-                }
-            }
-        }
-
-        if ($closeBracketPos === null) {
-            return false;
-        }
-
-        // 在闭合 ] 前插入新内容
-        $before = substr($content, 0, $closeBracketPos);
-        $after = substr($content, $closeBracketPos);
-
-        return $before . $insertBlock . "\n    " . $after;
     }
 
     /**

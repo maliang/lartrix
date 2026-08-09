@@ -69,6 +69,7 @@ class LartrixServiceProvider extends ServiceProvider
                 Commands\PublishAssetsCommand::class,
                 Commands\UninstallCommand::class,
                 Commands\MakeBackendCommand::class,
+Commands\BackendInstallCommand::class,
                 Commands\ModuleMakeCommand::class,
                 Commands\RemoveBackendCommand::class,
                 Commands\ModuleInstallCommand::class,
